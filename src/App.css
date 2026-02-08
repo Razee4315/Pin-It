@@ -1,15 +1,14 @@
-/* PinIt - Minimal Styles */
+/* PinIt - Compact Styles */
 
 :root {
-  /* Dark Theme (Default) */
-  --bg-primary: rgba(18, 18, 22, 0.95);
-  --bg-secondary: rgba(24, 24, 30, 0.98);
-  --bg-card: rgba(28, 28, 35, 0.9);
+  --bg-primary: rgba(22, 22, 28, 0.96);
+  --bg-secondary: rgba(28, 28, 36, 0.98);
+  --bg-card: rgba(32, 32, 42, 0.9);
   --accent: #4fc3f7;
-  --text-primary: #e8e8ec;
-  --text-secondary: #a0a0aa;
-  --text-muted: #68686f;
-  --border: rgba(255, 255, 255, 0.08);
+  --text-primary: #eaeaef;
+  --text-secondary: #a8a8b2;
+  --text-muted: #707078;
+  --border: rgba(255, 255, 255, 0.1);
   --blur: 16px;
 }
 
@@ -21,7 +20,7 @@
   --text-primary: #2a2622;
   --text-secondary: #5a564e;
   --text-muted: #8a867e;
-  --border: rgba(0, 0, 0, 0.06);
+  --border: rgba(0, 0, 0, 0.08);
   --blur: 0px;
 }
 
@@ -41,7 +40,7 @@ body,
 
 body {
   font-family: 'Segoe UI', system-ui, sans-serif;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   user-select: none;
@@ -61,91 +60,80 @@ body {
 
 /* Titlebar */
 .titlebar {
-  height: 32px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 8px 0 10px;
+  padding: 0 10px;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
-  cursor: default;
 }
 
 .titlebar-left {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
+  gap: 8px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-secondary);
 }
 
 .titlebar-left img {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
 }
 
 .titlebar-right {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 
 /* Theme Toggle Bulb */
 .theme-toggle {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: transparent;
   border: none;
   cursor: pointer;
-  margin-right: 4px;
+  margin-right: 6px;
 }
 
 .bulb {
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: var(--accent);
   transition: all 0.2s;
-  box-shadow: 0 0 8px var(--accent);
-}
-
-.theme-toggle.paper .bulb {
-  background: #c49464;
-  box-shadow: 0 0 8px rgba(196, 148, 100, 0.5);
-}
-
-.theme-toggle.dark .bulb {
-  background: #4fc3f7;
-  box-shadow: 0 0 8px rgba(79, 195, 247, 0.5);
+  box-shadow: 0 0 10px var(--accent);
 }
 
 /* Titlebar Buttons */
 .titlebar-btn {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: transparent;
   border: none;
-  border-radius: 4px;
+  border-radius: 5px;
   color: var(--text-muted);
   cursor: pointer;
   transition: all 0.15s;
 }
 
 .titlebar-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.1);
   color: var(--text-primary);
 }
 
 [data-theme="paper"] .titlebar-btn:hover {
-  background: rgba(0, 0, 0, 0.06);
+  background: rgba(0, 0, 0, 0.08);
 }
 
 .titlebar-btn.close:hover {
@@ -156,7 +144,7 @@ body {
 /* Container */
 .container {
   flex: 1;
-  padding: 12px;
+  padding: 14px;
   overflow-y: auto;
 }
 
@@ -172,77 +160,77 @@ body {
 /* Shortcuts */
 .shortcuts-info h2,
 .pinned-windows h2 {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .shortcut-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-bottom: 14px;
+  gap: 6px;
+  margin-bottom: 16px;
 }
 
 .shortcut-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 10px;
+  padding: 10px 12px;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
 }
 
 .keys {
   display: flex;
   align-items: center;
-  gap: 3px;
-  font-size: 11px;
+  gap: 4px;
+  font-size: 12px;
   color: var(--text-muted);
 }
 
 kbd {
-  padding: 2px 5px;
+  padding: 3px 6px;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
-  border-radius: 3px;
+  border-radius: 4px;
   font-family: inherit;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
   color: var(--text-primary);
 }
 
 [data-theme="paper"] kbd {
   background: #ede9e3;
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
 }
 
 .desc {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
 }
 
 /* Pinned Windows */
 .empty-state {
-  padding: 20px;
+  padding: 24px;
   text-align: center;
   background: var(--bg-card);
   border: 1px dashed var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
 }
 
 .empty-state p {
   color: var(--text-secondary);
-  font-size: 12px;
-  margin-bottom: 4px;
+  font-size: 13px;
+  margin-bottom: 6px;
 }
 
 .empty-state span {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
 }
 
@@ -250,17 +238,17 @@ kbd {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .window-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px;
+  padding: 12px;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   transition: border-color 0.15s;
 }
 
@@ -277,7 +265,7 @@ kbd {
 
 .window-title {
   font-weight: 500;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
@@ -285,19 +273,19 @@ kbd {
 }
 
 .window-process {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-muted);
 }
 
 .window-controls {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 input[type="range"] {
   width: 60px;
-  height: 3px;
+  height: 4px;
   appearance: none;
   background: var(--border);
   border-radius: 2px;
@@ -306,24 +294,24 @@ input[type="range"] {
 
 input[type="range"]::-webkit-slider-thumb {
   appearance: none;
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   background: var(--accent);
   border-radius: 50%;
   cursor: grab;
 }
 
 .unpin-btn {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: transparent;
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 5px;
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: 16px;
   cursor: pointer;
   transition: all 0.15s;
 }

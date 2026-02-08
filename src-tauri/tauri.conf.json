@@ -12,9 +12,9 @@
   "app": {
     "windows": [
       {
-        "title": "PinIt - Always on Top",
-        "width": 420,
-        "height": 520,
+        "title": "PinIt",
+        "width": 340,
+        "height": 320,
         "resizable": false,
         "maximizable": false,
         "visible": false,
