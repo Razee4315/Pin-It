@@ -1,18 +1,6 @@
-/* PinIt - Compact Styles */
+/* PinIt - Paper Theme Only */
 
 :root {
-  --bg-primary: rgba(22, 22, 28, 0.96);
-  --bg-secondary: rgba(28, 28, 36, 0.98);
-  --bg-card: rgba(32, 32, 42, 0.9);
-  --accent: #4fc3f7;
-  --text-primary: #eaeaef;
-  --text-secondary: #a8a8b2;
-  --text-muted: #707078;
-  --border: rgba(255, 255, 255, 0.1);
-  --blur: 16px;
-}
-
-[data-theme="paper"] {
   --bg-primary: #f8f6f2;
   --bg-secondary: #f0ede6;
   --bg-card: #ffffff;
@@ -21,7 +9,6 @@
   --text-secondary: #5a564e;
   --text-muted: #8a867e;
   --border: rgba(0, 0, 0, 0.08);
-  --blur: 0px;
 }
 
 * {
@@ -52,10 +39,10 @@ body {
   display: flex;
   flex-direction: column;
   background: var(--bg-primary);
-  backdrop-filter: blur(var(--blur));
   border-radius: 10px;
   border: 1px solid var(--border);
   overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
 /* Titlebar */
@@ -90,28 +77,6 @@ body {
   gap: 6px;
 }
 
-/* Theme Toggle Bulb */
-.theme-toggle {
-  width: 26px;
-  height: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  margin-right: 6px;
-}
-
-.bulb {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--accent);
-  transition: all 0.2s;
-  box-shadow: 0 0 10px var(--accent);
-}
-
 /* Titlebar Buttons */
 .titlebar-btn {
   width: 26px;
@@ -128,12 +93,8 @@ body {
 }
 
 .titlebar-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.06);
   color: var(--text-primary);
-}
-
-[data-theme="paper"] .titlebar-btn:hover {
-  background: rgba(0, 0, 0, 0.08);
 }
 
 .titlebar-btn.close:hover {
@@ -195,17 +156,13 @@ body {
 
 kbd {
   padding: 3px 6px;
-  background: var(--bg-secondary);
+  background: #ede9e3;
   border: 1px solid var(--border);
   border-radius: 4px;
   font-family: inherit;
   font-size: 11px;
   font-weight: 500;
   color: var(--text-primary);
-}
-
-[data-theme="paper"] kbd {
-  background: #ede9e3;
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
 }
 
@@ -287,7 +244,7 @@ input[type="range"] {
   width: 60px;
   height: 4px;
   appearance: none;
-  background: var(--border);
+  background: #e0dcd4;
   border-radius: 2px;
   cursor: pointer;
 }

@@ -5,16 +5,10 @@ import { getPinnedWindows, unpinWindow, setWindowOpacity } from './commands';
 import type { PinnedWindow } from './types';
 import './App.css';
 
-type Theme = 'paper' | 'dark';
-
 function App() {
   const [pinnedWindows, setPinnedWindows] = useState<PinnedWindow[]>([]);
-  const [theme, setTheme] = useState<Theme>('dark');
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('pinit-theme') as Theme;
-    if (savedTheme) setTheme(savedTheme);
-
     refreshPinnedWindows();
 
     const unlistenPin = listen<boolean>('pin-toggled', () => {
@@ -30,11 +24,6 @@ function App() {
       unlistenOpacity.then((fn) => fn());
     };
   }, []);
-
-  useEffect(() => {
-    localStorage.setItem('pinit-theme', theme);
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
 
   async function refreshPinnedWindows() {
     try {
@@ -73,12 +62,8 @@ function App() {
     await appWindow.hide();
   }
 
-  function toggleTheme() {
-    setTheme(theme === 'dark' ? 'paper' : 'dark');
-  }
-
   return (
-    <div className="app-wrapper" data-theme={theme}>
+    <div className="app-wrapper">
       {/* Custom Titlebar */}
       <header className="titlebar" data-tauri-drag-region>
         <div className="titlebar-left" data-tauri-drag-region>
@@ -86,13 +71,6 @@ function App() {
           <span>PinIt</span>
         </div>
         <div className="titlebar-right">
-          <button
-            className={`theme-toggle ${theme}`}
-            onClick={toggleTheme}
-            title={theme === 'dark' ? 'Switch to Paper' : 'Switch to Dark'}
-          >
-            <div className="bulb" />
-          </button>
           <button className="titlebar-btn" onClick={handleMinimize} title="Minimize">
             <svg width="10" height="1" viewBox="0 0 10 1">
               <rect width="10" height="1" fill="currentColor" />
