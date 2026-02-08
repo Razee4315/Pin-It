@@ -1,44 +1,33 @@
 import { useState, useEffect } from 'react';
 import { listen } from '@tauri-apps/api/event';
-import { getCurrentWindow } from '@tauri-apps/api/window';
+import { Window } from '@tauri-apps/api/window';
 import { getPinnedWindows, unpinWindow, setWindowOpacity } from './commands';
 import type { PinnedWindow } from './types';
 import './App.css';
 
-type Theme = 'glass' | 'paper' | 'midnight';
+type Theme = 'paper' | 'dark';
 
 function App() {
   const [pinnedWindows, setPinnedWindows] = useState<PinnedWindow[]>([]);
-  const [lastAction, setLastAction] = useState<string>('Ready');
-  const [theme, setTheme] = useState<Theme>('glass');
+  const [theme, setTheme] = useState<Theme>('dark');
 
   useEffect(() => {
-    // Load saved theme
     const savedTheme = localStorage.getItem('pinit-theme') as Theme;
     if (savedTheme) setTheme(savedTheme);
 
-    // Initial fetch
     refreshPinnedWindows();
 
-    // Listen for pin events
-    const unlistenPin = listen<boolean>('pin-toggled', (event) => {
-      setLastAction(event.payload ? 'Window pinned!' : 'Window unpinned!');
+    const unlistenPin = listen<boolean>('pin-toggled', () => {
       refreshPinnedWindows();
     });
 
-    const unlistenOpacity = listen<number>('opacity-changed', (event) => {
-      setLastAction(`Opacity: ${event.payload}%`);
+    const unlistenOpacity = listen<number>('opacity-changed', () => {
       refreshPinnedWindows();
-    });
-
-    const unlistenError = listen<string>('pin-error', (event) => {
-      setLastAction(`Error: ${event.payload}`);
     });
 
     return () => {
       unlistenPin.then((fn) => fn());
       unlistenOpacity.then((fn) => fn());
-      unlistenError.then((fn) => fn());
     };
   }, []);
 
@@ -59,10 +48,9 @@ function App() {
   async function handleUnpin(hwnd: number) {
     try {
       await unpinWindow(hwnd);
-      setLastAction('Window unpinned');
       refreshPinnedWindows();
     } catch (err) {
-      setLastAction(`Error: ${err}`);
+      console.error('Failed to unpin:', err);
     }
   }
 
@@ -71,97 +59,78 @@ function App() {
       await setWindowOpacity(hwnd, opacity);
       refreshPinnedWindows();
     } catch (err) {
-      setLastAction(`Error: ${err}`);
+      console.error('Failed to set opacity:', err);
     }
   }
 
   async function handleMinimize() {
-    const appWindow = getCurrentWindow();
+    const appWindow = Window.getCurrent();
     await appWindow.minimize();
   }
 
   async function handleClose() {
-    const appWindow = getCurrentWindow();
+    const appWindow = Window.getCurrent();
     await appWindow.hide();
+  }
+
+  function toggleTheme() {
+    setTheme(theme === 'dark' ? 'paper' : 'dark');
   }
 
   return (
     <div className="app-wrapper" data-theme={theme}>
       {/* Custom Titlebar */}
       <header className="titlebar" data-tauri-drag-region>
-        <div className="titlebar-title" data-tauri-drag-region>
-          <img src="/logo.svg" alt="PinIt" width="16" height="16" />
+        <div className="titlebar-left" data-tauri-drag-region>
+          <img src="/logo.svg" alt="PinIt" width="14" height="14" />
           <span>PinIt</span>
         </div>
-        <div className="titlebar-buttons">
-          <button className="titlebar-btn minimize" onClick={handleMinimize} title="Minimize">
+        <div className="titlebar-right">
+          <button
+            className={`theme-toggle ${theme}`}
+            onClick={toggleTheme}
+            title={theme === 'dark' ? 'Switch to Paper' : 'Switch to Dark'}
+          >
+            <div className="bulb" />
+          </button>
+          <button className="titlebar-btn" onClick={handleMinimize} title="Minimize">
             <svg width="10" height="1" viewBox="0 0 10 1">
               <rect width="10" height="1" fill="currentColor" />
             </svg>
           </button>
           <button className="titlebar-btn close" onClick={handleClose} title="Close">
             <svg width="10" height="10" viewBox="0 0 10 10">
-              <path d="M1 1L9 9M9 1L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path d="M1 1L9 9M9 1L1 9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
             </svg>
           </button>
         </div>
       </header>
 
       <main className="container">
-        {/* Theme Selector */}
-        <section className="theme-selector">
-          <button
-            className={`theme-btn ${theme === 'glass' ? 'active' : ''}`}
-            onClick={() => setTheme('glass')}
-            title="Glass Theme"
-          >
-            ✨
-          </button>
-          <button
-            className={`theme-btn ${theme === 'paper' ? 'active' : ''}`}
-            onClick={() => setTheme('paper')}
-            title="Paper Theme"
-          >
-            📄
-          </button>
-          <button
-            className={`theme-btn ${theme === 'midnight' ? 'active' : ''}`}
-            onClick={() => setTheme('midnight')}
-            title="Midnight Theme"
-          >
-            🌙
-          </button>
-        </section>
-
-        <section className="status-card">
-          <div className="status-indicator" />
-          <span className="status-text">{lastAction}</span>
-        </section>
-
         <section className="shortcuts-info">
-          <h2>Keyboard Shortcuts</h2>
+          <h2>Shortcuts</h2>
           <div className="shortcut-list">
             <div className="shortcut-item">
-              <kbd>Win</kbd> + <kbd>Ctrl</kbd> + <kbd>T</kbd>
-              <span>Toggle pin on focused window</span>
+              <div className="keys">
+                <kbd>Win</kbd><span>+</span><kbd>Ctrl</kbd><span>+</span><kbd>T</kbd>
+              </div>
+              <span className="desc">Pin/Unpin window</span>
             </div>
             <div className="shortcut-item">
-              <kbd>Win</kbd> + <kbd>Ctrl</kbd> + <kbd>=</kbd>
-              <span>Increase opacity (+10%)</span>
-            </div>
-            <div className="shortcut-item">
-              <kbd>Win</kbd> + <kbd>Ctrl</kbd> + <kbd>-</kbd>
-              <span>Decrease opacity (-10%)</span>
+              <div className="keys">
+                <kbd>Win</kbd><span>+</span><kbd>Ctrl</kbd><span>+</span><kbd>=</kbd><span>/</span><kbd>-</kbd>
+              </div>
+              <span className="desc">Adjust opacity</span>
             </div>
           </div>
         </section>
 
         <section className="pinned-windows">
-          <h2>Pinned Windows ({pinnedWindows.length})</h2>
+          <h2>Pinned ({pinnedWindows.length})</h2>
           {pinnedWindows.length === 0 ? (
             <div className="empty-state">
-              <p>No windows pinned yet.</p>
-              <p className="hint">Press <kbd>Win</kbd> + <kbd>Ctrl</kbd> + <kbd>T</kbd> on any window to pin it.</p>
+              <p>No windows pinned</p>
+              <span>Use <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd></span>
             </div>
           ) : (
             <ul className="window-list">
@@ -178,14 +147,14 @@ function App() {
                       max={100}
                       value={Math.round((win.opacity / 255) * 100)}
                       onChange={(e) => handleOpacityChange(win.hwnd, parseInt(e.target.value))}
-                      title={`Opacity: ${Math.round((win.opacity / 255) * 100)}%`}
+                      title={`${Math.round((win.opacity / 255) * 100)}%`}
                     />
                     <button
                       className="unpin-btn"
                       onClick={() => handleUnpin(win.hwnd)}
-                      title="Unpin window"
+                      title="Unpin"
                     >
-                      ✕
+                      ×
                     </button>
                   </div>
                 </li>
