@@ -17,7 +17,6 @@ The most common solution, Microsoft PowerToys, comes bundled with dozens of othe
 - **Transparency Control** - Adjust window opacity with `Win+Ctrl+=` and `Win+Ctrl+-`
 - **Minimal Interface** - Unobtrusive UI that stays out of your way
 - **System Tray Integration** - Runs quietly in the background
-- **Two Themes** - Clean Paper (Light) and Dark themes
 - **Native Performance** - Built with Rust and Tauri for minimal resource usage
 
 ## Installation
