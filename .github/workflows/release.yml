@@ -33,12 +33,10 @@ jobs:
         with:
           workspaces: './src-tauri -> target'
 
-      - name: Sync node version and setup cache
+      - name: Sync node version
         uses: actions/setup-node@v4
         with:
           node-version: 'lts/*'
-          cache: 'npm' # bun install generates package-lock.json? No, it generates bun.lockb.
-          # We should use bun setup if using bun.
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
