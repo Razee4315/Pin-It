@@ -15,9 +15,11 @@
         "title": "PinIt - Always on Top",
         "width": 420,
         "height": 520,
-        "resizable": true,
+        "resizable": false,
+        "maximizable": false,
         "visible": false,
-        "decorations": true,
+        "decorations": false,
+        "transparent": true,
         "center": true
       }
     ],
