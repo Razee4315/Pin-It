@@ -14,7 +14,7 @@ The most common solution, Microsoft PowerToys, comes bundled with dozens of othe
 ## Screenshots
 
 <p align="center">
-  <img src="Screenshot/UI.png" width="600" alt="PinIt UI">
+  <img src="Screenshot/UI.png" width="300" alt="PinIt UI">
   <br>
   <em>PinIt Interface - Simple, Clean, Effective</em>
 </p>
