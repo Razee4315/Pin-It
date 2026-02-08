@@ -80,6 +80,7 @@ pub fn get_opacity_percent(hwnd: HWND) -> u8 {
 }
 
 /// Restore window to full opacity and remove WS_EX_LAYERED
+#[allow(dead_code)]
 pub fn restore_opacity(hwnd: HWND) -> Result<(), PinError> {
     unsafe {
         // Set to fully opaque first

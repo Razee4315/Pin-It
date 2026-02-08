@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "pin-it",
+  "productName": "PinIt",
   "version": "0.1.0",
   "identifier": "com.saqla.pin-it",
   "build": {
@@ -10,11 +10,20 @@
     "frontendDist": "../dist"
   },
   "app": {
+    "trayIcon": {
+      "iconPath": "icons/icon.ico",
+      "iconAsTemplate": false,
+      "menuOnLeftClick": false
+    },
     "windows": [
       {
-        "title": "pin-it",
-        "width": 800,
-        "height": 600
+        "title": "PinIt - Always on Top",
+        "width": 420,
+        "height": 520,
+        "resizable": true,
+        "visible": false,
+        "decorations": true,
+        "center": true
       }
     ],
     "security": {

@@ -4,7 +4,8 @@
 //! to keep borders synced and clean up state.
 
 use super::state::PinState;
-use std::sync::atomic::{AtomicBool, Ordering};
+use once_cell::sync::Lazy;
+use std::sync::Mutex;
 use windows::Win32::Foundation::HWND;
 use windows::Win32::UI::Accessibility::{SetWinEventHook, UnhookWinEvent, HWINEVENTHOOK};
 use windows::Win32::UI::WindowsAndMessaging::{
@@ -17,16 +18,16 @@ use windows::Win32::UI::WindowsAndMessaging::{
 const WINEVENT_OUTOFCONTEXT: u32 = 0x0000;
 const WINEVENT_SKIPOWNPROCESS: u32 = 0x0002;
 
-/// Track if event hooks are initialized
-static HOOKS_INITIALIZED: AtomicBool = AtomicBool::new(false);
-
-/// Store hook handles for cleanup
-static mut EVENT_HOOKS: Vec<HWINEVENTHOOK> = Vec::new();
+/// Thread-safe storage for event hooks
+static EVENT_HOOKS: Lazy<Mutex<Vec<isize>>> = Lazy::new(|| Mutex::new(Vec::new()));
 
 /// Initialize window event hooks
 pub fn init_event_hooks() -> Result<(), String> {
-    if HOOKS_INITIALIZED.swap(true, Ordering::SeqCst) {
-        return Ok(()); // Already initialized
+    let mut hooks = EVENT_HOOKS.lock().unwrap();
+    
+    // Already initialized
+    if !hooks.is_empty() {
+        return Ok(());
     }
 
     unsafe {
@@ -54,7 +55,7 @@ pub fn init_event_hooks() -> Result<(), String> {
             if hook.0.is_null() {
                 log::warn!("Failed to set event hook for event {}", event);
             } else {
-                EVENT_HOOKS.push(hook);
+                hooks.push(hook.0 as isize);
             }
         }
     }
@@ -66,12 +67,13 @@ pub fn init_event_hooks() -> Result<(), String> {
 /// Cleanup event hooks on shutdown
 #[allow(dead_code)]
 pub fn cleanup_event_hooks() {
-    unsafe {
-        for hook in EVENT_HOOKS.drain(..) {
+    let mut hooks = EVENT_HOOKS.lock().unwrap();
+    for hook_ptr in hooks.drain(..) {
+        unsafe {
+            let hook = HWINEVENTHOOK(hook_ptr as *mut std::ffi::c_void);
             let _ = UnhookWinEvent(hook);
         }
     }
-    HOOKS_INITIALIZED.store(false, Ordering::SeqCst);
 }
 
 /// Callback for all window events
