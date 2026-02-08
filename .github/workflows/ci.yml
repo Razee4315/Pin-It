@@ -1,15 +1,15 @@
-name: Release
+name: CI
 
 on:
   push:
-    tags:
-      - 'v*'
-
-permissions:
-  contents: write
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  release:
+  test:
     runs-on: windows-latest
 
     steps:
@@ -32,13 +32,9 @@ jobs:
       - name: Install frontend dependencies
         run: bun install
 
-      - name: Build and Release
-        uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tagName: ${{ github.ref_name }}
-          releaseName: 'PinIt ${{ github.ref_name }}'
-          releaseBody: 'See the assets to download this version and install.'
-          releaseDraft: false
-          prerelease: false
+      - name: Build Frontend
+        run: bun run build
+
+      - name: Check Rust
+        working-directory: src-tauri
+        run: cargo check
