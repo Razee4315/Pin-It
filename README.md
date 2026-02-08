@@ -11,6 +11,14 @@ As a developer moving between Linux and Windows, I always missed the native abil
 
 The most common solution, Microsoft PowerToys, comes bundled with dozens of other utilities I didn't need. I wanted a lightweight, singular purpose tool that does one thing and does it well—without the bloat. PinIt was born from the desire for a clean, simple, and resource-efficient alternative that feels like a native part of the system.
 
+## Screenshots
+
+<p align="center">
+  <img src="Screenshot/UI.png" width="600" alt="PinIt UI">
+  <br>
+  <em>PinIt Interface - Simple, Clean, Effective</em>
+</p>
+
 ## Features
 
 - **Global Hotkey** - Pin any window instantly with `Win+Ctrl+T`
