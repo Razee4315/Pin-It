@@ -66,9 +66,7 @@ function App() {
     <main className="container">
       <header className="header">
         <div className="logo">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M12 2L12 12M12 12L7 17M12 12L17 17" strokeLinecap="round" />
-          </svg>
+          <img src="/logo.svg" alt="PinIt" width="32" height="32" />
           <h1>PinIt</h1>
         </div>
         <p className="subtitle">Always on Top Utility</p>

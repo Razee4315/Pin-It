@@ -64,10 +64,10 @@ body {
   margin-bottom: 6px;
 }
 
-.logo svg {
+.logo svg,
+.logo img {
   width: 32px;
   height: 32px;
-  color: var(--accent-primary);
 }
 
 .logo h1 {
@@ -107,8 +107,15 @@ body {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.6;
+  }
 }
 
 .status-text {
