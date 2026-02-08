@@ -40,8 +40,8 @@ Download the latest release from the [Releases](https://github.com/StartVision/P
 
 ```bash
 # Clone the repository
-git clone https://github.com/StartVision/PinIt.git
-cd PinIt
+git clone https://github.com/StartVision/Pin-It.git
+cd Pin-It
 
 # Install dependencies
 bun install
@@ -79,5 +79,5 @@ See the [LICENSE](LICENSE) file for full details.
 
 **Saqlain Abbas**
 Email: saqlainrazee@gmail.com
+
 GitHub: [@Razee4315](https://github.com/Razee4315)
-Initial Concept: [@StartVision](https://github.com/StartVision)
