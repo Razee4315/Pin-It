@@ -5,8 +5,27 @@ import { getPinnedWindows, unpinWindow, setWindowOpacity } from './commands';
 import type { PinnedWindow } from './types';
 import './App.css';
 
+const AVATAR_COLORS = [
+  '#e57373', '#f06292', '#ba68c8', '#9575cd', '#7986cb',
+  '#64b5f6', '#4fc3f7', '#4dd0e1', '#4db6ac', '#81c784',
+  '#aed581', '#ffd54f', '#ffb74d', '#ff8a65', '#a1887f',
+];
+
+function getAvatarColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
+function getInitial(name: string): string {
+  return name.replace(/\.exe$/i, '').charAt(0).toUpperCase();
+}
+
 function App() {
   const [pinnedWindows, setPinnedWindows] = useState<PinnedWindow[]>([]);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
   useEffect(() => {
     refreshPinnedWindows();
@@ -85,58 +104,87 @@ function App() {
       </header>
 
       <main className="container">
-        <section className="shortcuts-info">
-          <h2>Shortcuts</h2>
-          <div className="shortcut-list">
-            <div className="shortcut-item">
-              <div className="keys">
-                <kbd>Win</kbd><span>+</span><kbd>Ctrl</kbd><span>+</span><kbd>T</kbd>
+        {/* Collapsible Shortcuts */}
+        <section className="shortcuts-section">
+          <button className="section-toggle" onClick={() => setShortcutsOpen(!shortcutsOpen)}>
+            <span className="section-label">Shortcuts</span>
+            <svg className={`chevron ${shortcutsOpen ? 'open' : ''}`} width="10" height="10" viewBox="0 0 10 10">
+              <path d="M2.5 4L5 6.5L7.5 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+            </svg>
+          </button>
+          {shortcutsOpen && (
+            <div className="shortcut-list">
+              <div className="shortcut-item">
+                <div className="keys">
+                  <kbd>Win</kbd><span>+</span><kbd>Ctrl</kbd><span>+</span><kbd>T</kbd>
+                </div>
+                <span className="desc">Pin/Unpin</span>
               </div>
-              <span className="desc">Pin/Unpin window</span>
-            </div>
-            <div className="shortcut-item">
-              <div className="keys">
-                <kbd>Win</kbd><span>+</span><kbd>Ctrl</kbd><span>+</span><kbd>=</kbd><span>/</span><kbd>-</kbd>
+              <div className="shortcut-item">
+                <div className="keys">
+                  <kbd>Win</kbd><span>+</span><kbd>Ctrl</kbd><span>+</span><kbd>=</kbd><span>/</span><kbd>-</kbd>
+                </div>
+                <span className="desc">Opacity</span>
               </div>
-              <span className="desc">Adjust opacity</span>
             </div>
-          </div>
+          )}
         </section>
 
-        <section className="pinned-windows">
-          <h2>Pinned ({pinnedWindows.length})</h2>
+        {/* Pinned Windows */}
+        <section className="pinned-section">
+          <h2 className="section-heading">
+            <svg className="pin-heading-icon" width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
+            </svg>
+            Pinned
+            <span className="pin-count">{pinnedWindows.length}</span>
+          </h2>
+
           {pinnedWindows.length === 0 ? (
             <div className="empty-state">
-              <p>No windows pinned</p>
-              <span>Use <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd></span>
+              <span>Press <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd> to pin a window</span>
             </div>
           ) : (
             <ul className="window-list">
-              {pinnedWindows.map((win) => (
-                <li key={win.hwnd} className="window-item">
-                  <div className="window-info">
-                    <span className="window-title">{win.title || 'Untitled'}</span>
-                    <span className="window-process">{win.process_name}</span>
-                  </div>
-                  <div className="window-controls">
-                    <input
-                      type="range"
-                      min={20}
-                      max={100}
-                      value={Math.round((win.opacity / 255) * 100)}
-                      onChange={(e) => handleOpacityChange(win.hwnd, parseInt(e.target.value))}
-                      title={`${Math.round((win.opacity / 255) * 100)}%`}
-                    />
-                    <button
-                      className="unpin-btn"
-                      onClick={() => handleUnpin(win.hwnd)}
-                      title="Unpin"
-                    >
-                      ×
-                    </button>
-                  </div>
-                </li>
-              ))}
+              {pinnedWindows.map((win) => {
+                const opacityPercent = Math.round((win.opacity / 255) * 100);
+                return (
+                  <li key={win.hwnd} className="window-item">
+                    <div className="window-item-row">
+                      <div
+                        className="process-avatar"
+                        style={{ background: getAvatarColor(win.process_name) }}
+                      >
+                        {getInitial(win.process_name)}
+                      </div>
+                      <div className="window-info" title={win.title}>
+                        <span className="window-title">{win.title || 'Untitled'}</span>
+                        <span className="window-process">{win.process_name}</span>
+                      </div>
+                      <div className="window-controls">
+                        <div className="opacity-control">
+                          <input
+                            type="range"
+                            min={20}
+                            max={100}
+                            value={opacityPercent}
+                            onChange={(e) => handleOpacityChange(win.hwnd, parseInt(e.target.value))}
+                            title={`Opacity: ${opacityPercent}%`}
+                          />
+                          <span className="opacity-label">{opacityPercent}%</span>
+                        </div>
+                        <button
+                          className="unpin-btn"
+                          onClick={() => handleUnpin(win.hwnd)}
+                          title="Unpin"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>
