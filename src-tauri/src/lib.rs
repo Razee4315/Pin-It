@@ -6,12 +6,19 @@ mod commands;
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    Manager, WindowEvent,
+    Manager, RunEvent, WindowEvent,
 };
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    // Initialize logging so log::info!, log::error! etc. actually print
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
+        .format_timestamp_millis()
+        .init();
+
+    log::info!("PinIt starting up");
+
+    let app = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .setup(|app| {
@@ -82,6 +89,13 @@ pub fn run() {
             commands::set_window_opacity,
             commands::is_window_topmost,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application");
+
+    app.run(|_app_handle, event| {
+        if let RunEvent::Exit = event {
+            log::info!("PinIt shutting down, cleaning up...");
+            always_on_top::event_hook::cleanup_event_hooks();
+        }
+    });
 }
