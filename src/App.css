@@ -444,3 +444,55 @@ input[type="range"]::-webkit-slider-thumb {
   border-color: #e53935;
   color: white;
 }
+
+/* Settings Section */
+.settings-section {
+  flex-shrink: 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0;
+}
+
+.setting-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+/* Toggle Switch */
+.toggle {
+  width: 32px;
+  height: 18px;
+  border-radius: 9px;
+  background: #d4d0ca;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.2s;
+  padding: 0;
+}
+
+.toggle.active {
+  background: var(--accent);
+}
+
+.toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: white;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.toggle.active .toggle-knob {
+  transform: translateX(14px);
+}

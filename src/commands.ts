@@ -48,3 +48,13 @@ export async function focusWindow(hwnd: number): Promise<void> {
 export async function getPinnedCount(): Promise<number> {
     return invoke<number>('get_pinned_count');
 }
+
+/** Check if auto-start is enabled */
+export async function getAutoStart(): Promise<boolean> {
+    return invoke<boolean>('get_auto_start');
+}
+
+/** Enable or disable auto-start */
+export async function setAutoStart(enabled: boolean): Promise<void> {
+    return invoke<void>('set_auto_start', { enabled });
+}

@@ -1,6 +1,7 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 
 mod always_on_top;
+mod autostart;
 mod commands;
 
 use tauri::{
@@ -90,6 +91,8 @@ pub fn run() {
             commands::is_window_topmost,
             commands::focus_window,
             commands::get_pinned_count,
+            commands::get_auto_start,
+            commands::set_auto_start,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application");

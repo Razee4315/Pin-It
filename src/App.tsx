@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { Window } from '@tauri-apps/api/window';
-import { getPinnedWindows, unpinWindow, setWindowOpacity, focusWindow } from './commands';
+import { getPinnedWindows, unpinWindow, setWindowOpacity, focusWindow, getAutoStart, setAutoStart } from './commands';
 import type { PinnedWindow } from './types';
 import './App.css';
 
@@ -62,6 +62,7 @@ function App() {
   const [pinnedWindows, setPinnedWindows] = useState<PinnedWindow[]>([]);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastData[]>([]);
+  const [autoStart, setAutoStartState] = useState(false);
   const toastTimeouts = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
 
   const addToast = useCallback((message: string, pinned: boolean) => {
@@ -77,6 +78,7 @@ function App() {
 
   useEffect(() => {
     refreshPinnedWindows();
+    getAutoStart().then(setAutoStartState).catch(() => {});
 
     const unlistenPin = listen<PinToggledPayload>('pin-toggled', (event) => {
       refreshPinnedWindows();
@@ -133,6 +135,16 @@ function App() {
       await focusWindow(hwnd);
     } catch (err) {
       console.error('Failed to focus window:', err);
+    }
+  }
+
+  async function handleAutoStartToggle() {
+    const newValue = !autoStart;
+    try {
+      await setAutoStart(newValue);
+      setAutoStartState(newValue);
+    } catch (err) {
+      console.error('Failed to toggle auto-start:', err);
     }
   }
 
@@ -268,6 +280,20 @@ function App() {
               })}
             </ul>
           )}
+        </section>
+
+        {/* Settings */}
+        <section className="settings-section">
+          <div className="setting-row">
+            <span className="setting-label">Start with Windows</span>
+            <button
+              className={`toggle ${autoStart ? 'active' : ''}`}
+              onClick={handleAutoStartToggle}
+              title={autoStart ? 'Disable auto-start' : 'Enable auto-start'}
+            >
+              <span className="toggle-knob" />
+            </button>
+          </div>
         </section>
       </main>
     </div>

@@ -90,5 +90,21 @@ pub fn get_pinned_count() -> usize {
     PinState::get_all().len()
 }
 
+/// Check if auto-start is enabled
+#[tauri::command]
+pub fn get_auto_start() -> bool {
+    crate::autostart::is_enabled()
+}
+
+/// Set auto-start enabled/disabled
+#[tauri::command]
+pub fn set_auto_start(enabled: bool) -> Result<(), String> {
+    if enabled {
+        crate::autostart::enable()
+    } else {
+        crate::autostart::disable()
+    }
+}
+
 // Re-export PinnedWindow for command return type
 pub use crate::always_on_top::state;
