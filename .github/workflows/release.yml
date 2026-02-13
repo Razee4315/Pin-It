@@ -10,7 +10,35 @@ permissions:
   contents: write
 
 jobs:
+  # First: check if this version already has a release (cheap, runs on ubuntu)
+  check-version:
+    runs-on: ubuntu-latest
+    outputs:
+      should_release: ${{ steps.check.outputs.should_release }}
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check if version tag exists
+        id: check
+        run: |
+          VERSION=$(jq -r '.version' src-tauri/tauri.conf.json)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          if git tag -l "v$VERSION" | grep -q "v$VERSION"; then
+            echo "should_release=false" >> $GITHUB_OUTPUT
+            echo "::notice::Tag v$VERSION already exists — skipping release"
+          else
+            echo "should_release=true" >> $GITHUB_OUTPUT
+            echo "::notice::New version v$VERSION detected — will build and release"
+          fi
+
+  # Second: build and release only if version is new
   release:
+    needs: check-version
+    if: needs.check-version.outputs.should_release == 'true'
     runs-on: windows-latest
 
     steps:
@@ -38,8 +66,23 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: v__VERSION__ # Auto-reads version from package.json
+          tauriScript: bun run tauri
+          tagName: v__VERSION__
           releaseName: 'PinIt v__VERSION__'
-          releaseBody: 'See the assets to download this version and install.'
-          releaseDraft: true
+          releaseBody: |
+            ## PinIt v__VERSION__
+
+            Download the installer below to get started.
+
+            ### Installation
+            - **`.msi`** — Standard Windows installer (recommended)
+            - **`.exe`** — NSIS installer
+
+            ### Shortcuts
+            | Action | Shortcut |
+            |--------|----------|
+            | Pin/Unpin window | `Win` + `Ctrl` + `T` |
+            | Increase opacity | `Win` + `Ctrl` + `=` |
+            | Decrease opacity | `Win` + `Ctrl` + `-` |
+          releaseDraft: false
           prerelease: false

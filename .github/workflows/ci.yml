@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  test:
+  check:
     runs-on: windows-latest
 
     steps:
@@ -32,7 +32,7 @@ jobs:
       - name: Install frontend dependencies
         run: bun install
 
-      - name: Build Frontend
+      - name: Type check frontend
         run: bun run build
 
       - name: Check Rust
