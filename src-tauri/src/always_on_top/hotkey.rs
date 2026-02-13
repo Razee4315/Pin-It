@@ -4,8 +4,17 @@
 
 use super::pin_manager;
 use super::state::PinState;
+use serde::Serialize;
 use tauri::{AppHandle, Emitter};
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
+
+/// Event payload for pin toggle notifications
+#[derive(Clone, Serialize)]
+pub struct PinToggledPayload {
+    pub is_pinned: bool,
+    pub title: String,
+    pub process_name: String,
+}
 
 /// Register all global shortcuts for the app
 pub fn register_shortcuts(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
@@ -51,10 +60,18 @@ pub fn register_shortcuts(app: &AppHandle) -> Result<(), Box<dyn std::error::Err
 fn handle_toggle_pin(app: &AppHandle) {
     match pin_manager::get_foreground_window() {
         Ok(hwnd) => {
+            // Get window info before toggle (title may be needed for toast)
+            let title = pin_manager::get_window_title_pub(hwnd);
+            let process = pin_manager::get_process_name_pub(hwnd);
+
             match pin_manager::toggle_pin(hwnd) {
                 Ok(is_pinned) => {
-                    // Emit event to frontend
-                    let _ = app.emit("pin-toggled", is_pinned);
+                    // Emit rich event to frontend for toast notification
+                    let _ = app.emit("pin-toggled", PinToggledPayload {
+                        is_pinned,
+                        title,
+                        process_name: process,
+                    });
                     log::info!("Window {} pinned: {}", hwnd.0 as isize, is_pinned);
 
                     // Update tray tooltip with current pin count

@@ -92,6 +92,16 @@ pub fn get_foreground_window() -> Result<HWND, PinError> {
     }
 }
 
+/// Get window title (public wrapper for event payloads)
+pub fn get_window_title_pub(hwnd: HWND) -> String {
+    get_window_title(hwnd)
+}
+
+/// Get process name (public wrapper for event payloads)
+pub fn get_process_name_pub(hwnd: HWND) -> String {
+    get_process_name(hwnd)
+}
+
 /// Get window title as String
 fn get_window_title(hwnd: HWND) -> String {
     unsafe {

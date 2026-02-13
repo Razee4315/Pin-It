@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { Window } from '@tauri-apps/api/window';
 import { getPinnedWindows, unpinWindow, setWindowOpacity, focusWindow } from './commands';
@@ -23,15 +23,71 @@ function getInitial(name: string): string {
   return name.replace(/\.exe$/i, '').charAt(0).toUpperCase();
 }
 
+// --- Sound ---
+function playSound(pinned: boolean) {
+  try {
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    // Pin = higher pitch rising, Unpin = lower pitch falling
+    osc.frequency.value = pinned ? 880 : 660;
+    gain.gain.value = 0.08;
+    osc.start();
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+    osc.stop(ctx.currentTime + 0.12);
+  } catch {
+    // Audio not available, ignore
+  }
+}
+
+// --- Toast types ---
+interface ToastData {
+  id: number;
+  message: string;
+  pinned: boolean;
+}
+
+interface PinToggledPayload {
+  is_pinned: boolean;
+  title: string;
+  process_name: string;
+}
+
+let toastId = 0;
+
 function App() {
   const [pinnedWindows, setPinnedWindows] = useState<PinnedWindow[]>([]);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [toasts, setToasts] = useState<ToastData[]>([]);
+  const toastTimeouts = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
+
+  const addToast = useCallback((message: string, pinned: boolean) => {
+    const id = ++toastId;
+    setToasts((prev) => [...prev.slice(-2), { id, message, pinned }]); // Keep max 3
+
+    const timeout = setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+      toastTimeouts.current.delete(id);
+    }, 2000);
+    toastTimeouts.current.set(id, timeout);
+  }, []);
 
   useEffect(() => {
     refreshPinnedWindows();
 
-    const unlistenPin = listen<boolean>('pin-toggled', () => {
+    const unlistenPin = listen<PinToggledPayload>('pin-toggled', (event) => {
       refreshPinnedWindows();
+      const { is_pinned, title, process_name } = event.payload;
+      const name = title && title !== 'Unknown' ? title : process_name;
+      const truncated = name.length > 30 ? name.slice(0, 30) + '...' : name;
+      addToast(
+        is_pinned ? `Pinned: ${truncated}` : `Unpinned: ${truncated}`,
+        is_pinned
+      );
+      playSound(is_pinned);
     });
 
     const unlistenOpacity = listen<number>('opacity-changed', () => {
@@ -41,8 +97,9 @@ function App() {
     return () => {
       unlistenPin.then((fn) => fn());
       unlistenOpacity.then((fn) => fn());
+      toastTimeouts.current.forEach((t) => clearTimeout(t));
     };
-  }, []);
+  }, [addToast]);
 
   async function refreshPinnedWindows() {
     try {
@@ -91,6 +148,18 @@ function App() {
 
   return (
     <div className="app-wrapper">
+      {/* Toast Notifications */}
+      <div className="toast-container">
+        {toasts.map((toast) => (
+          <div key={toast.id} className={`toast ${toast.pinned ? 'toast-pin' : 'toast-unpin'}`}>
+            <svg className="toast-icon" width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
+            </svg>
+            {toast.message}
+          </div>
+        ))}
+      </div>
+
       {/* Custom Titlebar */}
       <header className="titlebar" data-tauri-drag-region>
         <div className="titlebar-left" data-tauri-drag-region>

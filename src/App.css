@@ -1,5 +1,57 @@
 /* PinIt - Paper Theme */
 
+/* Toast Notifications */
+.toast-container {
+  position: fixed;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  animation: toast-in 0.2s ease-out, toast-out 0.3s ease-in 1.7s forwards;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.toast-pin {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+}
+
+.toast-unpin {
+  background: #fff3e0;
+  color: #e65100;
+  border: 1px solid #ffe0b2;
+}
+
+.toast-icon {
+  flex-shrink: 0;
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes toast-out {
+  from { opacity: 1; }
+  to { opacity: 0; transform: translateY(-4px); }
+}
+
 :root {
   --bg-primary: #f8f6f2;
   --bg-secondary: #f0ede6;
