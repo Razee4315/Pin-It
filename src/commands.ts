@@ -38,3 +38,13 @@ export async function setWindowOpacity(hwnd: number, percent: number): Promise<v
 export async function isWindowTopmost(hwnd: number): Promise<boolean> {
     return invoke<boolean>('is_window_topmost', { hwnd });
 }
+
+/** Bring a pinned window to focus */
+export async function focusWindow(hwnd: number): Promise<void> {
+    return invoke<void>('focus_window', { hwnd });
+}
+
+/** Get count of pinned windows */
+export async function getPinnedCount(): Promise<number> {
+    return invoke<number>('get_pinned_count');
+}

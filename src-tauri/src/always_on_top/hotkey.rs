@@ -3,6 +3,7 @@
 //! Uses tauri-plugin-global-shortcut to register Win+Ctrl+T and transparency shortcuts.
 
 use super::pin_manager;
+use super::state::PinState;
 use tauri::{AppHandle, Emitter};
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
@@ -11,7 +12,7 @@ pub fn register_shortcuts(app: &AppHandle) -> Result<(), Box<dyn std::error::Err
     // Win+Ctrl+T - Toggle pin on foreground window
     let toggle_shortcut = Shortcut::new(Some(Modifiers::SUPER | Modifiers::CONTROL), Code::KeyT);
 
-    // Win+Ctrl+= - Increase opacity  
+    // Win+Ctrl+= - Increase opacity
     let opacity_up_shortcut =
         Shortcut::new(Some(Modifiers::SUPER | Modifiers::CONTROL), Code::Equal);
 
@@ -55,6 +56,9 @@ fn handle_toggle_pin(app: &AppHandle) {
                     // Emit event to frontend
                     let _ = app.emit("pin-toggled", is_pinned);
                     log::info!("Window {} pinned: {}", hwnd.0 as isize, is_pinned);
+
+                    // Update tray tooltip with current pin count
+                    update_tray_tooltip(app);
                 }
                 Err(e) => {
                     log::error!("Failed to toggle pin: {}", e);
@@ -72,7 +76,7 @@ fn handle_toggle_pin(app: &AppHandle) {
 fn handle_opacity_change(app: &AppHandle, delta: i32) {
     match pin_manager::get_foreground_window() {
         Ok(hwnd) => {
-            if super::state::PinState::is_pinned(hwnd) {
+            if PinState::is_pinned(hwnd) {
                 match super::transparency::adjust_opacity(hwnd, delta) {
                     Ok(new_opacity) => {
                         let _ = app.emit("opacity-changed", new_opacity);
@@ -85,5 +89,23 @@ fn handle_opacity_change(app: &AppHandle, delta: i32) {
             }
         }
         Err(_) => {}
+    }
+}
+
+/// Update the tray icon tooltip with current pin count
+pub fn update_tray_tooltip(app: &AppHandle) {
+    let count = PinState::get_all().len();
+    let tooltip = if count == 0 {
+        "PinIt - No windows pinned".to_string()
+    } else {
+        format!(
+            "PinIt - {} window{} pinned",
+            count,
+            if count == 1 { "" } else { "s" }
+        )
+    };
+
+    if let Some(tray) = app.tray_by_id("main-tray") {
+        let _ = tray.set_tooltip(Some(&tooltip));
     }
 }

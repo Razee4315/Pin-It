@@ -38,7 +38,7 @@ pub fn run() {
             let menu = Menu::with_items(app, &[&show_item, &quit_item])?;
 
             // Create system tray
-            let _tray = TrayIconBuilder::new()
+            let _tray = TrayIconBuilder::with_id("main-tray")
                 .icon(app.default_window_icon().unwrap().clone())
                 .menu(&menu)
                 .show_menu_on_left_click(false)
@@ -88,6 +88,8 @@ pub fn run() {
             commands::adjust_opacity,
             commands::set_window_opacity,
             commands::is_window_topmost,
+            commands::focus_window,
+            commands::get_pinned_count,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application");

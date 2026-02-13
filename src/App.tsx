@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { Window } from '@tauri-apps/api/window';
-import { getPinnedWindows, unpinWindow, setWindowOpacity } from './commands';
+import { getPinnedWindows, unpinWindow, setWindowOpacity, focusWindow } from './commands';
 import type { PinnedWindow } from './types';
 import './App.css';
 
@@ -68,6 +68,14 @@ function App() {
       refreshPinnedWindows();
     } catch (err) {
       console.error('Failed to set opacity:', err);
+    }
+  }
+
+  async function handleFocusWindow(hwnd: number) {
+    try {
+      await focusWindow(hwnd);
+    } catch (err) {
+      console.error('Failed to focus window:', err);
     }
   }
 
@@ -157,7 +165,11 @@ function App() {
                       >
                         {getInitial(win.process_name)}
                       </div>
-                      <div className="window-info" title={win.title}>
+                      <div
+                        className="window-info clickable"
+                        title={`Click to focus: ${win.title}`}
+                        onClick={() => handleFocusWindow(win.hwnd)}
+                      >
                         <span className="window-title">{win.title || 'Untitled'}</span>
                         <span className="window-process">{win.process_name}</span>
                       </div>

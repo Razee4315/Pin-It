@@ -60,5 +60,35 @@ pub fn is_window_topmost(hwnd: isize) -> bool {
     pin_manager::is_topmost(hwnd)
 }
 
+/// Bring a pinned window to focus
+#[tauri::command]
+pub fn focus_window(hwnd: isize) -> Result<(), PinError> {
+    use windows::Win32::Foundation::HWND;
+    use windows::Win32::UI::WindowsAndMessaging::{
+        IsIconic, SetForegroundWindow, ShowWindow, SW_RESTORE,
+    };
+    let hwnd = HWND(hwnd as *mut std::ffi::c_void);
+
+    if !pin_manager::is_valid_window(hwnd) {
+        return Err(PinError::NoForegroundWindow);
+    }
+
+    unsafe {
+        // Restore if minimized
+        if IsIconic(hwnd).as_bool() {
+            let _ = ShowWindow(hwnd, SW_RESTORE);
+        }
+        let _ = SetForegroundWindow(hwnd);
+    }
+
+    Ok(())
+}
+
+/// Get the count of currently pinned windows
+#[tauri::command]
+pub fn get_pinned_count() -> usize {
+    PinState::get_all().len()
+}
+
 // Re-export PinnedWindow for command return type
 pub use crate::always_on_top::state;

@@ -303,6 +303,22 @@ kbd {
   flex: 1;
 }
 
+.window-info.clickable {
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 2px 4px;
+  margin: -2px -4px;
+  transition: background 0.15s;
+}
+
+.window-info.clickable:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.window-info.clickable:hover .window-title {
+  color: var(--accent);
+}
+
 .window-title {
   font-weight: 500;
   font-size: 12px;
