@@ -3,6 +3,7 @@
 mod always_on_top;
 mod autostart;
 mod commands;
+mod persistence;
 
 use tauri::{
     menu::{Menu, MenuItem},
@@ -32,6 +33,9 @@ pub fn run() {
             if let Err(e) = always_on_top::hotkey::register_shortcuts(&app.handle()) {
                 log::error!("Failed to register shortcuts: {:?}", e);
             }
+
+            // Restore previously pinned windows
+            persistence::restore();
 
             // Create tray menu
             let show_item = MenuItem::with_id(app, "show", "Show PinIt", true, None::<&str>)?;
@@ -99,7 +103,8 @@ pub fn run() {
 
     app.run(|_app_handle, event| {
         if let RunEvent::Exit = event {
-            log::info!("PinIt shutting down, cleaning up...");
+            log::info!("PinIt shutting down, saving state...");
+            persistence::save_current();
             always_on_top::event_hook::cleanup_event_hooks();
         }
     });

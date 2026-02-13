@@ -2645,6 +2645,7 @@ dependencies = [
 name = "pin-it"
 version = "0.2.0"
 dependencies = [
+ "dirs",
  "env_logger",
  "log",
  "once_cell",
