@@ -31,7 +31,7 @@ pub struct PinState;
 impl PinState {
     /// Add a window to the pinned list
     pub fn add(hwnd: HWND, title: String, process_name: String) {
-        let mut windows = PINNED_WINDOWS.write().unwrap();
+        let mut windows = PINNED_WINDOWS.write().unwrap_or_else(|e| e.into_inner());
         windows.insert(
             hwnd.0 as isize,
             PinnedWindow {
@@ -46,26 +46,26 @@ impl PinState {
 
     /// Remove a window from the pinned list
     pub fn remove(hwnd: HWND) -> Option<PinnedWindow> {
-        let mut windows = PINNED_WINDOWS.write().unwrap();
+        let mut windows = PINNED_WINDOWS.write().unwrap_or_else(|e| e.into_inner());
         windows.remove(&(hwnd.0 as isize))
     }
 
     /// Check if a window is pinned
     pub fn is_pinned(hwnd: HWND) -> bool {
-        let windows = PINNED_WINDOWS.read().unwrap();
+        let windows = PINNED_WINDOWS.read().unwrap_or_else(|e| e.into_inner());
         windows.contains_key(&(hwnd.0 as isize))
     }
 
     /// Get a pinned window's info
     #[allow(dead_code)]
     pub fn get(hwnd: HWND) -> Option<PinnedWindow> {
-        let windows = PINNED_WINDOWS.read().unwrap();
+        let windows = PINNED_WINDOWS.read().unwrap_or_else(|e| e.into_inner());
         windows.get(&(hwnd.0 as isize)).cloned()
     }
 
     /// Update opacity for a pinned window
     pub fn set_opacity(hwnd: HWND, opacity: u8) {
-        let mut windows = PINNED_WINDOWS.write().unwrap();
+        let mut windows = PINNED_WINDOWS.write().unwrap_or_else(|e| e.into_inner());
         if let Some(window) = windows.get_mut(&(hwnd.0 as isize)) {
             if window.original_opacity.is_none() {
                 window.original_opacity = Some(window.opacity);
@@ -76,8 +76,17 @@ impl PinState {
 
     /// Get all pinned windows
     pub fn get_all() -> Vec<PinnedWindow> {
-        let windows = PINNED_WINDOWS.read().unwrap();
+        let windows = PINNED_WINDOWS.read().unwrap_or_else(|e| e.into_inner());
         windows.values().cloned().collect()
+    }
+
+    /// Remove stale windows whose handles are no longer valid
+    pub fn cleanup_stale() {
+        let mut windows = PINNED_WINDOWS.write().unwrap_or_else(|e| e.into_inner());
+        windows.retain(|_, win| {
+            let hwnd = HWND(win.hwnd as *mut std::ffi::c_void);
+            super::pin_manager::is_valid_window(hwnd)
+        });
     }
 
     /// Clear pinned state for a destroyed window

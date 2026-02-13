@@ -6,14 +6,14 @@
 use super::error::PinError;
 use super::state::PinState;
 use windows::core::{PCWSTR, PWSTR};
-use windows::Win32::Foundation::{BOOL, HWND, MAX_PATH};
+use windows::Win32::Foundation::{BOOL, CloseHandle, HWND, MAX_PATH};
 use windows::Win32::System::Threading::{
     OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32, PROCESS_QUERY_LIMITED_INFORMATION,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
     GetForegroundWindow, GetWindowLongW, GetWindowTextLengthW, GetWindowTextW,
-    GetWindowThreadProcessId, RemovePropW, SetPropW, SetWindowPos, GWL_EXSTYLE, HWND_NOTOPMOST,
-    HWND_TOPMOST, SWP_NOMOVE, SWP_NOSIZE, WS_EX_TOPMOST,
+    GetWindowThreadProcessId, IsWindow, RemovePropW, SetPropW, SetWindowPos, GWL_EXSTYLE,
+    HWND_NOTOPMOST, HWND_TOPMOST, SWP_NOMOVE, SWP_NOSIZE, WS_EX_TOPMOST,
 };
 
 /// Property name used to tag windows as pinned by our app
@@ -45,6 +45,9 @@ pub fn pin_window(hwnd: HWND) -> Result<bool, PinError> {
 /// Unpin a window (remove always-on-top)
 pub fn unpin_window(hwnd: HWND) -> Result<bool, PinError> {
     unsafe {
+        // Restore opacity before removing state (needs PinState to check original_opacity)
+        let _ = super::transparency::restore_opacity(hwnd);
+
         // Remove our property marker
         let prop_name: Vec<u16> = WINDOW_PINNED_PROP.encode_utf16().collect();
         let _ = RemovePropW(hwnd, PCWSTR(prop_name.as_ptr()));
@@ -62,7 +65,7 @@ pub fn unpin_window(hwnd: HWND) -> Result<bool, PinError> {
 
 /// Toggle pin state on a window
 pub fn toggle_pin(hwnd: HWND) -> Result<bool, PinError> {
-    if is_topmost(hwnd) || PinState::is_pinned(hwnd) {
+    if PinState::is_pinned(hwnd) {
         unpin_window(hwnd)
     } else {
         pin_window(hwnd)
@@ -107,6 +110,11 @@ fn get_window_title(hwnd: HWND) -> String {
     }
 }
 
+/// Check if a window handle is still valid
+pub fn is_valid_window(hwnd: HWND) -> bool {
+    unsafe { IsWindow(hwnd).as_bool() }
+}
+
 /// Get process name for a window
 fn get_process_name(hwnd: HWND) -> String {
     unsafe {
@@ -126,12 +134,16 @@ fn get_process_name(hwnd: HWND) -> String {
         let mut buffer: Vec<u16> = vec![0; MAX_PATH as usize];
         let mut size = buffer.len() as u32;
 
-        if QueryFullProcessImageNameW(handle, PROCESS_NAME_WIN32, PWSTR(buffer.as_mut_ptr()), &mut size).is_ok() {
+        let result = if QueryFullProcessImageNameW(handle, PROCESS_NAME_WIN32, PWSTR(buffer.as_mut_ptr()), &mut size).is_ok() {
             let path = String::from_utf16_lossy(&buffer[..size as usize]);
-            // Extract just the filename
             path.rsplit('\\').next().unwrap_or("Unknown").to_string()
         } else {
             String::from("Unknown")
-        }
+        };
+
+        // Close the process handle to prevent leak
+        let _ = CloseHandle(handle);
+
+        result
     }
 }
