@@ -283,7 +283,11 @@ function App() {
 
           {pinnedWindows.length === 0 ? (
             <div className="empty-state">
-              <span>Press <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd> to pin a window</span>
+              <svg className="empty-state-icon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" opacity="0.3">
+                <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
+              </svg>
+              <span>No windows pinned</span>
+              <span className="empty-state-hint">Focus any window, then press <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd></span>
             </div>
           ) : (
             <ul className="window-list" role="list" aria-label="Pinned windows">
