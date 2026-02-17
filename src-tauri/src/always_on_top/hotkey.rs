@@ -44,9 +44,9 @@ pub fn register_shortcuts(app: &AppHandle) -> Result<(), Box<dyn std::error::Err
             if shortcut == &toggle_clone {
                 handle_toggle_pin(&app_handle);
             } else if shortcut == &up_clone {
-                handle_opacity_change(&app_handle, 10);
+                handle_opacity_change(&app_handle, 5);
             } else if shortcut == &down_clone {
-                handle_opacity_change(&app_handle, -10);
+                handle_opacity_change(&app_handle, -5);
             }
         },
     )?;

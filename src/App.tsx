@@ -288,7 +288,11 @@ function App() {
                             aria-valuenow={opacityPercent}
                             aria-valuetext={`${opacityPercent}%`}
                           />
-                          <span className="opacity-label">{opacityPercent}%</span>
+                          <span
+                            className="opacity-label"
+                            onDoubleClick={() => handleOpacityChange(win.hwnd, 100)}
+                            title="Double-click to reset to 100%"
+                          >{opacityPercent}%</span>
                         </div>
                         <button
                           className="unpin-btn"

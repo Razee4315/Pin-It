@@ -419,20 +419,29 @@ kbd {
 
 input[type="range"] {
   width: 48px;
-  height: 3px;
+  height: 5px;
   appearance: none;
   background: #e0dcd4;
-  border-radius: 2px;
+  border-radius: 3px;
   cursor: pointer;
 }
 
 input[type="range"]::-webkit-slider-thumb {
   appearance: none;
-  width: 10px;
-  height: 10px;
+  width: 14px;
+  height: 14px;
   background: var(--accent);
   border-radius: 50%;
   cursor: grab;
+  transition: transform 0.1s;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+input[type="range"]::-webkit-slider-thumb:active {
+  cursor: grabbing;
 }
 
 .opacity-label {
@@ -440,6 +449,7 @@ input[type="range"]::-webkit-slider-thumb {
   color: var(--text-muted);
   min-width: 24px;
   text-align: right;
+  cursor: pointer;
 }
 
 .unpin-btn {
