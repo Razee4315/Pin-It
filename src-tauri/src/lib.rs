@@ -100,6 +100,10 @@ pub fn run() {
             commands::get_pinned_count,
             commands::get_auto_start,
             commands::set_auto_start,
+            commands::get_sound_enabled,
+            commands::set_sound_enabled,
+            commands::get_has_seen_tray_notice,
+            commands::set_has_seen_tray_notice,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application");

@@ -58,3 +58,23 @@ export async function getAutoStart(): Promise<boolean> {
 export async function setAutoStart(enabled: boolean): Promise<void> {
     return invoke<void>('set_auto_start', { enabled });
 }
+
+/** Get sound enabled setting */
+export async function getSoundEnabled(): Promise<boolean> {
+    return invoke<boolean>('get_sound_enabled');
+}
+
+/** Set sound enabled setting */
+export async function setSoundEnabled(enabled: boolean): Promise<void> {
+    return invoke<void>('set_sound_enabled', { enabled });
+}
+
+/** Get whether user has seen the tray notice */
+export async function getHasSeenTrayNotice(): Promise<boolean> {
+    return invoke<boolean>('get_has_seen_tray_notice');
+}
+
+/** Mark tray notice as seen */
+export async function setHasSeenTrayNotice(): Promise<void> {
+    return invoke<void>('set_has_seen_tray_notice');
+}

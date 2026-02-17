@@ -106,5 +106,33 @@ pub fn set_auto_start(enabled: bool) -> Result<(), String> {
     }
 }
 
+/// Get sound enabled setting
+#[tauri::command]
+pub fn get_sound_enabled() -> bool {
+    crate::persistence::get_settings().enable_sound
+}
+
+/// Set sound enabled setting
+#[tauri::command]
+pub fn set_sound_enabled(enabled: bool) {
+    let mut settings = crate::persistence::get_settings();
+    settings.enable_sound = enabled;
+    crate::persistence::update_settings(settings);
+}
+
+/// Get whether user has seen the tray notice
+#[tauri::command]
+pub fn get_has_seen_tray_notice() -> bool {
+    crate::persistence::get_settings().has_seen_tray_notice
+}
+
+/// Mark tray notice as seen
+#[tauri::command]
+pub fn set_has_seen_tray_notice() {
+    let mut settings = crate::persistence::get_settings();
+    settings.has_seen_tray_notice = true;
+    crate::persistence::update_settings(settings);
+}
+
 // Re-export PinnedWindow for command return type
 pub use crate::always_on_top::state;

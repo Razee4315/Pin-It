@@ -17,11 +17,36 @@ pub struct SavedPin {
     pub opacity: u8,
 }
 
+/// User preferences / settings
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct UserSettings {
+    #[serde(default = "default_true")]
+    pub enable_sound: bool,
+    #[serde(default)]
+    pub has_seen_tray_notice: bool,
+}
+
+fn default_true() -> bool {
+    true
+}
+
+impl Default for UserSettings {
+    fn default() -> Self {
+        Self {
+            enable_sound: true,
+            has_seen_tray_notice: false,
+        }
+    }
+}
+
 /// All saved preferences
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct SavedState {
     /// Map of process_name -> SavedPin
     pub pins: HashMap<String, SavedPin>,
+    /// User settings
+    #[serde(default)]
+    pub settings: UserSettings,
 }
 
 /// Get the path to the preferences file
@@ -69,10 +94,11 @@ pub fn save(state: &SavedState) {
     }
 }
 
-/// Save current pinned windows state
+/// Save current pinned windows state (preserves existing settings)
 pub fn save_current() {
     let pinned = crate::always_on_top::state::PinState::get_all();
-    let mut state = SavedState::default();
+    let mut state = load(); // Preserve existing settings
+    state.pins.clear();
 
     for win in pinned {
         state.pins.insert(
@@ -84,6 +110,18 @@ pub fn save_current() {
         );
     }
 
+    save(&state);
+}
+
+/// Get a specific setting value
+pub fn get_settings() -> UserSettings {
+    load().settings
+}
+
+/// Update settings and save
+pub fn update_settings(settings: UserSettings) {
+    let mut state = load();
+    state.settings = settings;
     save(&state);
 }
 

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { Window } from '@tauri-apps/api/window';
-import { getPinnedWindows, unpinWindow, setWindowOpacity, focusWindow, getAutoStart, setAutoStart } from './commands';
+import { getPinnedWindows, unpinWindow, setWindowOpacity, focusWindow, getAutoStart, setAutoStart, getSoundEnabled, setSoundEnabled } from './commands';
 import type { PinnedWindow } from './types';
 import './App.css';
 
@@ -63,6 +63,8 @@ function App() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastData[]>([]);
   const [autoStart, setAutoStartState] = useState(false);
+  const [soundEnabled, setSoundEnabledState] = useState(true);
+  const soundEnabledRef = useRef(true);
   const toastTimeouts = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
 
   const addToast = useCallback((message: string, type: 'pin' | 'unpin' | 'error') => {
@@ -79,6 +81,7 @@ function App() {
   useEffect(() => {
     refreshPinnedWindows();
     getAutoStart().then(setAutoStartState).catch(() => {});
+    getSoundEnabled().then((v) => { setSoundEnabledState(v); soundEnabledRef.current = v; }).catch(() => {});
 
     const unlistenPin = listen<PinToggledPayload>('pin-toggled', (event) => {
       refreshPinnedWindows();
@@ -89,7 +92,7 @@ function App() {
         is_pinned ? `Pinned: ${truncated}` : `Unpinned: ${truncated}`,
         is_pinned ? 'pin' : 'unpin'
       );
-      playSound(is_pinned);
+      if (soundEnabledRef.current) playSound(is_pinned);
     });
 
     const unlistenOpacity = listen<number>('opacity-changed', () => {
@@ -145,6 +148,17 @@ function App() {
       await focusWindow(hwnd);
     } catch (err) {
       console.error('Failed to focus window:', err);
+    }
+  }
+
+  async function handleSoundToggle() {
+    const newValue = !soundEnabled;
+    try {
+      await setSoundEnabled(newValue);
+      setSoundEnabledState(newValue);
+      soundEnabledRef.current = newValue;
+    } catch (err) {
+      console.error('Failed to toggle sound:', err);
     }
   }
 
@@ -316,6 +330,19 @@ function App() {
 
         {/* Settings */}
         <section className="settings-section">
+          <div className="setting-row">
+            <span className="setting-label">Sound effects</span>
+            <button
+              className={`toggle ${soundEnabled ? 'active' : ''}`}
+              onClick={handleSoundToggle}
+              title={soundEnabled ? 'Disable sound' : 'Enable sound'}
+              role="switch"
+              aria-checked={soundEnabled}
+              aria-label="Sound effects"
+            >
+              <span className="toggle-knob" />
+            </button>
+          </div>
           <div className="setting-row">
             <span className="setting-label">Start with Windows</span>
             <button
