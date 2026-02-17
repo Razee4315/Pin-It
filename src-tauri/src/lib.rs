@@ -32,9 +32,14 @@ pub fn run() {
                 log::error!("Failed to initialize event hooks: {}", e);
             }
 
-            // Register global shortcuts
-            if let Err(e) = always_on_top::hotkey::register_shortcuts(&app.handle()) {
-                log::error!("Failed to register shortcuts: {:?}", e);
+            // Register global shortcuts with saved config
+            let shortcut_config = persistence::get_shortcut_config();
+            if let Err(e) = always_on_top::hotkey::register_shortcuts(&app.handle(), &shortcut_config) {
+                log::error!("Failed to register custom shortcuts, trying defaults: {:?}", e);
+                let defaults = persistence::ShortcutConfig::default();
+                if let Err(e2) = always_on_top::hotkey::register_shortcuts(&app.handle(), &defaults) {
+                    log::error!("Failed to register default shortcuts: {:?}", e2);
+                }
             }
 
             // Restore previously pinned windows
@@ -104,6 +109,10 @@ pub fn run() {
             commands::set_sound_enabled,
             commands::get_has_seen_tray_notice,
             commands::set_has_seen_tray_notice,
+            commands::get_shortcut_config,
+            commands::set_shortcut_config,
+            commands::validate_shortcut,
+            commands::reset_shortcut_config,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application");

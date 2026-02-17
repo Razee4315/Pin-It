@@ -136,5 +136,37 @@ pub fn set_has_seen_tray_notice() {
     crate::persistence::update_settings(settings);
 }
 
+/// Get the current shortcut configuration
+#[tauri::command]
+pub fn get_shortcut_config() -> crate::persistence::ShortcutConfig {
+    crate::persistence::get_shortcut_config()
+}
+
+/// Update shortcut configuration (validates, saves, and re-registers)
+#[tauri::command]
+pub fn set_shortcut_config(
+    app: tauri::AppHandle,
+    config: crate::persistence::ShortcutConfig,
+) -> Result<(), String> {
+    crate::always_on_top::hotkey::update_shortcuts(&app, &config)?;
+    crate::persistence::update_shortcut_config(config);
+    Ok(())
+}
+
+/// Validate a single shortcut string
+#[tauri::command]
+pub fn validate_shortcut(shortcut: String) -> Result<(), String> {
+    crate::always_on_top::hotkey::validate_shortcut(&shortcut)
+}
+
+/// Reset shortcuts to defaults
+#[tauri::command]
+pub fn reset_shortcut_config(app: tauri::AppHandle) -> Result<crate::persistence::ShortcutConfig, String> {
+    let defaults = crate::persistence::ShortcutConfig::default();
+    crate::always_on_top::hotkey::update_shortcuts(&app, &defaults)?;
+    crate::persistence::update_shortcut_config(defaults.clone());
+    Ok(defaults)
+}
+
 // Re-export PinnedWindow for command return type
 pub use crate::always_on_top::state;

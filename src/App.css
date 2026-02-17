@@ -232,6 +232,104 @@ kbd {
 .desc {
   font-size: 11px;
   color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* Shortcut editing */
+.shortcut-display {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.shortcut-edit-btn {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.15s;
+}
+
+.shortcut-item:hover .shortcut-edit-btn {
+  opacity: 0.6;
+}
+
+.shortcut-edit-btn:hover {
+  opacity: 1 !important;
+  background: rgba(0, 0, 0, 0.06);
+  border-color: var(--border);
+}
+
+.shortcut-item.shortcut-editing {
+  background: rgba(196, 148, 100, 0.08);
+  border-radius: 4px;
+}
+
+.shortcut-capture {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  outline: none;
+}
+
+.shortcut-capture .keys {
+  border: 1px dashed var(--accent);
+  border-radius: 4px;
+  padding: 2px 6px;
+  min-width: 80px;
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+}
+
+.capture-hint {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.shortcut-save-btn {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  border: none;
+  border-radius: 3px;
+  color: white;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.shortcut-save-btn:hover {
+  opacity: 0.85;
+}
+
+.shortcut-reset-btn {
+  margin-top: 4px;
+  padding: 4px 8px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 10px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+
+.shortcut-reset-btn:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--text-secondary);
+  border-color: var(--text-muted);
 }
 
 /* Pinned Section */
@@ -642,6 +740,18 @@ input[type="range"]:focus-visible {
 
   .window-list::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.12);
+  }
+
+  .shortcut-edit-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .shortcut-item.shortcut-editing {
+    background: rgba(212, 163, 115, 0.1);
+  }
+
+  .shortcut-reset-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
   }
 
   .unpin-btn:hover {

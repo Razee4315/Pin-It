@@ -2,7 +2,7 @@
  * Tauri command bindings for Always on Top functionality
  */
 import { invoke } from '@tauri-apps/api/core';
-import type { PinnedWindow } from './types';
+import type { PinnedWindow, ShortcutConfig } from './types';
 
 /** Toggle pin state on the foreground window */
 export async function togglePinForeground(): Promise<boolean> {
@@ -77,4 +77,24 @@ export async function getHasSeenTrayNotice(): Promise<boolean> {
 /** Mark tray notice as seen */
 export async function setHasSeenTrayNotice(): Promise<void> {
     return invoke<void>('set_has_seen_tray_notice');
+}
+
+/** Get the current shortcut configuration */
+export async function getShortcutConfig(): Promise<ShortcutConfig> {
+    return invoke<ShortcutConfig>('get_shortcut_config');
+}
+
+/** Update shortcut configuration */
+export async function setShortcutConfig(config: ShortcutConfig): Promise<void> {
+    return invoke<void>('set_shortcut_config', { config });
+}
+
+/** Validate a single shortcut string */
+export async function validateShortcut(shortcut: string): Promise<void> {
+    return invoke<void>('validate_shortcut', { shortcut });
+}
+
+/** Reset shortcuts to defaults */
+export async function resetShortcutConfig(): Promise<ShortcutConfig> {
+    return invoke<ShortcutConfig>('reset_shortcut_config');
 }

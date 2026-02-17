@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { Window } from '@tauri-apps/api/window';
-import { getPinnedWindows, unpinWindow, setWindowOpacity, focusWindow, getAutoStart, setAutoStart, getSoundEnabled, setSoundEnabled, getHasSeenTrayNotice, setHasSeenTrayNotice } from './commands';
-import type { PinnedWindow } from './types';
+import { getPinnedWindows, unpinWindow, setWindowOpacity, focusWindow, getAutoStart, setAutoStart, getSoundEnabled, setSoundEnabled, getHasSeenTrayNotice, setHasSeenTrayNotice, getShortcutConfig, setShortcutConfig, resetShortcutConfig } from './commands';
+import type { PinnedWindow, ShortcutConfig } from './types';
+import { SHORTCUT_LABELS } from './types';
+import { keyEventToShortcutString, shortcutToDisplay } from './shortcutUtils';
 import './App.css';
 
 const AVATAR_COLORS = [
@@ -66,6 +68,9 @@ function App() {
   const [soundEnabled, setSoundEnabledState] = useState(true);
   const soundEnabledRef = useRef(true);
   const [showTrayNotice, setShowTrayNotice] = useState(false);
+  const [shortcuts, setShortcuts] = useState<ShortcutConfig | null>(null);
+  const [editingKey, setEditingKey] = useState<keyof ShortcutConfig | null>(null);
+  const [captureValue, setCaptureValue] = useState<string | null>(null);
   const toastTimeouts = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
 
   const addToast = useCallback((message: string, type: 'pin' | 'unpin' | 'error') => {
@@ -83,6 +88,7 @@ function App() {
     refreshPinnedWindows();
     getAutoStart().then(setAutoStartState).catch(() => {});
     getSoundEnabled().then((v) => { setSoundEnabledState(v); soundEnabledRef.current = v; }).catch(() => {});
+    getShortcutConfig().then(setShortcuts).catch(() => {});
 
     const unlistenPin = listen<PinToggledPayload>('pin-toggled', (event) => {
       refreshPinnedWindows();
@@ -108,11 +114,16 @@ function App() {
       addToast(event.payload, 'error');
     });
 
+    const unlistenShortcuts = listen('shortcuts-updated', () => {
+      getShortcutConfig().then(setShortcuts).catch(() => {});
+    });
+
     return () => {
       unlistenPin.then((fn) => fn());
       unlistenOpacity.then((fn) => fn());
       unlistenDestroyed.then((fn) => fn());
       unlistenError.then((fn) => fn());
+      unlistenShortcuts.then((fn) => fn());
       toastTimeouts.current.forEach((t) => clearTimeout(t));
     };
   }, [addToast]);
@@ -199,6 +210,49 @@ function App() {
     await appWindow.hide();
   }
 
+  function handleEditShortcut(key: keyof ShortcutConfig) {
+    setEditingKey(key);
+    setCaptureValue(null);
+  }
+
+  function handleCancelEdit() {
+    setEditingKey(null);
+    setCaptureValue(null);
+  }
+
+  function handleShortcutKeyDown(e: React.KeyboardEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    const str = keyEventToShortcutString(e.nativeEvent);
+    if (str) {
+      setCaptureValue(str);
+    }
+  }
+
+  async function handleSaveShortcut() {
+    if (!editingKey || !captureValue || !shortcuts) return;
+    const newConfig = { ...shortcuts, [editingKey]: captureValue };
+    try {
+      await setShortcutConfig(newConfig);
+      setShortcuts(newConfig);
+      setEditingKey(null);
+      setCaptureValue(null);
+    } catch (err) {
+      addToast(String(err), 'error');
+    }
+  }
+
+  async function handleResetShortcuts() {
+    try {
+      const defaults = await resetShortcutConfig();
+      setShortcuts(defaults);
+      setEditingKey(null);
+      setCaptureValue(null);
+    } catch (err) {
+      addToast(String(err), 'error');
+    }
+  }
+
   return (
     <div className="app-wrapper">
       {/* Tray Notice Overlay */}
@@ -243,26 +297,72 @@ function App() {
                 <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 2.5a1 1 0 110 2 1 1 0 010-2zM6.5 7h1.25v4.5h1.5V7H10V5.75H6.5V7z"/>
               </svg>
             </button>
-            {shortcutsOpen && (
+            {shortcutsOpen && shortcuts && (
               <div className="shortcuts-popover" id="shortcuts-panel" role="region" aria-label="Keyboard shortcuts">
-                <div className="shortcut-item">
-                  <div className="keys">
-                    <kbd>Win</kbd><span>+</span><kbd>Ctrl</kbd><span>+</span><kbd>T</kbd>
-                  </div>
-                  <span className="desc">Pin/Unpin</span>
-                </div>
-                <div className="shortcut-item">
-                  <div className="keys">
-                    <kbd>Win</kbd><span>+</span><kbd>Ctrl</kbd><span>+</span><kbd>=</kbd><span>/</span><kbd>-</kbd>
-                  </div>
-                  <span className="desc">Opacity</span>
-                </div>
-                <div className="shortcut-item">
-                  <div className="keys">
-                    <kbd>Win</kbd><span>+</span><kbd>Ctrl</kbd><span>+</span><kbd>P</kbd>
-                  </div>
-                  <span className="desc">Show/Hide</span>
-                </div>
+                {(Object.keys(SHORTCUT_LABELS) as (keyof ShortcutConfig)[]).map((key) => {
+                  const isEditing = editingKey === key;
+                  const displayParts = shortcutToDisplay(
+                    isEditing && captureValue ? captureValue : shortcuts[key]
+                  );
+                  return (
+                    <div
+                      key={key}
+                      className={`shortcut-item${isEditing ? ' shortcut-editing' : ''}`}
+                    >
+                      <span className="desc">{SHORTCUT_LABELS[key]}</span>
+                      {isEditing ? (
+                        <div
+                          className="shortcut-capture"
+                          tabIndex={0}
+                          onKeyDown={handleShortcutKeyDown}
+                          onBlur={handleCancelEdit}
+                          ref={(el) => el?.focus()}
+                        >
+                          <div className="keys">
+                            {captureValue ? (
+                              displayParts.map((k, i) => (
+                                <span key={i}>{i > 0 && <span>+</span>}<kbd>{k}</kbd></span>
+                              ))
+                            ) : (
+                              <span className="capture-hint">Press keys...</span>
+                            )}
+                          </div>
+                          {captureValue && (
+                            <button
+                              className="shortcut-save-btn"
+                              onMouseDown={(e) => { e.preventDefault(); handleSaveShortcut(); }}
+                              title="Save shortcut"
+                            >
+                              <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M2 6l3 3 5-5" />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="shortcut-display">
+                          <div className="keys">
+                            {displayParts.map((k, i) => (
+                              <span key={i}>{i > 0 && <span>+</span>}<kbd>{k}</kbd></span>
+                            ))}
+                          </div>
+                          <button
+                            className="shortcut-edit-btn"
+                            onClick={() => handleEditShortcut(key)}
+                            title="Edit shortcut"
+                          >
+                            <svg width="9" height="9" viewBox="0 0 12 12" fill="currentColor">
+                              <path d="M9.5.5a1.4 1.4 0 012 2L4 10l-3 1 1-3L9.5.5z"/>
+                            </svg>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+                <button className="shortcut-reset-btn" onClick={handleResetShortcuts}>
+                  Reset to defaults
+                </button>
               </div>
             )}
           </div>
@@ -296,7 +396,7 @@ function App() {
                 <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
               </svg>
               <span>No windows pinned</span>
-              <span className="empty-state-hint">Focus any window, then press <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd></span>
+              <span className="empty-state-hint">Focus any window, then press {shortcuts ? shortcutToDisplay(shortcuts.toggle_pin).map((k, i) => (<span key={i}>{i > 0 && '+'}<kbd>{k}</kbd></span>)) : <><kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd></>}</span>
             </div>
           ) : (
             <ul className="window-list" role="list" aria-label="Pinned windows">

@@ -20,6 +20,43 @@ pub struct SavedPin {
     pub opacity: u8,
 }
 
+/// Keyboard shortcut configuration
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ShortcutConfig {
+    #[serde(default = "default_toggle_pin")]
+    pub toggle_pin: String,
+    #[serde(default = "default_opacity_up")]
+    pub opacity_up: String,
+    #[serde(default = "default_opacity_down")]
+    pub opacity_down: String,
+    #[serde(default = "default_toggle_window")]
+    pub toggle_window: String,
+}
+
+fn default_toggle_pin() -> String {
+    "super+ctrl+KeyT".to_string()
+}
+fn default_opacity_up() -> String {
+    "super+ctrl+Equal".to_string()
+}
+fn default_opacity_down() -> String {
+    "super+ctrl+Minus".to_string()
+}
+fn default_toggle_window() -> String {
+    "super+ctrl+KeyP".to_string()
+}
+
+impl Default for ShortcutConfig {
+    fn default() -> Self {
+        Self {
+            toggle_pin: default_toggle_pin(),
+            opacity_up: default_opacity_up(),
+            opacity_down: default_opacity_down(),
+            toggle_window: default_toggle_window(),
+        }
+    }
+}
+
 /// User preferences / settings
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct UserSettings {
@@ -27,6 +64,8 @@ pub struct UserSettings {
     pub enable_sound: bool,
     #[serde(default)]
     pub has_seen_tray_notice: bool,
+    #[serde(default)]
+    pub shortcuts: ShortcutConfig,
 }
 
 fn default_true() -> bool {
@@ -38,6 +77,7 @@ impl Default for UserSettings {
         Self {
             enable_sound: true,
             has_seen_tray_notice: false,
+            shortcuts: ShortcutConfig::default(),
         }
     }
 }
@@ -128,6 +168,18 @@ pub fn get_settings() -> UserSettings {
 pub fn update_settings(settings: UserSettings) {
     let mut state = load();
     state.settings = settings;
+    save(&state);
+}
+
+/// Get shortcut configuration
+pub fn get_shortcut_config() -> ShortcutConfig {
+    load().settings.shortcuts
+}
+
+/// Update shortcut configuration and save
+pub fn update_shortcut_config(config: ShortcutConfig) {
+    let mut state = load();
+    state.settings.shortcuts = config;
     save(&state);
 }
 

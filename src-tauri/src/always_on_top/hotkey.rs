@@ -1,12 +1,14 @@
 //! Global hotkey registration and handling.
 //!
-//! Uses tauri-plugin-global-shortcut to register Win+Ctrl+T and transparency shortcuts.
+//! Uses tauri-plugin-global-shortcut to register configurable global shortcuts.
 
 use super::pin_manager;
 use super::state::PinState;
+use crate::persistence::ShortcutConfig;
 use serde::Serialize;
+use std::str::FromStr;
 use tauri::{AppHandle, Emitter, Manager};
-use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
+use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
 
 /// Event payload for pin toggle notifications
 #[derive(Clone, Serialize)]
@@ -16,27 +18,28 @@ pub struct PinToggledPayload {
     pub process_name: String,
 }
 
-/// Register all global shortcuts for the app
-pub fn register_shortcuts(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
-    // Win+Ctrl+T - Toggle pin on foreground window
-    let toggle_shortcut = Shortcut::new(Some(Modifiers::SUPER | Modifiers::CONTROL), Code::KeyT);
+/// Validate a shortcut string can be parsed
+pub fn validate_shortcut(shortcut_str: &str) -> Result<(), String> {
+    Shortcut::from_str(shortcut_str)
+        .map(|_| ())
+        .map_err(|e| format!("Invalid shortcut '{}': {}", shortcut_str, e))
+}
 
-    // Win+Ctrl+= - Increase opacity
-    let opacity_up_shortcut =
-        Shortcut::new(Some(Modifiers::SUPER | Modifiers::CONTROL), Code::Equal);
-
-    // Win+Ctrl+- - Decrease opacity
-    let opacity_down_shortcut =
-        Shortcut::new(Some(Modifiers::SUPER | Modifiers::CONTROL), Code::Minus);
-
-    // Win+Ctrl+P - Toggle PinIt window visibility
-    let show_shortcut = Shortcut::new(Some(Modifiers::SUPER | Modifiers::CONTROL), Code::KeyP);
+/// Register all global shortcuts for the app using the provided config
+pub fn register_shortcuts(
+    app: &AppHandle,
+    config: &ShortcutConfig,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let toggle_shortcut = Shortcut::from_str(&config.toggle_pin)?;
+    let opacity_up_shortcut = Shortcut::from_str(&config.opacity_up)?;
+    let opacity_down_shortcut = Shortcut::from_str(&config.opacity_down)?;
+    let show_shortcut = Shortcut::from_str(&config.toggle_window)?;
 
     let app_handle = app.clone();
-    let toggle_clone = toggle_shortcut.clone();
-    let up_clone = opacity_up_shortcut.clone();
-    let down_clone = opacity_down_shortcut.clone();
-    let show_clone = show_shortcut.clone();
+    let toggle_clone = toggle_shortcut;
+    let up_clone = opacity_up_shortcut;
+    let down_clone = opacity_down_shortcut;
+    let show_clone = show_shortcut;
 
     let result = app.global_shortcut().on_shortcuts(
         [toggle_shortcut, opacity_up_shortcut, opacity_down_shortcut, show_shortcut],
@@ -59,15 +62,57 @@ pub fn register_shortcuts(app: &AppHandle) -> Result<(), Box<dyn std::error::Err
 
     match &result {
         Ok(_) => {
-            log::info!("Global shortcuts registered: Win+Ctrl+T, Win+Ctrl+=, Win+Ctrl+-, Win+Ctrl+P");
+            log::info!(
+                "Global shortcuts registered: {} (pin), {} (opacity+), {} (opacity-), {} (show)",
+                config.toggle_pin, config.opacity_up, config.opacity_down, config.toggle_window
+            );
         }
         Err(e) => {
             log::error!("Failed to register shortcuts: {}", e);
-            let _ = app.emit("pin-error", format!("Could not register shortcuts — another app may be using them: {}", e));
+            let _ = app.emit(
+                "pin-error",
+                format!(
+                    "Could not register shortcuts — another app may be using them: {}",
+                    e
+                ),
+            );
         }
     }
 
     result.map_err(|e| e.into())
+}
+
+/// Unregister all shortcuts, then re-register with new config.
+/// On failure, attempts rollback to default config.
+pub fn update_shortcuts(
+    app: &AppHandle,
+    config: &ShortcutConfig,
+) -> Result<(), String> {
+    // Validate all shortcuts first
+    validate_shortcut(&config.toggle_pin)?;
+    validate_shortcut(&config.opacity_up)?;
+    validate_shortcut(&config.opacity_down)?;
+    validate_shortcut(&config.toggle_window)?;
+
+    // Unregister all existing shortcuts
+    app.global_shortcut()
+        .unregister_all()
+        .map_err(|e| format!("Failed to unregister shortcuts: {}", e))?;
+
+    // Register with new config
+    match register_shortcuts(app, config) {
+        Ok(_) => {
+            let _ = app.emit("shortcuts-updated", ());
+            Ok(())
+        }
+        Err(e) => {
+            // Rollback to defaults
+            log::warn!("Failed to register new shortcuts, rolling back to defaults: {}", e);
+            let defaults = ShortcutConfig::default();
+            let _ = register_shortcuts(app, &defaults);
+            Err(format!("Failed to register shortcuts: {}. Rolled back to defaults.", e))
+        }
+    }
 }
 
 /// Handle toggle pin hotkey
