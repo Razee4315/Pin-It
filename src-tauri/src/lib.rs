@@ -24,6 +24,9 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .setup(|app| {
+            // Store app handle for event emission from hooks
+            always_on_top::event_hook::set_app_handle(app.handle().clone());
+
             // Initialize event hooks for window tracking
             if let Err(e) = always_on_top::event_hook::init_event_hooks() {
                 log::error!("Failed to initialize event hooks: {}", e);

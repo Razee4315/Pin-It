@@ -96,9 +96,14 @@ function App() {
       refreshPinnedWindows();
     });
 
+    const unlistenDestroyed = listen('window-destroyed', () => {
+      refreshPinnedWindows();
+    });
+
     return () => {
       unlistenPin.then((fn) => fn());
       unlistenOpacity.then((fn) => fn());
+      unlistenDestroyed.then((fn) => fn());
       toastTimeouts.current.forEach((t) => clearTimeout(t));
     };
   }, [addToast]);
