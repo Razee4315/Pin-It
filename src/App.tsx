@@ -257,6 +257,12 @@ function App() {
                   </div>
                   <span className="desc">Opacity</span>
                 </div>
+                <div className="shortcut-item">
+                  <div className="keys">
+                    <kbd>Win</kbd><span>+</span><kbd>Ctrl</kbd><span>+</span><kbd>P</kbd>
+                  </div>
+                  <span className="desc">Show/Hide</span>
+                </div>
               </div>
             )}
           </div>

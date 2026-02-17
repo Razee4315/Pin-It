@@ -5,7 +5,7 @@
 use super::pin_manager;
 use super::state::PinState;
 use serde::Serialize;
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
 /// Event payload for pin toggle notifications
@@ -29,13 +29,17 @@ pub fn register_shortcuts(app: &AppHandle) -> Result<(), Box<dyn std::error::Err
     let opacity_down_shortcut =
         Shortcut::new(Some(Modifiers::SUPER | Modifiers::CONTROL), Code::Minus);
 
+    // Win+Ctrl+P - Toggle PinIt window visibility
+    let show_shortcut = Shortcut::new(Some(Modifiers::SUPER | Modifiers::CONTROL), Code::KeyP);
+
     let app_handle = app.clone();
     let toggle_clone = toggle_shortcut.clone();
     let up_clone = opacity_up_shortcut.clone();
     let down_clone = opacity_down_shortcut.clone();
+    let show_clone = show_shortcut.clone();
 
-    app.global_shortcut().on_shortcuts(
-        [toggle_shortcut, opacity_up_shortcut, opacity_down_shortcut],
+    let result = app.global_shortcut().on_shortcuts(
+        [toggle_shortcut, opacity_up_shortcut, opacity_down_shortcut, show_shortcut],
         move |_app, shortcut, event| {
             if event.state != ShortcutState::Pressed {
                 return;
@@ -47,13 +51,23 @@ pub fn register_shortcuts(app: &AppHandle) -> Result<(), Box<dyn std::error::Err
                 handle_opacity_change(&app_handle, 5);
             } else if shortcut == &down_clone {
                 handle_opacity_change(&app_handle, -5);
+            } else if shortcut == &show_clone {
+                handle_toggle_window(&app_handle);
             }
         },
-    )?;
+    );
 
-    log::info!("Global shortcuts registered: Win+Ctrl+T, Win+Ctrl+=, Win+Ctrl+-");
+    match &result {
+        Ok(_) => {
+            log::info!("Global shortcuts registered: Win+Ctrl+T, Win+Ctrl+=, Win+Ctrl+-, Win+Ctrl+P");
+        }
+        Err(e) => {
+            log::error!("Failed to register shortcuts: {}", e);
+            let _ = app.emit("pin-error", format!("Could not register shortcuts — another app may be using them: {}", e));
+        }
+    }
 
-    Ok(())
+    result.map_err(|e| e.into())
 }
 
 /// Handle toggle pin hotkey
@@ -86,6 +100,21 @@ fn handle_toggle_pin(app: &AppHandle) {
         Err(_) => {
             log::warn!("No foreground window to pin");
             let _ = app.emit("pin-error", "No window to pin — click on a window first");
+        }
+    }
+}
+
+/// Handle toggle PinIt window visibility
+fn handle_toggle_window(app: &AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        match window.is_visible() {
+            Ok(true) => {
+                let _ = window.hide();
+            }
+            _ => {
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
         }
     }
 }
