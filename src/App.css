@@ -389,6 +389,18 @@ kbd {
 .window-process {
   font-size: 10px;
   color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.focus-icon {
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.window-info.clickable:hover .focus-icon {
+  opacity: 0.6;
 }
 
 /* Window Controls */
@@ -431,8 +443,8 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .unpin-btn {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -440,7 +452,6 @@ input[type="range"]::-webkit-slider-thumb {
   border: 1px solid var(--border);
   border-radius: 4px;
   color: var(--text-muted);
-  font-size: 14px;
   cursor: pointer;
   transition: all 0.15s;
 }

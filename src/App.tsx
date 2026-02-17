@@ -262,7 +262,12 @@ function App() {
                         onClick={() => handleFocusWindow(win.hwnd)}
                       >
                         <span className="window-title" title={win.title}>{win.title || 'Untitled'}</span>
-                        <span className="window-process">{win.process_name}</span>
+                        <span className="window-process">
+                          {win.process_name}
+                          <svg className="focus-icon" width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M7 1h4v4M11 1L6 6M5 1H2a1 1 0 00-1 1v8a1 1 0 001 1h8a1 1 0 001-1V7" />
+                          </svg>
+                        </span>
                       </div>
                       <div className="window-controls">
                         <div className="opacity-control">
@@ -279,9 +284,12 @@ function App() {
                         <button
                           className="unpin-btn"
                           onClick={() => handleUnpin(win.hwnd)}
-                          title="Unpin"
+                          title="Unpin this window"
                         >
-                          ×
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
+                            <line x1="3" y1="3" x2="21" y2="21" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+                          </svg>
                         </button>
                       </div>
                     </div>
