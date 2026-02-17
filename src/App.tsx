@@ -231,6 +231,35 @@ function App() {
           <span>PinIt</span>
         </div>
         <div className="titlebar-right">
+          <div className="shortcuts-popover-wrapper">
+            <button
+              className="titlebar-btn"
+              onClick={() => setShortcutsOpen(!shortcutsOpen)}
+              title="Keyboard shortcuts"
+              aria-expanded={shortcutsOpen}
+              aria-controls="shortcuts-panel"
+            >
+              <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 2.5a1 1 0 110 2 1 1 0 010-2zM6.5 7h1.25v4.5h1.5V7H10V5.75H6.5V7z"/>
+              </svg>
+            </button>
+            {shortcutsOpen && (
+              <div className="shortcuts-popover" id="shortcuts-panel" role="region" aria-label="Keyboard shortcuts">
+                <div className="shortcut-item">
+                  <div className="keys">
+                    <kbd>Win</kbd><span>+</span><kbd>Ctrl</kbd><span>+</span><kbd>T</kbd>
+                  </div>
+                  <span className="desc">Pin/Unpin</span>
+                </div>
+                <div className="shortcut-item">
+                  <div className="keys">
+                    <kbd>Win</kbd><span>+</span><kbd>Ctrl</kbd><span>+</span><kbd>=</kbd><span>/</span><kbd>-</kbd>
+                  </div>
+                  <span className="desc">Opacity</span>
+                </div>
+              </div>
+            )}
+          </div>
           <button className="titlebar-btn" onClick={handleMinimize} title="Minimize">
             <svg width="10" height="1" viewBox="0 0 10 1">
               <rect width="10" height="1" fill="currentColor" />
@@ -245,32 +274,6 @@ function App() {
       </header>
 
       <main className="container">
-        {/* Collapsible Shortcuts */}
-        <section className="shortcuts-section">
-          <button className="section-toggle" onClick={() => setShortcutsOpen(!shortcutsOpen)} aria-expanded={shortcutsOpen} aria-controls="shortcuts-panel">
-            <span className="section-label">Shortcuts</span>
-            <svg className={`chevron ${shortcutsOpen ? 'open' : ''}`} width="10" height="10" viewBox="0 0 10 10">
-              <path d="M2.5 4L5 6.5L7.5 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-            </svg>
-          </button>
-          {shortcutsOpen && (
-            <div className="shortcut-list" id="shortcuts-panel" role="region" aria-label="Keyboard shortcuts">
-              <div className="shortcut-item">
-                <div className="keys">
-                  <kbd>Win</kbd><span>+</span><kbd>Ctrl</kbd><span>+</span><kbd>T</kbd>
-                </div>
-                <span className="desc">Pin/Unpin</span>
-              </div>
-              <div className="shortcut-item">
-                <div className="keys">
-                  <kbd>Win</kbd><span>+</span><kbd>Ctrl</kbd><span>+</span><kbd>=</kbd><span>/</span><kbd>-</kbd>
-                </div>
-                <span className="desc">Opacity</span>
-              </div>
-            </div>
-          )}
-        </section>
-
         {/* Pinned Windows */}
         <section className="pinned-section">
           <h2 className="section-heading">

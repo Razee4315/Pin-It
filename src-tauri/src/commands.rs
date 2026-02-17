@@ -25,10 +25,12 @@ pub fn unpin_window(hwnd: isize) -> Result<bool, PinError> {
     pin_manager::unpin_window(hwnd)
 }
 
-/// Get list of all pinned windows
+/// Get list of all pinned windows (sorted by process name)
 #[tauri::command]
 pub fn get_pinned_windows() -> Vec<state::PinnedWindow> {
-    PinState::get_all()
+    let mut windows = PinState::get_all();
+    windows.sort_by(|a, b| a.process_name.to_lowercase().cmp(&b.process_name.to_lowercase()));
+    windows
 }
 
 /// Adjust opacity of foreground window (delta can be negative)
