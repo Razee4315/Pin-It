@@ -93,7 +93,8 @@ fn handle_toggle_pin(app: &AppHandle) {
                 }
                 Err(e) => {
                     log::error!("Failed to toggle pin: {}", e);
-                    let _ = app.emit("pin-error", e.to_string());
+                    let user_msg = format!("Cannot pin {} — it may be running as administrator", process);
+                    let _ = app.emit("pin-error", user_msg);
                 }
             }
         }

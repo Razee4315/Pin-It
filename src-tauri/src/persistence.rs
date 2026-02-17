@@ -13,6 +13,9 @@ use std::path::PathBuf;
 pub struct SavedPin {
     /// Process name (e.g., "chrome.exe")
     pub process_name: String,
+    /// Window title at time of saving (for smarter matching)
+    #[serde(default)]
+    pub title: String,
     /// Saved opacity (0-255)
     pub opacity: u8,
 }
@@ -101,10 +104,13 @@ pub fn save_current() {
     state.pins.clear();
 
     for win in pinned {
+        // Use process_name + hwnd as key to allow multiple windows of same process
+        let key = format!("{}:{}", win.process_name, win.hwnd);
         state.pins.insert(
-            win.process_name.clone(),
+            key,
             SavedPin {
                 process_name: win.process_name,
+                title: win.title,
                 opacity: win.opacity,
             },
         );
@@ -126,7 +132,8 @@ pub fn update_settings(settings: UserSettings) {
 }
 
 /// Restore pinned windows from saved state.
-/// Enumerates all top-level windows, matches by process name, and re-pins them.
+/// Enumerates all top-level windows, matches by process name + title, and re-pins them.
+/// For each saved pin, only the best matching window is pinned (title match preferred).
 pub fn restore() {
     let state = load();
     if state.pins.is_empty() {
@@ -168,21 +175,41 @@ pub fn restore() {
             LPARAM(&mut windows as *mut Vec<HWND> as isize),
         );
 
-        for hwnd in windows {
-            let process_name = crate::always_on_top::pin_manager::get_process_name_pub(hwnd);
+        // Build a lookup: process_name -> Vec<(hwnd, title)>
+        let mut window_map: HashMap<String, Vec<(HWND, String)>> = HashMap::new();
+        for hwnd in &windows {
+            let process_name = crate::always_on_top::pin_manager::get_process_name_pub(*hwnd);
+            let title = crate::always_on_top::pin_manager::get_window_title_pub(*hwnd);
+            window_map.entry(process_name).or_default().push((*hwnd, title));
+        }
 
-            if let Some(saved) = state.pins.get(&process_name) {
-                // Pin this window
-                if let Ok(true) = crate::always_on_top::pin_manager::pin_window(hwnd) {
-                    log::info!("Restored pin for: {}", process_name);
+        // Track which hwnds we've already pinned to avoid double-pinning
+        let mut pinned_hwnds: std::collections::HashSet<isize> = std::collections::HashSet::new();
 
-                    // Restore opacity if it was modified
-                    if saved.opacity < 255 {
-                        let percent = ((saved.opacity as u32 * 100) / 255) as u8;
-                        let _ = crate::always_on_top::transparency::set_opacity(hwnd, percent);
+        for saved in state.pins.values() {
+            if let Some(candidates) = window_map.get(&saved.process_name) {
+                // Prefer exact title match, fall back to first available
+                let best = candidates.iter()
+                    .find(|(hwnd, title)| !pinned_hwnds.contains(&(hwnd.0 as isize)) && !saved.title.is_empty() && title == &saved.title)
+                    .or_else(|| candidates.iter().find(|(hwnd, _)| !pinned_hwnds.contains(&(hwnd.0 as isize))));
+
+                if let Some((hwnd, _)) = best {
+                    if let Ok(true) = crate::always_on_top::pin_manager::pin_window(*hwnd) {
+                        pinned_hwnds.insert(hwnd.0 as isize);
+                        log::info!("Restored pin for: {} (title: {})", saved.process_name, saved.title);
+
+                        if saved.opacity < 255 {
+                            let percent = ((saved.opacity as u32 * 100) / 255) as u8;
+                            let _ = crate::always_on_top::transparency::set_opacity(*hwnd, percent);
+                        }
                     }
                 }
             }
+        }
+
+        let count = pinned_hwnds.len();
+        if count > 0 {
+            log::info!("Successfully restored {} pinned window(s)", count);
         }
     }
 }
