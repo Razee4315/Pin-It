@@ -226,7 +226,7 @@ function App() {
               <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
             </svg>
             Pinned
-            <span className="pin-count">{pinnedWindows.length}</span>
+            {pinnedWindows.length > 0 && <span className="pin-count">{pinnedWindows.length}</span>}
           </h2>
 
           {pinnedWindows.length === 0 ? (
@@ -251,7 +251,7 @@ function App() {
                         title={`Click to focus: ${win.title}`}
                         onClick={() => handleFocusWindow(win.hwnd)}
                       >
-                        <span className="window-title">{win.title || 'Untitled'}</span>
+                        <span className="window-title" title={win.title}>{win.title || 'Untitled'}</span>
                         <span className="window-process">{win.process_name}</span>
                       </div>
                       <div className="window-controls">
