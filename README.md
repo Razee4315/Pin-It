@@ -68,6 +68,8 @@ bun run tauri build
 | Increase Opacity | `Win` + `Ctrl` + `=` |
 | Decrease Opacity | `Win` + `Ctrl` + `-` |
 
+- You can also added custom shortcuts
+
 ## Tech Stack
 
 - **Frontend**: React, TypeScript, Vite
