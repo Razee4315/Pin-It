@@ -10,40 +10,56 @@ permissions:
   contents: write
 
 jobs:
-  # First: check if this version already has a release (cheap, runs on ubuntu)
-  check-version:
-    runs-on: ubuntu-latest
-    outputs:
-      should_release: ${{ steps.check.outputs.should_release }}
-      version: ${{ steps.check.outputs.version }}
+  release:
+    runs-on: windows-latest
+    # Skip version-bump commits to avoid infinite loop
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Check if version tag exists
-        id: check
+      - name: Auto-bump patch version
+        id: bump
+        shell: bash
         run: |
-          VERSION=$(jq -r '.version' src-tauri/tauri.conf.json)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          if git tag -l "v$VERSION" | grep -q "v$VERSION"; then
-            echo "should_release=false" >> $GITHUB_OUTPUT
-            echo "::notice::Tag v$VERSION already exists — skipping release"
+          # Read current version
+          CURRENT=$(jq -r '.version' src-tauri/tauri.conf.json)
+          echo "Current version: $CURRENT"
+
+          # Check if tag already exists — if so, bump patch
+          if git tag -l "v$CURRENT" | grep -q "v$CURRENT"; then
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+            PATCH=$((PATCH + 1))
+            NEW="$MAJOR.$MINOR.$PATCH"
+            echo "Bumping to $NEW"
           else
-            echo "should_release=true" >> $GITHUB_OUTPUT
-            echo "::notice::New version v$VERSION detected — will build and release"
+            NEW="$CURRENT"
+            echo "Version $CURRENT has no tag yet, using as-is"
           fi
 
-  # Second: build and release only if version is new
-  release:
-    needs: check-version
-    if: needs.check-version.outputs.should_release == 'true'
-    runs-on: windows-latest
+          echo "version=$NEW" >> $GITHUB_OUTPUT
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+          # Update all 3 files if version changed
+          if [ "$NEW" != "$CURRENT" ]; then
+            # tauri.conf.json
+            jq --arg v "$NEW" '.version = $v' src-tauri/tauri.conf.json > tmp.json && mv tmp.json src-tauri/tauri.conf.json
+
+            # package.json
+            jq --arg v "$NEW" '.version = $v' package.json > tmp.json && mv tmp.json package.json
+
+            # Cargo.toml — replace version line
+            sed -i "s/^version = \"$CURRENT\"/version = \"$NEW\"/" src-tauri/Cargo.toml
+
+            # Commit the version bump
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml
+            git commit -m "chore: bump version to $NEW [skip ci]"
+            git push
+          fi
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -78,8 +94,8 @@ jobs:
             - **`.msi`** — Standard Windows installer (recommended)
             - **`.exe`** — NSIS installer
 
-            ### Shortcuts
-            | Action | Shortcut |
+            ### Shortcuts (customizable)
+            | Action | Default Shortcut |
             |--------|----------|
             | Pin/Unpin window | `Win` + `Ctrl` + `T` |
             | Increase opacity | `Win` + `Ctrl` + `=` |
