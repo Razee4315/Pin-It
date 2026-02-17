@@ -513,3 +513,18 @@ input[type="range"]::-webkit-slider-thumb {
 .toggle.active .toggle-knob {
   transform: translateX(14px);
 }
+
+/* Focus visible styles for keyboard navigation */
+.section-toggle:focus-visible,
+.titlebar-btn:focus-visible,
+.window-info.clickable:focus-visible,
+.unpin-btn:focus-visible,
+.toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+input[type="range"]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}

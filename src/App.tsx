@@ -205,14 +205,14 @@ function App() {
       <main className="container">
         {/* Collapsible Shortcuts */}
         <section className="shortcuts-section">
-          <button className="section-toggle" onClick={() => setShortcutsOpen(!shortcutsOpen)}>
+          <button className="section-toggle" onClick={() => setShortcutsOpen(!shortcutsOpen)} aria-expanded={shortcutsOpen} aria-controls="shortcuts-panel">
             <span className="section-label">Shortcuts</span>
             <svg className={`chevron ${shortcutsOpen ? 'open' : ''}`} width="10" height="10" viewBox="0 0 10 10">
               <path d="M2.5 4L5 6.5L7.5 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
             </svg>
           </button>
           {shortcutsOpen && (
-            <div className="shortcut-list">
+            <div className="shortcut-list" id="shortcuts-panel" role="region" aria-label="Keyboard shortcuts">
               <div className="shortcut-item">
                 <div className="keys">
                   <kbd>Win</kbd><span>+</span><kbd>Ctrl</kbd><span>+</span><kbd>T</kbd>
@@ -244,7 +244,7 @@ function App() {
               <span>Press <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd> to pin a window</span>
             </div>
           ) : (
-            <ul className="window-list">
+            <ul className="window-list" role="list" aria-label="Pinned windows">
               {pinnedWindows.map((win) => {
                 const opacityPercent = Math.round((win.opacity / 255) * 100);
                 return (
@@ -260,6 +260,10 @@ function App() {
                         className="window-info clickable"
                         title={`Click to focus: ${win.title}`}
                         onClick={() => handleFocusWindow(win.hwnd)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleFocusWindow(win.hwnd); } }}
+                        tabIndex={0}
+                        role="button"
+                        aria-label={`Focus ${win.title || win.process_name}`}
                       >
                         <span className="window-title" title={win.title}>{win.title || 'Untitled'}</span>
                         <span className="window-process">
@@ -278,6 +282,11 @@ function App() {
                             value={opacityPercent}
                             onChange={(e) => handleOpacityChange(win.hwnd, parseInt(e.target.value))}
                             title={`Opacity: ${opacityPercent}%`}
+                            aria-label={`Opacity for ${win.process_name}`}
+                            aria-valuemin={20}
+                            aria-valuemax={100}
+                            aria-valuenow={opacityPercent}
+                            aria-valuetext={`${opacityPercent}%`}
                           />
                           <span className="opacity-label">{opacityPercent}%</span>
                         </div>
@@ -285,6 +294,7 @@ function App() {
                           className="unpin-btn"
                           onClick={() => handleUnpin(win.hwnd)}
                           title="Unpin this window"
+                          aria-label={`Unpin ${win.process_name}`}
                         >
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
@@ -308,6 +318,9 @@ function App() {
               className={`toggle ${autoStart ? 'active' : ''}`}
               onClick={handleAutoStartToggle}
               title={autoStart ? 'Disable auto-start' : 'Enable auto-start'}
+              role="switch"
+              aria-checked={autoStart}
+              aria-label="Start with Windows"
             >
               <span className="toggle-knob" />
             </button>
