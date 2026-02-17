@@ -84,5 +84,6 @@ jobs:
             | Pin/Unpin window | `Win` + `Ctrl` + `T` |
             | Increase opacity | `Win` + `Ctrl` + `=` |
             | Decrease opacity | `Win` + `Ctrl` + `-` |
+            | Show/Hide PinIt | `Win` + `Ctrl` + `P` |
           releaseDraft: false
           prerelease: false
