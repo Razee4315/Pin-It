@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { Window } from '@tauri-apps/api/window';
-import { getPinnedWindows, unpinWindow, setWindowOpacity, focusWindow, getAutoStart, setAutoStart, getSoundEnabled, setSoundEnabled } from './commands';
+import { getPinnedWindows, unpinWindow, setWindowOpacity, focusWindow, getAutoStart, setAutoStart, getSoundEnabled, setSoundEnabled, getHasSeenTrayNotice, setHasSeenTrayNotice } from './commands';
 import type { PinnedWindow } from './types';
 import './App.css';
 
@@ -65,6 +65,7 @@ function App() {
   const [autoStart, setAutoStartState] = useState(false);
   const [soundEnabled, setSoundEnabledState] = useState(true);
   const soundEnabledRef = useRef(true);
+  const [showTrayNotice, setShowTrayNotice] = useState(false);
   const toastTimeouts = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
 
   const addToast = useCallback((message: string, type: 'pin' | 'unpin' | 'error') => {
@@ -178,12 +179,39 @@ function App() {
   }
 
   async function handleClose() {
+    try {
+      const seen = await getHasSeenTrayNotice();
+      if (!seen) {
+        setShowTrayNotice(true);
+        await setHasSeenTrayNotice();
+        return;
+      }
+    } catch {
+      // If we can't check, just close
+    }
+    const appWindow = Window.getCurrent();
+    await appWindow.hide();
+  }
+
+  async function dismissTrayNotice() {
+    setShowTrayNotice(false);
     const appWindow = Window.getCurrent();
     await appWindow.hide();
   }
 
   return (
     <div className="app-wrapper">
+      {/* Tray Notice Overlay */}
+      {showTrayNotice && (
+        <div className="tray-notice-overlay">
+          <div className="tray-notice">
+            <p>PinIt will keep running in the system tray.</p>
+            <p className="tray-notice-hint">Right-click the tray icon to quit.</p>
+            <button className="tray-notice-btn" onClick={dismissTrayNotice}>Got it</button>
+          </div>
+        </div>
+      )}
+
       {/* Toast Notifications */}
       <div className="toast-container">
         {toasts.map((toast) => (

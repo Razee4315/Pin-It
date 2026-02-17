@@ -539,6 +539,56 @@ input[type="range"]:focus-visible {
   outline-offset: 1px;
 }
 
+/* Tray Notice Overlay */
+.tray-notice-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  border-radius: 10px;
+}
+
+.tray-notice {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 20px;
+  text-align: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  max-width: 280px;
+}
+
+.tray-notice p {
+  font-size: 12px;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.tray-notice-hint {
+  color: var(--text-muted) !important;
+  font-size: 11px !important;
+  margin-bottom: 12px !important;
+}
+
+.tray-notice-btn {
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 6px 20px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.tray-notice-btn:hover {
+  opacity: 0.9;
+}
+
 /* Dark Mode */
 @media (prefers-color-scheme: dark) {
   :root {
