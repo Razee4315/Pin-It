@@ -38,6 +38,12 @@
   border: 1px solid #ffe0b2;
 }
 
+.toast-error {
+  background: #fbe9e7;
+  color: #c62828;
+  border: 1px solid #ffcdd2;
+}
+
 .toast-icon {
   flex-shrink: 0;
 }

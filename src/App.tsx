@@ -47,7 +47,7 @@ function playSound(pinned: boolean) {
 interface ToastData {
   id: number;
   message: string;
-  pinned: boolean;
+  type: 'pin' | 'unpin' | 'error';
 }
 
 interface PinToggledPayload {
@@ -65,9 +65,9 @@ function App() {
   const [autoStart, setAutoStartState] = useState(false);
   const toastTimeouts = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
 
-  const addToast = useCallback((message: string, pinned: boolean) => {
+  const addToast = useCallback((message: string, type: 'pin' | 'unpin' | 'error') => {
     const id = ++toastId;
-    setToasts((prev) => [...prev.slice(-2), { id, message, pinned }]); // Keep max 3
+    setToasts((prev) => [...prev.slice(-2), { id, message, type }]); // Keep max 3
 
     const timeout = setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -87,7 +87,7 @@ function App() {
       const truncated = name.length > 30 ? name.slice(0, 30) + '...' : name;
       addToast(
         is_pinned ? `Pinned: ${truncated}` : `Unpinned: ${truncated}`,
-        is_pinned
+        is_pinned ? 'pin' : 'unpin'
       );
       playSound(is_pinned);
     });
@@ -100,10 +100,15 @@ function App() {
       refreshPinnedWindows();
     });
 
+    const unlistenError = listen<string>('pin-error', (event) => {
+      addToast(event.payload, 'error');
+    });
+
     return () => {
       unlistenPin.then((fn) => fn());
       unlistenOpacity.then((fn) => fn());
       unlistenDestroyed.then((fn) => fn());
+      unlistenError.then((fn) => fn());
       toastTimeouts.current.forEach((t) => clearTimeout(t));
     };
   }, [addToast]);
@@ -168,7 +173,7 @@ function App() {
       {/* Toast Notifications */}
       <div className="toast-container">
         {toasts.map((toast) => (
-          <div key={toast.id} className={`toast ${toast.pinned ? 'toast-pin' : 'toast-unpin'}`}>
+          <div key={toast.id} className={`toast toast-${toast.type}`}>
             <svg className="toast-icon" width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
               <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
             </svg>

@@ -83,8 +83,9 @@ fn handle_toggle_pin(app: &AppHandle) {
                 }
             }
         }
-        Err(e) => {
-            log::warn!("No foreground window: {}", e);
+        Err(_) => {
+            log::warn!("No foreground window to pin");
+            let _ = app.emit("pin-error", "No window to pin — click on a window first");
         }
     }
 }
