@@ -104,9 +104,10 @@ pub fn register_shortcuts(
     result.map_err(|e| e.into())
 }
 
-/// Update shortcuts at runtime. Unregisters old shortcuts individually,
-/// then registers new ones individually. The handler from `register_shortcuts`
-/// stays active and reads from the updated CURRENT_CONFIG.
+/// Update shortcuts at runtime. Unregisters all shortcuts via `unregister_all`,
+/// then re-registers with `on_shortcuts` so the handler is properly attached.
+/// Individual `unregister`/`register` calls don't work reliably for shortcuts
+/// registered via `on_shortcuts`, so we always do a full re-registration.
 pub fn update_shortcuts(app: &AppHandle, new_config: &ShortcutConfig) -> Result<(), String> {
     // Validate all new shortcuts first
     validate_shortcut(&new_config.toggle_pin)?;
@@ -114,68 +115,37 @@ pub fn update_shortcuts(app: &AppHandle, new_config: &ShortcutConfig) -> Result<
     validate_shortcut(&new_config.opacity_down)?;
     validate_shortcut(&new_config.toggle_window)?;
 
-    let gs = app.global_shortcut();
-
-    // Read old config and unregister each shortcut individually
     let old_config = CURRENT_CONFIG.read().unwrap().clone();
-    let old_strings = [
-        &old_config.toggle_pin,
-        &old_config.opacity_up,
-        &old_config.opacity_down,
-        &old_config.toggle_window,
-    ];
-    for s in &old_strings {
-        if let Ok(shortcut) = Shortcut::from_str(s) {
-            if let Err(e) = gs.unregister(shortcut) {
-                log::warn!("Failed to unregister {}: {}", s, e);
-            }
-        }
+
+    // Unregister ALL shortcuts — more reliable than individual unregister
+    // for shortcuts registered via on_shortcuts
+    if let Err(e) = app.global_shortcut().unregister_all() {
+        log::warn!("Failed to unregister_all shortcuts: {}", e);
     }
 
-    // Update the global config (handler will use this for routing)
-    *CURRENT_CONFIG.write().unwrap() = new_config.clone();
-
-    // Register new shortcuts individually
-    let new_strings = [
-        &new_config.toggle_pin,
-        &new_config.opacity_up,
-        &new_config.opacity_down,
-        &new_config.toggle_window,
-    ];
-    for (i, s) in new_strings.iter().enumerate() {
-        let shortcut =
-            Shortcut::from_str(s).map_err(|e| format!("Invalid shortcut '{}': {}", s, e))?;
-        if let Err(e) = gs.register(shortcut) {
-            log::error!("Failed to register {}: {}", s, e);
-            // Rollback: unregister any we just registered, restore old config
-            for already in &new_strings[..i] {
-                if let Ok(sc) = Shortcut::from_str(already) {
-                    let _ = gs.unregister(sc);
-                }
-            }
-            // Re-register old shortcuts
-            *CURRENT_CONFIG.write().unwrap() = old_config.clone();
-            for os in &old_strings {
-                if let Ok(sc) = Shortcut::from_str(os) {
-                    let _ = gs.register(sc);
-                }
-            }
-            return Err(format!(
-                "Failed to register '{}': {}. Rolled back to previous shortcuts.",
-                s, e
-            ));
+    // Re-register all shortcuts with handler via on_shortcuts
+    match register_shortcuts(app, new_config) {
+        Ok(_) => {
+            let _ = app.emit("shortcuts-updated", ());
+            log::info!(
+                "Shortcuts updated: {} (pin), {} (opacity+), {} (opacity-), {} (show)",
+                new_config.toggle_pin,
+                new_config.opacity_up,
+                new_config.opacity_down,
+                new_config.toggle_window
+            );
+            Ok(())
+        }
+        Err(e) => {
+            // Rollback: try to re-register old shortcuts
+            log::error!("Failed to register new shortcuts: {:?}, rolling back", e);
+            let _ = register_shortcuts(app, &old_config);
+            Err(format!(
+                "Failed to register shortcuts: {}. Rolled back to previous shortcuts.",
+                e
+            ))
         }
     }
-
-    let _ = app.emit("shortcuts-updated", ());
-    log::info!(
-        "Shortcuts updated: {} (pin), {} (opacity+), {} (opacity-), {} (show)",
-        new_config.toggle_pin,
-        new_config.opacity_up,
-        new_config.opacity_down,
-        new_config.toggle_window
-    );
-    Ok(())
 }
 
 /// Handle toggle pin hotkey
