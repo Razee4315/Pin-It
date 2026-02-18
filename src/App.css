@@ -163,11 +163,11 @@ body {
 /* Container */
 .container {
   flex: 1;
-  padding: 12px;
+  padding: 14px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 16px;
 }
 
 .container::-webkit-scrollbar {
@@ -250,6 +250,8 @@ kbd {
 /* Always-visible shortcuts reference */
 .shortcuts-reference {
   flex-shrink: 0;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
 }
 
 .shortcuts-grid {
@@ -262,7 +264,7 @@ kbd {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 3px 0;
+  padding: 4px 0;
 }
 
 .shortcut-ref-label {
@@ -606,7 +608,7 @@ input[type="range"]::-webkit-slider-thumb:active {
 /* Settings Section */
 .settings-section {
   flex-shrink: 0;
-  padding-top: 8px;
+  padding-top: 4px;
   border-top: 1px solid var(--border);
 }
 
