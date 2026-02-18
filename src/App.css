@@ -235,6 +235,41 @@ kbd {
   flex-shrink: 0;
 }
 
+/* Shortcuts popover title */
+.shortcuts-popover-title {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 8px 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2px;
+}
+
+/* Always-visible shortcuts reference */
+.shortcuts-reference {
+  flex-shrink: 0;
+}
+
+.shortcuts-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.shortcut-ref-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 0;
+}
+
+.shortcut-ref-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
 /* Shortcut editing */
 .shortcut-display {
   display: flex;

@@ -289,16 +289,17 @@ function App() {
             <button
               className="titlebar-btn"
               onClick={() => setShortcutsOpen(!shortcutsOpen)}
-              title="Keyboard shortcuts"
+              title="Shortcut settings"
               aria-expanded={shortcutsOpen}
               aria-controls="shortcuts-panel"
             >
-              <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 2.5a1 1 0 110 2 1 1 0 010-2zM6.5 7h1.25v4.5h1.5V7H10V5.75H6.5V7z"/>
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 0a1 1 0 00-1 1v.1A5.96 5.96 0 005.05 1.9l-.07-.07a1 1 0 00-1.41 0L2.63 2.76a1 1 0 000 1.41l.07.07A5.96 5.96 0 001.9 6.19H1a1 1 0 00-1 1v1.62a1 1 0 001 1h.1a5.96 5.96 0 00.8 1.95l-.07.07a1 1 0 000 1.41l.94.94a1 1 0 001.41 0l.07-.07c.57.37 1.23.64 1.95.8V15a1 1 0 001 1h1.62a1 1 0 001-1v-.1a5.96 5.96 0 001.95-.8l.07.07a1 1 0 001.41 0l.94-.94a1 1 0 000-1.41l-.07-.07c.37-.57.64-1.23.8-1.95H15a1 1 0 001-1V7.19a1 1 0 00-1-1h-.1a5.96 5.96 0 00-.8-1.95l.07-.07a1 1 0 000-1.41l-.94-.94a1 1 0 00-1.41 0l-.07.07A5.96 5.96 0 009.81 1.1V1a1 1 0 00-1-1H8zM8 5a3 3 0 110 6 3 3 0 010-6z"/>
               </svg>
             </button>
             {shortcutsOpen && shortcuts && (
-              <div className="shortcuts-popover" id="shortcuts-panel" role="region" aria-label="Keyboard shortcuts">
+              <div className="shortcuts-popover" id="shortcuts-panel" role="region" aria-label="Edit shortcuts">
+                <div className="shortcuts-popover-title">Edit Shortcuts</div>
                 {(Object.keys(SHORTCUT_LABELS) as (keyof ShortcutConfig)[]).map((key) => {
                   const isEditing = editingKey === key;
                   const displayParts = shortcutToDisplay(
@@ -468,6 +469,30 @@ function App() {
             </ul>
           )}
         </section>
+
+        {/* Shortcuts Reference */}
+        {shortcuts && (
+          <section className="shortcuts-reference">
+            <h2 className="section-heading">
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" opacity="0.6">
+                <path d="M0 3a2 2 0 012-2h12a2 2 0 012 2v7a2 2 0 01-2 2H2a2 2 0 01-2-2V3zm3 1a1 1 0 100 2h1a1 1 0 100-2H3zm4 0a1 1 0 100 2h1a1 1 0 100-2H7zm4 0a1 1 0 100 2h1a1 1 0 100-2h-1zM3 7a1 1 0 100 2h10a1 1 0 100-2H3z"/>
+              </svg>
+              Shortcuts
+            </h2>
+            <div className="shortcuts-grid">
+              {(Object.keys(SHORTCUT_LABELS) as (keyof ShortcutConfig)[]).map((key) => (
+                <div key={key} className="shortcut-ref-row">
+                  <span className="shortcut-ref-label">{SHORTCUT_LABELS[key]}</span>
+                  <div className="keys">
+                    {shortcutToDisplay(shortcuts[key]).map((k, i) => (
+                      <span key={i}>{i > 0 && <span>+</span>}<kbd>{k}</kbd></span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Settings */}
         <section className="settings-section">
