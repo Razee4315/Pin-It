@@ -1,8 +1,9 @@
 //! Global hotkey registration and handling.
 //!
 //! Uses tauri-plugin-global-shortcut to register configurable global shortcuts.
-//! The handler is set once via `on_shortcuts` at startup. Runtime updates use
-//! individual `unregister`/`register` calls so the handler stays active.
+//! The handler is set once via `Builder::with_handler()` at plugin init time.
+//! Runtime updates use `unregister_all` + individual `register` calls — the
+//! global handler dispatches based on the current CURRENT_CONFIG.
 
 use super::pin_manager;
 use super::state::PinState;
@@ -26,6 +27,25 @@ pub struct PinToggledPayload {
     pub process_name: String,
 }
 
+/// Global handler called by the plugin for ALL registered shortcuts.
+/// Set once via `Builder::with_handler()` in lib.rs — never changes.
+/// Reads CURRENT_CONFIG to dispatch to the correct action.
+pub fn handle_shortcut(app: &AppHandle, shortcut: &Shortcut, event: tauri_plugin_global_shortcut::ShortcutEvent) {
+    if event.state != ShortcutState::Pressed {
+        return;
+    }
+    let config = CURRENT_CONFIG.read().unwrap();
+    if matches_config(shortcut, &config.toggle_pin) {
+        handle_toggle_pin(app);
+    } else if matches_config(shortcut, &config.opacity_up) {
+        handle_opacity_change(app, 5);
+    } else if matches_config(shortcut, &config.opacity_down) {
+        handle_opacity_change(app, -5);
+    } else if matches_config(shortcut, &config.toggle_window) {
+        handle_toggle_window(app);
+    }
+}
+
 /// Validate a shortcut string can be parsed
 pub fn validate_shortcut(shortcut_str: &str) -> Result<(), String> {
     Shortcut::from_str(shortcut_str)
@@ -38,8 +58,9 @@ fn matches_config(shortcut: &Shortcut, config_str: &str) -> bool {
     Shortcut::from_str(config_str).map_or(false, |s| shortcut == &s)
 }
 
-/// Register all global shortcuts for the app using the provided config.
-/// Called once at startup — sets the handler that reads from CURRENT_CONFIG.
+/// Register all global shortcuts using plain `register()` calls.
+/// Best-effort: registers what it can, warns about failures, returns Ok
+/// if at least one shortcut registered. Only returns Err if ALL failed.
 pub fn register_shortcuts(
     app: &AppHandle,
     config: &ShortcutConfig,
@@ -47,83 +68,101 @@ pub fn register_shortcuts(
     // Store config globally for the handler
     *CURRENT_CONFIG.write().unwrap() = config.clone();
 
-    let toggle_shortcut = Shortcut::from_str(&config.toggle_pin)?;
-    let opacity_up_shortcut = Shortcut::from_str(&config.opacity_up)?;
-    let opacity_down_shortcut = Shortcut::from_str(&config.opacity_down)?;
-    let show_shortcut = Shortcut::from_str(&config.toggle_window)?;
+    let gs = app.global_shortcut();
+    let shortcut_entries: [(&str, &str); 4] = [
+        ("Pin/Unpin", &config.toggle_pin),
+        ("Opacity +", &config.opacity_up),
+        ("Opacity -", &config.opacity_down),
+        ("Show/Hide", &config.toggle_window),
+    ];
 
-    let app_handle = app.clone();
+    let mut registered = 0u32;
+    let mut failed_names: Vec<&str> = Vec::new();
 
-    let result = app.global_shortcut().on_shortcuts(
-        [
-            toggle_shortcut,
-            opacity_up_shortcut,
-            opacity_down_shortcut,
-            show_shortcut,
-        ],
-        move |_app, shortcut, event| {
-            if event.state != ShortcutState::Pressed {
-                return;
+    for (label, s) in &shortcut_entries {
+        match Shortcut::from_str(s) {
+            Ok(shortcut) => {
+                if let Err(e) = gs.register(shortcut) {
+                    log::warn!("Could not register {} ({}): {}", label, s, e);
+                    failed_names.push(label);
+                } else {
+                    registered += 1;
+                }
             }
-            // Read current config dynamically — supports hot-swapped shortcuts
-            let config = CURRENT_CONFIG.read().unwrap();
-            if matches_config(shortcut, &config.toggle_pin) {
-                handle_toggle_pin(&app_handle);
-            } else if matches_config(shortcut, &config.opacity_up) {
-                handle_opacity_change(&app_handle, 5);
-            } else if matches_config(shortcut, &config.opacity_down) {
-                handle_opacity_change(&app_handle, -5);
-            } else if matches_config(shortcut, &config.toggle_window) {
-                handle_toggle_window(&app_handle);
+            Err(e) => {
+                log::warn!("Invalid shortcut for {} ({}): {}", label, s, e);
+                failed_names.push(label);
             }
-        },
-    );
-
-    match &result {
-        Ok(_) => {
-            log::info!(
-                "Global shortcuts registered: {} (pin), {} (opacity+), {} (opacity-), {} (show)",
-                config.toggle_pin,
-                config.opacity_up,
-                config.opacity_down,
-                config.toggle_window
-            );
-        }
-        Err(e) => {
-            log::error!("Failed to register shortcuts: {}", e);
-            let _ = app.emit(
-                "pin-error",
-                format!(
-                    "Could not register shortcuts — another app may be using them: {}",
-                    e
-                ),
-            );
         }
     }
 
-    result.map_err(|e| e.into())
+    if !failed_names.is_empty() {
+        let msg = format!(
+            "Some shortcuts unavailable: {}. Another app or PinIt instance may be using them.",
+            failed_names.join(", ")
+        );
+        log::warn!("{}", msg);
+        let _ = app.emit("pin-error", &msg);
+    }
+
+    if registered > 0 {
+        log::info!(
+            "Global shortcuts registered: {}/{} — {} (pin), {} (opacity+), {} (opacity-), {} (show)",
+            registered,
+            shortcut_entries.len(),
+            config.toggle_pin,
+            config.opacity_up,
+            config.opacity_down,
+            config.toggle_window
+        );
+        Ok(())
+    } else {
+        let msg = "Could not register any shortcuts — another app or PinIt instance may be using them.".to_string();
+        log::error!("{}", msg);
+        let _ = app.emit("pin-error", &msg);
+        Err(msg.into())
+    }
 }
 
-/// Update shortcuts at runtime. Unregisters all shortcuts via `unregister_all`,
-/// then re-registers with `on_shortcuts` so the handler is properly attached.
-/// Individual `unregister`/`register` calls don't work reliably for shortcuts
-/// registered via `on_shortcuts`, so we always do a full re-registration.
+/// Check that all shortcut strings in a config are unique
+fn check_duplicates(config: &ShortcutConfig) -> Result<(), String> {
+    let shortcuts = [
+        ("Pin/Unpin", &config.toggle_pin),
+        ("Opacity +", &config.opacity_up),
+        ("Opacity -", &config.opacity_down),
+        ("Show/Hide", &config.toggle_window),
+    ];
+    for i in 0..shortcuts.len() {
+        for j in (i + 1)..shortcuts.len() {
+            if shortcuts[i].1 == shortcuts[j].1 {
+                return Err(format!(
+                    "'{}' and '{}' cannot use the same shortcut.",
+                    shortcuts[i].0, shortcuts[j].0
+                ));
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Update shortcuts at runtime. Unregisters all shortcuts, then re-registers
+/// with the new config. The global handler stays active throughout.
 pub fn update_shortcuts(app: &AppHandle, new_config: &ShortcutConfig) -> Result<(), String> {
     // Validate all new shortcuts first
     validate_shortcut(&new_config.toggle_pin)?;
     validate_shortcut(&new_config.opacity_up)?;
     validate_shortcut(&new_config.opacity_down)?;
     validate_shortcut(&new_config.toggle_window)?;
+    check_duplicates(new_config)?;
 
     let old_config = CURRENT_CONFIG.read().unwrap().clone();
 
-    // Unregister ALL shortcuts — more reliable than individual unregister
-    // for shortcuts registered via on_shortcuts
+    // Unregister ALL shortcuts cleanly
     if let Err(e) = app.global_shortcut().unregister_all() {
         log::warn!("Failed to unregister_all shortcuts: {}", e);
     }
 
-    // Re-register all shortcuts with handler via on_shortcuts
+    // Re-register with the new config
     match register_shortcuts(app, new_config) {
         Ok(_) => {
             let _ = app.emit("shortcuts-updated", ());

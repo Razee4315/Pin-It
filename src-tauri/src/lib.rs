@@ -22,7 +22,13 @@ pub fn run() {
 
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .plugin(
+            tauri_plugin_global_shortcut::Builder::new()
+                .with_handler(|app, shortcut, event| {
+                    always_on_top::hotkey::handle_shortcut(app, shortcut, event);
+                })
+                .build(),
+        )
         .setup(|app| {
             // Store app handle for event emission from hooks
             always_on_top::event_hook::set_app_handle(app.handle().clone());
