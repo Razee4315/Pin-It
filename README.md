@@ -29,7 +29,7 @@ The most common solution, Microsoft PowerToys, comes bundled with dozens of othe
 
 ## Installation
 
-Download the latest release from the [Releases](https://github.com/StartVision/PinIt/releases) page.
+Download the latest release from the [Releases](https://github.com/Razee4315/Pin-It/releases) page.
 
 ### Available Formats
 
@@ -47,7 +47,7 @@ Download the latest release from the [Releases](https://github.com/StartVision/P
 
 ```bash
 # Clone the repository
-git clone https://github.com/StartVision/Pin-It.git
+git clone https://github.com/Razee4315/Pin-It.git
 cd Pin-It
 
 # Install dependencies
@@ -67,8 +67,9 @@ bun run tauri build
 | Toggle Pin | `Win` + `Ctrl` + `T` |
 | Increase Opacity | `Win` + `Ctrl` + `=` |
 | Decrease Opacity | `Win` + `Ctrl` + `-` |
+| Show/Hide PinIt | `Win` + `Ctrl` + `P` |
 
-- You can also added custom shortcuts
+All shortcuts can be customized from within the app.
 
 ## Tech Stack
 
