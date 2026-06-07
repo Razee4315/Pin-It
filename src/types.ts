@@ -31,3 +31,26 @@ export const SHORTCUT_LABELS: Record<keyof ShortcutConfig, string> = {
   opacity_down: 'Opacity -',
   toggle_window: 'Show/Hide',
 };
+
+/** Backend event names — must match src-tauri/src/events.rs */
+export const EVENTS = {
+  PIN_TOGGLED: 'pin-toggled',
+  PIN_ERROR: 'pin-error',
+  OPACITY_CHANGED: 'opacity-changed',
+  WINDOW_DESTROYED: 'window-destroyed',
+  SHORTCUTS_UPDATED: 'shortcuts-updated',
+} as const;
+
+/** Payload of the pin-toggled backend event */
+export interface PinToggledPayload {
+  is_pinned: boolean;
+  title: string;
+  process_name: string;
+}
+
+/** A toast notification entry */
+export interface ToastData {
+  id: number;
+  message: string;
+  type: 'pin' | 'unpin' | 'error';
+}
