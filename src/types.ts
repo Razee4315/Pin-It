@@ -16,6 +16,13 @@ export interface PinnedWindow {
   original_opacity: number | null;
 }
 
+/** A window eligible for pinning (matches Rust PinnableWindow) */
+export interface PinnableWindow {
+  hwnd: number;
+  title: string;
+  process_name: string;
+}
+
 /** Keyboard shortcut configuration (matches Rust ShortcutConfig) */
 export interface ShortcutConfig {
   toggle_pin: string;
@@ -24,14 +31,6 @@ export interface ShortcutConfig {
   toggle_window: string;
 }
 
-/** Default shortcut values */
-export const DEFAULT_SHORTCUTS: ShortcutConfig = {
-  toggle_pin: 'super+ctrl+KeyT',
-  opacity_up: 'super+ctrl+Equal',
-  opacity_down: 'super+ctrl+Minus',
-  toggle_window: 'super+ctrl+KeyP',
-};
-
 /** Human-readable labels for each shortcut action */
 export const SHORTCUT_LABELS: Record<keyof ShortcutConfig, string> = {
   toggle_pin: 'Pin/Unpin',
@@ -39,3 +38,26 @@ export const SHORTCUT_LABELS: Record<keyof ShortcutConfig, string> = {
   opacity_down: 'Opacity -',
   toggle_window: 'Show/Hide',
 };
+
+/** Backend event names — must match src-tauri/src/events.rs */
+export const EVENTS = {
+  PIN_TOGGLED: 'pin-toggled',
+  PIN_ERROR: 'pin-error',
+  OPACITY_CHANGED: 'opacity-changed',
+  WINDOW_DESTROYED: 'window-destroyed',
+  SHORTCUTS_UPDATED: 'shortcuts-updated',
+} as const;
+
+/** Payload of the pin-toggled backend event */
+export interface PinToggledPayload {
+  is_pinned: boolean;
+  title: string;
+  process_name: string;
+}
+
+/** A toast notification entry */
+export interface ToastData {
+  id: number;
+  message: string;
+  type: 'pin' | 'unpin' | 'error';
+}

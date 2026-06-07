@@ -2,12 +2,7 @@
  * Tauri command bindings for Always on Top functionality
  */
 import { invoke } from '@tauri-apps/api/core';
-import type { PinnedWindow, ShortcutConfig } from './types';
-
-/** Toggle pin state on the foreground window */
-export async function togglePinForeground(): Promise<boolean> {
-    return invoke<boolean>('toggle_pin_foreground');
-}
+import type { PinnableWindow, PinnedWindow, ShortcutConfig } from './types';
 
 /** Pin a specific window by its handle */
 export async function pinWindow(hwnd: number): Promise<boolean> {
@@ -24,9 +19,9 @@ export async function getPinnedWindows(): Promise<PinnedWindow[]> {
     return invoke<PinnedWindow[]>('get_pinned_windows');
 }
 
-/** Adjust opacity of foreground window */
-export async function adjustOpacity(delta: number): Promise<number> {
-    return invoke<number>('adjust_opacity', { delta });
+/** List open windows that could be pinned (for the picker) */
+export async function listPinnableWindows(): Promise<PinnableWindow[]> {
+    return invoke<PinnableWindow[]>('list_pinnable_windows');
 }
 
 /** Set opacity of a specific pinned window */
@@ -34,19 +29,9 @@ export async function setWindowOpacity(hwnd: number, percent: number): Promise<v
     return invoke<void>('set_window_opacity', { hwnd, percent });
 }
 
-/** Check if a window is currently topmost */
-export async function isWindowTopmost(hwnd: number): Promise<boolean> {
-    return invoke<boolean>('is_window_topmost', { hwnd });
-}
-
 /** Bring a pinned window to focus */
 export async function focusWindow(hwnd: number): Promise<void> {
     return invoke<void>('focus_window', { hwnd });
-}
-
-/** Get count of pinned windows */
-export async function getPinnedCount(): Promise<number> {
-    return invoke<number>('get_pinned_count');
 }
 
 /** Check if auto-start is enabled */
@@ -87,11 +72,6 @@ export async function getShortcutConfig(): Promise<ShortcutConfig> {
 /** Update shortcut configuration */
 export async function setShortcutConfig(config: ShortcutConfig): Promise<void> {
     return invoke<void>('set_shortcut_config', { config });
-}
-
-/** Validate a single shortcut string */
-export async function validateShortcut(shortcut: string): Promise<void> {
-    return invoke<void>('validate_shortcut', { shortcut });
 }
 
 /** Reset shortcuts to defaults */

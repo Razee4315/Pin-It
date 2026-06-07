@@ -56,13 +56,6 @@ impl PinState {
         windows.contains_key(&(hwnd.0 as isize))
     }
 
-    /// Get a pinned window's info
-    #[allow(dead_code)]
-    pub fn get(hwnd: HWND) -> Option<PinnedWindow> {
-        let windows = PINNED_WINDOWS.read().unwrap_or_else(|e| e.into_inner());
-        windows.get(&(hwnd.0 as isize)).cloned()
-    }
-
     /// Update opacity for a pinned window
     pub fn set_opacity(hwnd: HWND, opacity: u8) {
         let mut windows = PINNED_WINDOWS.write().unwrap_or_else(|e| e.into_inner());

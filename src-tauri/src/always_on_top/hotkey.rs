@@ -30,7 +30,11 @@ pub struct PinToggledPayload {
 /// Global handler called by the plugin for ALL registered shortcuts.
 /// Set once via `Builder::with_handler()` in lib.rs — never changes.
 /// Reads CURRENT_CONFIG to dispatch to the correct action.
-pub fn handle_shortcut(app: &AppHandle, shortcut: &Shortcut, event: tauri_plugin_global_shortcut::ShortcutEvent) {
+pub fn handle_shortcut(
+    app: &AppHandle,
+    shortcut: &Shortcut,
+    event: tauri_plugin_global_shortcut::ShortcutEvent,
+) {
     if event.state != ShortcutState::Pressed {
         return;
     }
@@ -55,26 +59,18 @@ pub fn validate_shortcut(shortcut_str: &str) -> Result<(), String> {
 
 /// Check if a parsed Shortcut matches a config string
 fn matches_config(shortcut: &Shortcut, config_str: &str) -> bool {
-    Shortcut::from_str(config_str).map_or(false, |s| shortcut == &s)
+    Shortcut::from_str(config_str).is_ok_and(|s| shortcut == &s)
 }
 
 /// Register all global shortcuts using plain `register()` calls.
 /// Best-effort: registers what it can, warns about failures, returns Ok
 /// if at least one shortcut registered. Only returns Err if ALL failed.
-pub fn register_shortcuts(
-    app: &AppHandle,
-    config: &ShortcutConfig,
-) -> Result<(), Box<dyn std::error::Error>> {
+pub fn register_shortcuts(app: &AppHandle, config: &ShortcutConfig) -> Result<(), String> {
     // Store config globally for the handler
     *CURRENT_CONFIG.write().unwrap() = config.clone();
 
     let gs = app.global_shortcut();
-    let shortcut_entries: [(&str, &str); 4] = [
-        ("Pin/Unpin", &config.toggle_pin),
-        ("Opacity +", &config.opacity_up),
-        ("Opacity -", &config.opacity_down),
-        ("Show/Hide", &config.toggle_window),
-    ];
+    let shortcut_entries = config.entries();
 
     let mut registered = 0u32;
     let mut failed_names: Vec<&str> = Vec::new();
@@ -102,7 +98,7 @@ pub fn register_shortcuts(
             failed_names.join(", ")
         );
         log::warn!("{}", msg);
-        let _ = app.emit("pin-error", &msg);
+        let _ = app.emit(crate::events::PIN_ERROR, &msg);
     }
 
     if registered > 0 {
@@ -117,21 +113,18 @@ pub fn register_shortcuts(
         );
         Ok(())
     } else {
-        let msg = "Could not register any shortcuts — another app or PinIt instance may be using them.".to_string();
+        let msg =
+            "Could not register any shortcuts — another app or PinIt instance may be using them."
+                .to_string();
         log::error!("{}", msg);
-        let _ = app.emit("pin-error", &msg);
-        Err(msg.into())
+        let _ = app.emit(crate::events::PIN_ERROR, &msg);
+        Err(msg)
     }
 }
 
 /// Check that all shortcut strings in a config are unique
 fn check_duplicates(config: &ShortcutConfig) -> Result<(), String> {
-    let shortcuts = [
-        ("Pin/Unpin", &config.toggle_pin),
-        ("Opacity +", &config.opacity_up),
-        ("Opacity -", &config.opacity_down),
-        ("Show/Hide", &config.toggle_window),
-    ];
+    let shortcuts = config.entries();
     for i in 0..shortcuts.len() {
         for j in (i + 1)..shortcuts.len() {
             if shortcuts[i].1 == shortcuts[j].1 {
@@ -149,22 +142,21 @@ fn check_duplicates(config: &ShortcutConfig) -> Result<(), String> {
 /// actually changed — unchanged ones are left alone to avoid OS conflicts.
 pub fn update_shortcuts(app: &AppHandle, new_config: &ShortcutConfig) -> Result<(), String> {
     // Validate all new shortcuts first
-    validate_shortcut(&new_config.toggle_pin)?;
-    validate_shortcut(&new_config.opacity_up)?;
-    validate_shortcut(&new_config.opacity_down)?;
-    validate_shortcut(&new_config.toggle_window)?;
+    for (_, s) in new_config.entries() {
+        validate_shortcut(s)?;
+    }
     check_duplicates(new_config)?;
 
     let old_config = CURRENT_CONFIG.read().unwrap().clone();
     let gs = app.global_shortcut();
 
     // Collect pairs of (old, new, label) — only process changed ones
-    let pairs: Vec<(&str, &str, &str)> = vec![
-        (&*old_config.toggle_pin, &*new_config.toggle_pin, "Pin/Unpin"),
-        (&*old_config.opacity_up, &*new_config.opacity_up, "Opacity +"),
-        (&*old_config.opacity_down, &*new_config.opacity_down, "Opacity -"),
-        (&*old_config.toggle_window, &*new_config.toggle_window, "Show/Hide"),
-    ];
+    let old_entries = old_config.entries();
+    let pairs: Vec<(&str, &str, &str)> = old_entries
+        .iter()
+        .zip(new_config.entries())
+        .map(|((label, old), (_, new))| (*old, new, *label))
+        .collect();
 
     let changed: Vec<_> = pairs.iter().filter(|(old, new, _)| old != new).collect();
     if changed.is_empty() {
@@ -211,7 +203,7 @@ pub fn update_shortcuts(app: &AppHandle, new_config: &ShortcutConfig) -> Result<
 
     // All good — update global config
     *CURRENT_CONFIG.write().unwrap() = new_config.clone();
-    let _ = app.emit("shortcuts-updated", ());
+    let _ = app.emit(crate::events::SHORTCUTS_UPDATED, ());
     log::info!(
         "Shortcuts updated: {} (pin), {} (opacity+), {} (opacity-), {} (show)",
         new_config.toggle_pin,
@@ -234,7 +226,7 @@ fn handle_toggle_pin(app: &AppHandle) {
                 Ok(is_pinned) => {
                     // Emit rich event to frontend for toast notification
                     let _ = app.emit(
-                        "pin-toggled",
+                        crate::events::PIN_TOGGLED,
                         PinToggledPayload {
                             is_pinned,
                             title,
@@ -248,15 +240,22 @@ fn handle_toggle_pin(app: &AppHandle) {
                 }
                 Err(e) => {
                     log::error!("Failed to toggle pin: {}", e);
-                    let user_msg =
-                        format!("Cannot pin {} — it may be running as administrator", process);
-                    let _ = app.emit("pin-error", user_msg);
+                    // AccessDenied already carries a user-friendly message;
+                    // other errors get a generic wrapper.
+                    let user_msg = match &e {
+                        super::error::PinError::AccessDenied(_) => e.to_string(),
+                        _ => format!("Could not pin {}: {}", process, e),
+                    };
+                    let _ = app.emit(crate::events::PIN_ERROR, user_msg);
                 }
             }
         }
         Err(_) => {
             log::warn!("No foreground window to pin");
-            let _ = app.emit("pin-error", "No window to pin — click on a window first");
+            let _ = app.emit(
+                crate::events::PIN_ERROR,
+                "No window to pin — click on a window first",
+            );
         }
     }
 }
@@ -278,21 +277,18 @@ fn handle_toggle_window(app: &AppHandle) {
 
 /// Handle opacity change hotkey
 fn handle_opacity_change(app: &AppHandle, delta: i32) {
-    match pin_manager::get_foreground_window() {
-        Ok(hwnd) => {
-            if PinState::is_pinned(hwnd) {
-                match super::transparency::adjust_opacity(hwnd, delta) {
-                    Ok(new_opacity) => {
-                        let _ = app.emit("opacity-changed", new_opacity);
-                        log::info!("Opacity changed to {}%", new_opacity);
-                    }
-                    Err(e) => {
-                        log::error!("Failed to adjust opacity: {}", e);
-                    }
+    if let Ok(hwnd) = pin_manager::get_foreground_window() {
+        if PinState::is_pinned(hwnd) {
+            match super::transparency::adjust_opacity(hwnd, delta) {
+                Ok(new_opacity) => {
+                    let _ = app.emit(crate::events::OPACITY_CHANGED, new_opacity);
+                    log::info!("Opacity changed to {}%", new_opacity);
+                }
+                Err(e) => {
+                    log::error!("Failed to adjust opacity: {}", e);
                 }
             }
         }
-        Err(_) => {}
     }
 }
 
@@ -311,5 +307,44 @@ pub fn update_tray_tooltip(app: &AppHandle) {
 
     if let Some(tray) = app.tray_by_id("main-tray") {
         let _ = tray.set_tooltip(Some(&tooltip));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn default_shortcuts_parse() {
+        for (label, s) in ShortcutConfig::default().entries() {
+            assert!(
+                validate_shortcut(s).is_ok(),
+                "default for {} ('{}') should parse",
+                label,
+                s
+            );
+        }
+    }
+
+    #[test]
+    fn invalid_shortcuts_rejected() {
+        assert!(validate_shortcut("not a shortcut").is_err());
+        assert!(validate_shortcut("").is_err());
+    }
+
+    #[test]
+    fn duplicate_bindings_rejected() {
+        let mut config = ShortcutConfig::default();
+        config.opacity_up = config.toggle_pin.clone();
+        assert!(check_duplicates(&config).is_err());
+        assert!(check_duplicates(&ShortcutConfig::default()).is_ok());
+    }
+
+    #[test]
+    fn matches_config_compares_parsed_shortcuts() {
+        let shortcut = Shortcut::from_str("super+ctrl+KeyT").unwrap();
+        assert!(matches_config(&shortcut, "super+ctrl+KeyT"));
+        assert!(!matches_config(&shortcut, "super+ctrl+KeyP"));
+        assert!(!matches_config(&shortcut, "garbage"));
     }
 }

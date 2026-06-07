@@ -5,15 +5,17 @@
 
 use super::error::PinError;
 use super::state::PinState;
+use serde::Serialize;
 use windows::core::{PCWSTR, PWSTR};
-use windows::Win32::Foundation::{BOOL, CloseHandle, HWND, MAX_PATH};
+use windows::Win32::Foundation::{CloseHandle, BOOL, HWND, LPARAM, MAX_PATH};
 use windows::Win32::System::Threading::{
     OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32, PROCESS_QUERY_LIMITED_INFORMATION,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
-    GetForegroundWindow, GetWindowLongW, GetWindowTextLengthW, GetWindowTextW,
-    GetWindowThreadProcessId, IsWindow, RemovePropW, SetPropW, SetWindowPos, GWL_EXSTYLE,
-    HWND_NOTOPMOST, HWND_TOPMOST, SWP_NOMOVE, SWP_NOSIZE, WS_EX_TOPMOST,
+    EnumWindows, GetForegroundWindow, GetWindowLongW, GetWindowTextLengthW, GetWindowTextW,
+    GetWindowThreadProcessId, IsWindow, IsWindowVisible, RemovePropW, SetPropW, SetWindowPos,
+    GWL_EXSTYLE, HWND_NOTOPMOST, HWND_TOPMOST, SWP_NOMOVE, SWP_NOSIZE, WS_EX_TOOLWINDOW,
+    WS_EX_TOPMOST,
 };
 
 /// Property name used to tag windows as pinned by our app
@@ -26,14 +28,26 @@ pub fn pin_window(hwnd: HWND) -> Result<bool, PinError> {
         let title = get_window_title(hwnd);
         let process_name = get_process_name(hwnd);
 
-        // Set property to mark as pinned by us
+        // Set property to mark as pinned by us — the value is a non-null
+        // sentinel (1), only its presence matters
         let prop_name: Vec<u16> = WINDOW_PINNED_PROP.encode_utf16().collect();
-        SetPropW(hwnd, PCWSTR(prop_name.as_ptr()), windows::Win32::Foundation::HANDLE(1 as *mut std::ffi::c_void))
+        let marker = windows::Win32::Foundation::HANDLE(std::ptr::without_provenance_mut(1));
+        SetPropW(hwnd, PCWSTR(prop_name.as_ptr()), marker)
             .map_err(|e| PinError::SetPropertyFailed(e.to_string()))?;
 
         // Set HWND_TOPMOST
-        SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE)
-            .map_err(|e| PinError::SetWindowPosFailed(e.to_string()))?;
+        if let Err(e) = apply_topmost(hwnd) {
+            let _ = RemovePropW(hwnd, PCWSTR(prop_name.as_ptr()));
+            return Err(e);
+        }
+
+        // UIPI blocks SetWindowPos against elevated (admin) windows but frequently
+        // reports success while doing nothing. Verify the topmost style actually
+        // took — otherwise we'd track and show a pin that was never applied.
+        if !is_topmost(hwnd) {
+            let _ = RemovePropW(hwnd, PCWSTR(prop_name.as_ptr()));
+            return Err(PinError::AccessDenied(process_name));
+        }
 
         // Track in our state
         PinState::add(hwnd, title, process_name);
@@ -69,6 +83,15 @@ pub fn toggle_pin(hwnd: HWND) -> Result<bool, PinError> {
         unpin_window(hwnd)
     } else {
         pin_window(hwnd)
+    }
+}
+
+/// Apply HWND_TOPMOST without moving or resizing the window.
+/// Shared by the pin path and the event hook's re-enforcement.
+pub fn apply_topmost(hwnd: HWND) -> Result<(), PinError> {
+    unsafe {
+        SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE)
+            .map_err(|e| PinError::SetWindowPosFailed(e.to_string()))
     }
 }
 
@@ -125,6 +148,71 @@ pub fn is_valid_window(hwnd: HWND) -> bool {
     unsafe { IsWindow(hwnd).as_bool() }
 }
 
+/// A window eligible for pinning (used by the in-app picker)
+#[derive(Clone, Serialize)]
+pub struct PinnableWindow {
+    pub hwnd: isize,
+    pub title: String,
+    pub process_name: String,
+}
+
+/// Enumerate visible, non-tool top-level windows as (hwnd, title, process_name).
+/// Shared by persistence::restore and the add-window picker.
+pub fn enumerate_windows() -> Vec<(HWND, String, String)> {
+    unsafe extern "system" fn enum_callback(hwnd: HWND, lparam: LPARAM) -> BOOL {
+        let windows = &mut *(lparam.0 as *mut Vec<HWND>);
+
+        // Only consider visible, non-tool windows
+        if IsWindowVisible(hwnd).as_bool() {
+            let ex_style = GetWindowLongW(hwnd, GWL_EXSTYLE) as u32;
+            if (ex_style & WS_EX_TOOLWINDOW.0) == 0 {
+                windows.push(hwnd);
+            }
+        }
+
+        BOOL::from(true)
+    }
+
+    let mut handles: Vec<HWND> = Vec::new();
+    unsafe {
+        let _ = EnumWindows(
+            Some(enum_callback),
+            LPARAM(&mut handles as *mut Vec<HWND> as isize),
+        );
+    }
+
+    handles
+        .into_iter()
+        .map(|hwnd| {
+            let title = get_window_title(hwnd);
+            let process = get_process_name(hwnd);
+            (hwnd, title, process)
+        })
+        .collect()
+}
+
+/// Windows the user could pin from the in-app picker: visible, titled,
+/// not PinIt itself, and not already pinned.
+pub fn list_pinnable() -> Vec<PinnableWindow> {
+    let own_pid = std::process::id();
+    enumerate_windows()
+        .into_iter()
+        .filter(|(hwnd, title, _)| {
+            if title.is_empty() || title == "Unknown" || PinState::is_pinned(*hwnd) {
+                return false;
+            }
+            let mut pid = 0u32;
+            unsafe { GetWindowThreadProcessId(*hwnd, Some(&mut pid)) };
+            pid != own_pid
+        })
+        .map(|(hwnd, title, process_name)| PinnableWindow {
+            hwnd: hwnd.0 as isize,
+            title,
+            process_name,
+        })
+        .collect()
+}
+
 /// Get process name for a window
 fn get_process_name(hwnd: HWND) -> String {
     unsafe {
@@ -135,7 +223,11 @@ fn get_process_name(hwnd: HWND) -> String {
             return String::from("Unknown");
         }
 
-        let handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, BOOL::from(false), process_id);
+        let handle = OpenProcess(
+            PROCESS_QUERY_LIMITED_INFORMATION,
+            BOOL::from(false),
+            process_id,
+        );
         if handle.is_err() {
             return String::from("Unknown");
         }
@@ -144,7 +236,14 @@ fn get_process_name(hwnd: HWND) -> String {
         let mut buffer: Vec<u16> = vec![0; MAX_PATH as usize];
         let mut size = buffer.len() as u32;
 
-        let result = if QueryFullProcessImageNameW(handle, PROCESS_NAME_WIN32, PWSTR(buffer.as_mut_ptr()), &mut size).is_ok() {
+        let result = if QueryFullProcessImageNameW(
+            handle,
+            PROCESS_NAME_WIN32,
+            PWSTR(buffer.as_mut_ptr()),
+            &mut size,
+        )
+        .is_ok()
+        {
             let path = String::from_utf16_lossy(&buffer[..size as usize]);
             path.rsplit('\\').next().unwrap_or("Unknown").to_string()
         } else {

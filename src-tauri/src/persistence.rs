@@ -57,6 +57,20 @@ impl Default for ShortcutConfig {
     }
 }
 
+impl ShortcutConfig {
+    /// (label, shortcut string) pairs for every action, in a fixed order.
+    /// Single source of truth for iterating the config — used for
+    /// registration, duplicate checks, and diffing on update.
+    pub fn entries(&self) -> [(&'static str, &str); 4] {
+        [
+            ("Pin/Unpin", self.toggle_pin.as_str()),
+            ("Opacity +", self.opacity_up.as_str()),
+            ("Opacity -", self.opacity_down.as_str()),
+            ("Show/Hide", self.toggle_window.as_str()),
+        ]
+    }
+}
+
 /// User preferences / settings
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct UserSettings {
@@ -99,19 +113,52 @@ fn get_save_path() -> Option<PathBuf> {
     Some(dir.join("pinned.json"))
 }
 
-/// Load saved state from disk
+/// Load saved state from disk.
+/// Falls back to the .bak copy if the main file is corrupted, and only
+/// resets to defaults (with a warning) when both are unreadable.
 pub fn load() -> SavedState {
     let Some(path) = get_save_path() else {
         return SavedState::default();
     };
 
-    match fs::read_to_string(&path) {
-        Ok(content) => serde_json::from_str(&content).unwrap_or_default(),
-        Err(_) => SavedState::default(),
+    match read_state(&path) {
+        Some(state) => state,
+        None => {
+            let backup = path.with_extension("json.bak");
+            match read_state(&backup) {
+                Some(state) => {
+                    log::warn!("State file unreadable, restored from backup {:?}", backup);
+                    state
+                }
+                None => {
+                    if path.exists() {
+                        log::warn!(
+                            "State file {:?} corrupted and no usable backup; starting fresh",
+                            path
+                        );
+                    }
+                    SavedState::default()
+                }
+            }
+        }
     }
 }
 
-/// Save current state to disk
+/// Read and parse a state file; None if missing or corrupted
+fn read_state(path: &std::path::Path) -> Option<SavedState> {
+    let content = fs::read_to_string(path).ok()?;
+    match serde_json::from_str(&content) {
+        Ok(state) => Some(state),
+        Err(e) => {
+            log::warn!("Failed to parse {:?}: {}", path, e);
+            None
+        }
+    }
+}
+
+/// Save current state to disk atomically: write to a temp file, keep the
+/// previous file as .bak, then rename over the target. A crash mid-write
+/// can no longer truncate pinned.json.
 pub fn save(state: &SavedState) {
     let Some(path) = get_save_path() else {
         log::warn!("Could not determine save path");
@@ -123,17 +170,30 @@ pub fn save(state: &SavedState) {
         let _ = fs::create_dir_all(parent);
     }
 
-    match serde_json::to_string_pretty(state) {
-        Ok(json) => {
-            if let Err(e) = fs::write(&path, json) {
-                log::error!("Failed to save state: {}", e);
-            } else {
-                log::debug!("State saved to {:?}", path);
-            }
-        }
+    let json = match serde_json::to_string_pretty(state) {
+        Ok(json) => json,
         Err(e) => {
             log::error!("Failed to serialize state: {}", e);
+            return;
         }
+    };
+
+    let tmp = path.with_extension("json.tmp");
+    if let Err(e) = fs::write(&tmp, &json) {
+        log::error!("Failed to write temp state file: {}", e);
+        return;
+    }
+
+    // Keep the last good copy around for recovery
+    if path.exists() {
+        let _ = fs::copy(&path, path.with_extension("json.bak"));
+    }
+
+    if let Err(e) = fs::rename(&tmp, &path) {
+        log::error!("Failed to replace state file: {}", e);
+        let _ = fs::remove_file(&tmp);
+    } else {
+        log::debug!("State saved to {:?}", path);
     }
 }
 
@@ -195,73 +255,115 @@ pub fn restore() {
 
     log::info!("Restoring {} saved pin(s)", state.pins.len());
 
-    unsafe {
-        use windows::Win32::Foundation::{BOOL, HWND, LPARAM};
-        use windows::Win32::UI::WindowsAndMessaging::{
-            EnumWindows, GetWindowLongW, IsWindowVisible, GWL_EXSTYLE, GWL_STYLE, WS_EX_TOOLWINDOW,
-            WS_VISIBLE,
-        };
+    use windows::Win32::Foundation::HWND;
 
-        // Collect all visible top-level windows
-        unsafe extern "system" fn enum_callback(hwnd: HWND, lparam: LPARAM) -> BOOL {
-            let windows = &mut *(lparam.0 as *mut Vec<HWND>);
+    // Build a lookup: process_name -> Vec<(hwnd, title)>
+    let mut window_map: HashMap<String, Vec<(HWND, String)>> = HashMap::new();
+    for (hwnd, title, process_name) in crate::always_on_top::pin_manager::enumerate_windows() {
+        window_map
+            .entry(process_name)
+            .or_default()
+            .push((hwnd, title));
+    }
 
-            // Only consider visible, non-tool windows
-            if !IsWindowVisible(hwnd).as_bool() {
-                return BOOL::from(true);
-            }
+    // Track which hwnds we've already pinned to avoid double-pinning
+    let mut pinned_hwnds: std::collections::HashSet<isize> = std::collections::HashSet::new();
 
-            let style = GetWindowLongW(hwnd, GWL_STYLE) as u32;
-            let ex_style = GetWindowLongW(hwnd, GWL_EXSTYLE) as u32;
+    for saved in state.pins.values() {
+        if let Some(candidates) = window_map.get(&saved.process_name) {
+            // Prefer exact title match, fall back to first available
+            let best = candidates
+                .iter()
+                .find(|(hwnd, title)| {
+                    !pinned_hwnds.contains(&(hwnd.0 as isize))
+                        && !saved.title.is_empty()
+                        && title == &saved.title
+                })
+                .or_else(|| {
+                    candidates
+                        .iter()
+                        .find(|(hwnd, _)| !pinned_hwnds.contains(&(hwnd.0 as isize)))
+                });
 
-            if (style & WS_VISIBLE.0) != 0 && (ex_style & WS_EX_TOOLWINDOW.0) == 0 {
-                windows.push(hwnd);
-            }
+            if let Some((hwnd, _)) = best {
+                if let Ok(true) = crate::always_on_top::pin_manager::pin_window(*hwnd) {
+                    pinned_hwnds.insert(hwnd.0 as isize);
+                    log::info!(
+                        "Restored pin for: {} (title: {})",
+                        saved.process_name,
+                        saved.title
+                    );
 
-            BOOL::from(true)
-        }
-
-        let mut windows: Vec<HWND> = Vec::new();
-        let _ = EnumWindows(
-            Some(enum_callback),
-            LPARAM(&mut windows as *mut Vec<HWND> as isize),
-        );
-
-        // Build a lookup: process_name -> Vec<(hwnd, title)>
-        let mut window_map: HashMap<String, Vec<(HWND, String)>> = HashMap::new();
-        for hwnd in &windows {
-            let process_name = crate::always_on_top::pin_manager::get_process_name_pub(*hwnd);
-            let title = crate::always_on_top::pin_manager::get_window_title_pub(*hwnd);
-            window_map.entry(process_name).or_default().push((*hwnd, title));
-        }
-
-        // Track which hwnds we've already pinned to avoid double-pinning
-        let mut pinned_hwnds: std::collections::HashSet<isize> = std::collections::HashSet::new();
-
-        for saved in state.pins.values() {
-            if let Some(candidates) = window_map.get(&saved.process_name) {
-                // Prefer exact title match, fall back to first available
-                let best = candidates.iter()
-                    .find(|(hwnd, title)| !pinned_hwnds.contains(&(hwnd.0 as isize)) && !saved.title.is_empty() && title == &saved.title)
-                    .or_else(|| candidates.iter().find(|(hwnd, _)| !pinned_hwnds.contains(&(hwnd.0 as isize))));
-
-                if let Some((hwnd, _)) = best {
-                    if let Ok(true) = crate::always_on_top::pin_manager::pin_window(*hwnd) {
-                        pinned_hwnds.insert(hwnd.0 as isize);
-                        log::info!("Restored pin for: {} (title: {})", saved.process_name, saved.title);
-
-                        if saved.opacity < 255 {
-                            let percent = ((saved.opacity as u32 * 100) / 255) as u8;
-                            let _ = crate::always_on_top::transparency::set_opacity(*hwnd, percent);
-                        }
+                    if saved.opacity < 255 {
+                        let percent =
+                            crate::always_on_top::transparency::alpha_to_percent(saved.opacity);
+                        let _ = crate::always_on_top::transparency::set_opacity(*hwnd, percent);
                     }
                 }
             }
         }
+    }
 
-        let count = pinned_hwnds.len();
-        if count > 0 {
-            log::info!("Successfully restored {} pinned window(s)", count);
-        }
+    let count = pinned_hwnds.len();
+    if count > 0 {
+        log::info!("Successfully restored {} pinned window(s)", count);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn saved_state_round_trips() {
+        let mut state = SavedState::default();
+        state.pins.insert(
+            "notepad.exe:123".into(),
+            SavedPin {
+                process_name: "notepad.exe".into(),
+                title: "readme".into(),
+                opacity: 128,
+            },
+        );
+        state.settings.enable_sound = false;
+        state.settings.shortcuts.toggle_pin = "super+ctrl+KeyY".into();
+
+        let json = serde_json::to_string(&state).unwrap();
+        let back: SavedState = serde_json::from_str(&json).unwrap();
+        let pin = &back.pins["notepad.exe:123"];
+        assert_eq!(pin.process_name, "notepad.exe");
+        assert_eq!(pin.title, "readme");
+        assert_eq!(pin.opacity, 128);
+        assert!(!back.settings.enable_sound);
+        assert_eq!(back.settings.shortcuts.toggle_pin, "super+ctrl+KeyY");
+    }
+
+    #[test]
+    fn old_partial_json_backfills_defaults() {
+        // pinned.json written by an older version: no title on pins, no settings.
+        // This protects backward compatibility of the on-disk format across upgrades.
+        let json = r#"{"pins":{"chrome.exe":{"process_name":"chrome.exe","opacity":255}}}"#;
+        let state: SavedState = serde_json::from_str(json).unwrap();
+        assert_eq!(state.pins["chrome.exe"].title, "");
+        assert!(state.settings.enable_sound); // defaults to true
+        assert!(!state.settings.has_seen_tray_notice);
+        assert_eq!(state.settings.shortcuts.toggle_pin, "super+ctrl+KeyT");
+    }
+
+    #[test]
+    fn corrupted_json_fails_to_parse() {
+        // load() relies on this to fall back to the .bak file
+        assert!(serde_json::from_str::<SavedState>(r#"{"pins":{"a":"#).is_err());
+    }
+
+    #[test]
+    fn shortcut_entries_cover_all_fields_in_order() {
+        let config = ShortcutConfig::default();
+        let entries = config.entries();
+        assert_eq!(entries.len(), 4);
+        assert_eq!(entries[0], ("Pin/Unpin", "super+ctrl+KeyT"));
+        assert_eq!(entries[1], ("Opacity +", "super+ctrl+Equal"));
+        assert_eq!(entries[2], ("Opacity -", "super+ctrl+Minus"));
+        assert_eq!(entries[3], ("Show/Hide", "super+ctrl+KeyP"));
     }
 }

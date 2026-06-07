@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Always on Top for Windows — PinIt | Free Pin Window Utility</title>
+  <meta name="description" content="PinIt is a free, lightweight Always on Top utility for Windows 10 and 11. Pin any window to stay on top with a global hotkey, plus per-window opacity. No bloat." />
+  <link rel="canonical" href="https://razee4315.github.io/Pin-It/" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="theme-color" content="#c49464" />
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="PinIt" />
+  <meta property="og:title" content="PinIt — Free Always on Top utility for Windows 11 & 10" />
+  <meta property="og:description" content="Pin any window to stay on top with a global hotkey. Per-window transparency, pins that survive restarts. Free, ~2.5 MB, built with Rust." />
+  <meta property="og:url" content="https://razee4315.github.io/Pin-It/" />
+  <!-- TODO: replace with a dedicated 1200x630 og-image.png -->
+  <meta property="og:image" content="https://razee4315.github.io/Pin-It/assets/screenshot.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="PinIt — Free Always on Top utility for Windows 11 & 10" />
+  <meta name="twitter:description" content="Pin any window to stay on top with a global hotkey. Per-window transparency, pins that survive restarts. Free, ~2.5 MB, built with Rust." />
+  <meta name="twitter:image" content="https://razee4315.github.io/Pin-It/assets/screenshot.png" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "PinIt",
+    "alternateName": "PinIt Always on Top",
+    "operatingSystem": "Windows 10, Windows 11",
+    "applicationCategory": "UtilitiesApplication",
+    "description": "PinIt is a free, lightweight Always on Top utility for Windows. Pin any window to stay on top with a global hotkey and control per-window opacity.",
+    "url": "https://razee4315.github.io/Pin-It/",
+    "downloadUrl": "https://github.com/Razee4315/Pin-It/releases/latest",
+    "softwareVersion": "1.0.1",
+    "screenshot": "https://razee4315.github.io/Pin-It/assets/screenshot.png",
+    "image": "https://razee4315.github.io/Pin-It/assets/screenshot.png",
+    "license": "https://github.com/Razee4315/Pin-It/blob/main/LICENSE",
+    "author": { "@type": "Person", "name": "Saqlain Abbas", "url": "https://github.com/Razee4315" },
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How do I keep a window always on top in Windows 11?",
+        "acceptedAnswer": { "@type": "Answer", "text": "To keep a window always on top in Windows 11, install PinIt, click the window you want to stay visible, and press Win+Ctrl+T. The window stays on top of every other window until you unpin it. Windows has no built-in always-on-top button." }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the keyboard shortcut to pin a window on top?",
+        "acceptedAnswer": { "@type": "Answer", "text": "PinIt's default shortcut is Win+Ctrl+T to toggle pinning the focused window. All shortcuts can be customized from within the app." }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I make a window transparent or see-through on Windows?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. Pin a window with PinIt and press Win+Ctrl+- to fade it (down to 20% opacity) or Win+Ctrl+= to make it solid again. Each pinned window keeps its own opacity level." }
+      },
+      {
+        "@type": "Question",
+        "name": "Do pinned windows stay on top after a restart?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. PinIt saves your pins with their opacity and re-pins matching windows on the next launch — something neither PowerToys nor DeskPins does." }
+      },
+      {
+        "@type": "Question",
+        "name": "Is PinIt a free alternative to PowerToys Always On Top?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. PinIt is free and adds two things PowerToys Always On Top cannot do: true per-window transparency and pins that survive a reboot. It is a single ~2.5 MB tool instead of a full utility suite." }
+      }
+    ]
+  }
+  </script>
+
+  <style>
+    :root {
+      --bg: #f8f6f2; --bg2: #f0ede6; --card: #ffffff; --accent: #c49464;
+      --text: #2a2622; --text2: #5a564e; --muted: #6b6760; --border: rgba(0,0,0,0.08);
+      --green: #2e7d32; --red: #c62828;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1e1c1a; --bg2: #252320; --card: #2d2b28; --accent: #d4a373;
+        --text: #e8e4de; --text2: #b8b4ae; --muted: #908c86; --border: rgba(255,255,255,0.08);
+        --green: #66bb6a; --red: #ef9a9a;
+      }
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+    .wrap { max-width: 880px; margin: 0 auto; padding: 0 20px; }
+    header.hero { text-align: center; padding: 64px 0 48px; }
+    .hero img.logo { width: 72px; height: 72px; }
+    h1 { font-size: clamp(28px, 5vw, 42px); line-height: 1.2; margin: 16px 0 12px; letter-spacing: -0.5px; }
+    .sub { font-size: 18px; color: var(--text2); max-width: 560px; margin: 0 auto 28px; }
+    .sub kbd, li kbd, td kbd { background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; font-family: inherit; font-size: 0.9em; box-shadow: 0 1px 1px rgba(0,0,0,0.06); }
+    .cta-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
+    .btn { display: inline-block; padding: 12px 28px; border-radius: 8px; font-weight: 600; text-decoration: none; font-size: 16px; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { filter: brightness(1.05); }
+    .btn-ghost { border: 1px solid var(--border); color: var(--text2); background: var(--card); }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+    .meta-line { font-size: 13px; color: var(--muted); }
+    .shot { display: block; margin: 40px auto 0; max-width: 320px; width: 100%; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 12px 40px rgba(0,0,0,0.12); }
+    section { padding: 40px 0; border-top: 1px solid var(--border); }
+    h2 { font-size: 26px; margin-bottom: 20px; letter-spacing: -0.3px; }
+    h3 { font-size: 17px; margin: 22px 0 6px; }
+    p, li { color: var(--text2); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+    .card b { display: block; color: var(--text); margin-bottom: 4px; }
+    .card p { font-size: 14px; }
+    ol.steps { padding-left: 22px; font-size: 16px; }
+    ol.steps li { margin-bottom: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; background: var(--card); border-radius: 10px; overflow: hidden; }
+    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+    th { background: var(--bg2); color: var(--text); }
+    td:not(:first-child), th:not(:first-child) { text-align: center; }
+    .y { color: var(--green); font-weight: 600; }
+    .n { color: var(--red); }
+    .note { font-size: 13px; color: var(--muted); margin-top: 10px; }
+    details { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; margin-bottom: 10px; }
+    summary { cursor: pointer; font-weight: 600; color: var(--text); font-size: 15px; }
+    details p { margin-top: 8px; font-size: 14px; }
+    footer { padding: 36px 0 48px; text-align: center; font-size: 13px; color: var(--muted); border-top: 1px solid var(--border); }
+    footer a { color: var(--accent); }
+    a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <header class="hero">
+      <img class="logo" src="assets/logo.svg" alt="PinIt logo" width="72" height="72" />
+      <h1>Keep Any Window Always on Top<br/>— Free for Windows 10 &amp; 11</h1>
+      <p class="sub">PinIt pins any window so it stays on top with a single global hotkey — <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd>. Make it see-through. It re-pins itself after a reboot.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://github.com/Razee4315/Pin-It/releases/latest">Download for Windows (Free)</a>
+        <a class="btn btn-ghost" href="https://github.com/Razee4315/Pin-It">View on GitHub</a>
+      </div>
+      <p class="meta-line">~2.5 MB installer · Windows 10 &amp; 11 · Built with Rust + Tauri</p>
+      <!-- TODO: replace with assets/demo.mp4 (autoplay muted loop) once recorded — a moving demo converts far better -->
+      <img class="shot" src="assets/screenshot.png" alt="PinIt interface pinning windows always on top in Windows 11 with per-window opacity sliders" loading="lazy" />
+    </header>
+
+    <section id="features">
+      <h2>What PinIt Does</h2>
+      <div class="grid">
+        <div class="card"><b>Global hotkey pinning</b><p><kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd> pins or unpins the focused window instantly. No menus, no clicking around.</p></div>
+        <div class="card"><b>Per-window transparency</b><p>Fade any pinned window with <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>-</kbd> or a slider — keep notes or a video visible over your work.</p></div>
+        <div class="card"><b>Pins survive restarts</b><p>PinIt remembers what you pinned and its opacity, and re-pins it when you log back in.</p></div>
+        <div class="card"><b>Windows 11 re-enforcement</b><p>Win11's compositor sometimes strips the topmost flag. PinIt watches window events and re-applies it automatically.</p></div>
+        <div class="card"><b>Tiny and fast</b><p>Rust talking directly to the Windows API. ~2.5 MB installer, runs quietly in the system tray.</p></div>
+        <div class="card"><b>Customizable shortcuts</b><p>Rebind every hotkey from inside the app. Optional start-with-Windows.</p></div>
+      </div>
+    </section>
+
+    <section id="how-to">
+      <h2>How to Keep a Window Always on Top with PinIt</h2>
+      <ol class="steps">
+        <li><a href="https://github.com/Razee4315/Pin-It/releases/latest">Download and install PinIt</a> (free, ~2.5 MB).</li>
+        <li>Click the window you want to keep visible, then press <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd>.</li>
+        <li>Optional: press <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>-</kbd> to make it see-through, <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>=</kbd> to solidify.</li>
+      </ol>
+      <p class="note">To keep a window always on top in Windows 11 or Windows 10, that's all there is — Windows itself has no built-in always-on-top button.</p>
+    </section>
+
+    <section id="compare">
+      <h2>PinIt vs PowerToys vs DeskPins</h2>
+      <table>
+        <thead>
+          <tr><th>Feature</th><th>PinIt</th><th>PowerToys (Always On Top)</th><th>DeskPins</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Price</td><td class="y">Free</td><td class="y">Free</td><td class="y">Free</td></tr>
+          <tr><td>Single-purpose / lightweight</td><td class="y">Yes — ~2.5 MB</td><td class="n">No — full utility suite</td><td class="y">Yes</td></tr>
+          <tr><td>Global hotkey to pin</td><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td></tr>
+          <tr><td>True per-window transparency</td><td class="y">Yes</td><td class="n">No¹</td><td class="n">No</td></tr>
+          <tr><td>Pins persist across restart</td><td class="y">Yes</td><td class="n">No</td><td class="n">No</td></tr>
+          <tr><td>Actively maintained</td><td class="y">Yes</td><td class="y">Yes</td><td class="n">Last release 2018</td></tr>
+        </tbody>
+      </table>
+      <p class="note">¹ PowerToys' "Opacity" setting changes the highlight <em>border</em> around pinned windows, not the window content itself — true window transparency is a long-standing open <a href="https://github.com/microsoft/PowerToys/issues/26049">feature request</a>.</p>
+    </section>
+
+    <section id="faq">
+      <h2>Frequently Asked Questions</h2>
+
+      <details open>
+        <summary>How do I keep a window always on top in Windows 11?</summary>
+        <p>To keep a window always on top in Windows 11, install PinIt, click the window you want to stay visible, and press <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd>. The window stays on top of every other window until you unpin it. Windows has no built-in always-on-top button.</p>
+      </details>
+      <details>
+        <summary>What is the keyboard shortcut to pin a window on top?</summary>
+        <p>PinIt's default shortcut is <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd> to toggle pinning the focused window. All shortcuts can be customized from within the app.</p>
+      </details>
+      <details>
+        <summary>Can I make a window transparent / see-through on Windows?</summary>
+        <p>Yes — pin a window with PinIt, then press <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>-</kbd> to fade it (down to 20% opacity) or <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>=</kbd> to make it solid again. Each pinned window keeps its own opacity level.</p>
+      </details>
+      <details>
+        <summary>Do my pinned windows stay on top after I restart?</summary>
+        <p>Yes. PinIt saves your pins (per app, with their opacity) and re-pins matching windows on the next launch — something neither PowerToys nor DeskPins does.</p>
+      </details>
+      <details>
+        <summary>PowerToys already has Always On Top — why PinIt?</summary>
+        <p>Two things PowerToys can't do: true per-window transparency and pins that survive a reboot. Plus, PinIt is a single ~2.5 MB tool rather than a large suite — if pinning is all you need, you don't have to install everything else.</p>
+      </details>
+      <details>
+        <summary>Does it work with apps running as administrator?</summary>
+        <p>Windows security (UIPI) prevents normal apps from modifying elevated windows. To pin a window that's running as administrator, run PinIt as administrator too.</p>
+      </details>
+      <details>
+        <summary>Is PinIt free? Is the source code available?</summary>
+        <p>PinIt is free for personal use and the full source code is public on <a href="https://github.com/Razee4315/Pin-It">GitHub</a> (source-available license — commercial use requires permission).</p>
+      </details>
+    </section>
+
+    <footer>
+      <p>PinIt — a free Always on Top utility for Windows, by <a href="https://github.com/Razee4315">Saqlain Abbas</a>.<br/>
+      <a href="https://github.com/Razee4315/Pin-It">Source code</a> · <a href="https://github.com/Razee4315/Pin-It/releases/latest">Download</a> · <a href="https://github.com/Razee4315/Pin-It/issues">Report an issue</a></p>
+    </footer>
+
+  </div>
+</body>
+</html>

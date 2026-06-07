@@ -3,6 +3,7 @@
 mod always_on_top;
 mod autostart;
 mod commands;
+mod events;
 mod persistence;
 
 use tauri::{
@@ -21,6 +22,15 @@ pub fn run() {
     log::info!("PinIt starting up");
 
     let app = tauri::Builder::default()
+        // Must be the first registered plugin: a second PinIt launch would
+        // otherwise fail to grab the global shortcuts and add a duplicate
+        // tray icon. Instead, surface the existing instance's window.
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
+        }))
         .plugin(tauri_plugin_opener::init())
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
@@ -40,10 +50,16 @@ pub fn run() {
 
             // Register global shortcuts with saved config
             let shortcut_config = persistence::get_shortcut_config();
-            if let Err(e) = always_on_top::hotkey::register_shortcuts(&app.handle(), &shortcut_config) {
-                log::error!("Failed to register custom shortcuts, trying defaults: {:?}", e);
+            if let Err(e) =
+                always_on_top::hotkey::register_shortcuts(app.handle(), &shortcut_config)
+            {
+                log::error!(
+                    "Failed to register custom shortcuts, trying defaults: {:?}",
+                    e
+                );
                 let defaults = persistence::ShortcutConfig::default();
-                if let Err(e2) = always_on_top::hotkey::register_shortcuts(&app.handle(), &defaults) {
+                if let Err(e2) = always_on_top::hotkey::register_shortcuts(app.handle(), &defaults)
+                {
                     log::error!("Failed to register default shortcuts: {:?}", e2);
                 }
             }
@@ -100,15 +116,12 @@ pub fn run() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            commands::toggle_pin_foreground,
             commands::pin_window,
             commands::unpin_window,
             commands::get_pinned_windows,
-            commands::adjust_opacity,
+            commands::list_pinnable_windows,
             commands::set_window_opacity,
-            commands::is_window_topmost,
             commands::focus_window,
-            commands::get_pinned_count,
             commands::get_auto_start,
             commands::set_auto_start,
             commands::get_sound_enabled,
@@ -117,7 +130,6 @@ pub fn run() {
             commands::set_has_seen_tray_notice,
             commands::get_shortcut_config,
             commands::set_shortcut_config,
-            commands::validate_shortcut,
             commands::reset_shortcut_config,
         ])
         .build(tauri::generate_context!())
