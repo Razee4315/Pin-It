@@ -10,6 +10,9 @@ pub enum PinError {
     #[error("Failed to set window position: {0}")]
     SetWindowPosFailed(String),
 
+    #[error("Cannot pin {0} — it may be running as administrator")]
+    AccessDenied(String),
+
     #[allow(dead_code)]
     #[error("Failed to get window info: {0}")]
     GetWindowInfoFailed(String),

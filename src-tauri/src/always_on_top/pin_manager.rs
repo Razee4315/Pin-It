@@ -32,8 +32,18 @@ pub fn pin_window(hwnd: HWND) -> Result<bool, PinError> {
             .map_err(|e| PinError::SetPropertyFailed(e.to_string()))?;
 
         // Set HWND_TOPMOST
-        SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE)
-            .map_err(|e| PinError::SetWindowPosFailed(e.to_string()))?;
+        if let Err(e) = SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE) {
+            let _ = RemovePropW(hwnd, PCWSTR(prop_name.as_ptr()));
+            return Err(PinError::SetWindowPosFailed(e.to_string()));
+        }
+
+        // UIPI blocks SetWindowPos against elevated (admin) windows but frequently
+        // reports success while doing nothing. Verify the topmost style actually
+        // took — otherwise we'd track and show a pin that was never applied.
+        if !is_topmost(hwnd) {
+            let _ = RemovePropW(hwnd, PCWSTR(prop_name.as_ptr()));
+            return Err(PinError::AccessDenied(process_name));
+        }
 
         // Track in our state
         PinState::add(hwnd, title, process_name);

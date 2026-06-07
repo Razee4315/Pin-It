@@ -248,8 +248,12 @@ fn handle_toggle_pin(app: &AppHandle) {
                 }
                 Err(e) => {
                     log::error!("Failed to toggle pin: {}", e);
-                    let user_msg =
-                        format!("Cannot pin {} — it may be running as administrator", process);
+                    // AccessDenied already carries a user-friendly message;
+                    // other errors get a generic wrapper.
+                    let user_msg = match &e {
+                        super::error::PinError::AccessDenied(_) => e.to_string(),
+                        _ => format!("Could not pin {}: {}", process, e),
+                    };
                     let _ = app.emit("pin-error", user_msg);
                 }
             }
