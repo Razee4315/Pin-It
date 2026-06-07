@@ -27,7 +27,11 @@ export function WindowList({ windows, shortcuts, onFocus, onUnpin, onOpacityChan
             <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
           </svg>
           <span>No windows pinned</span>
-          <span className="empty-state-hint">Focus any window, then press {shortcuts ? shortcutToDisplay(shortcuts.toggle_pin).map((k, i) => (<span key={i}>{i > 0 && '+'}<kbd>{k}</kbd></span>)) : <><kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd></>}</span>
+          <ol className="empty-state-steps">
+            <li>Click the window you want on top</li>
+            <li>Press {shortcuts ? shortcutToDisplay(shortcuts.toggle_pin).map((k, i) => (<span key={i}>{i > 0 && '+'}<kbd>{k}</kbd></span>)) : <><kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd></>}</li>
+            <li>It appears here, pinned on top</li>
+          </ol>
         </div>
       ) : (
         <ul className="window-list" role="list" aria-label="Pinned windows">

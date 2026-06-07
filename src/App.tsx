@@ -39,7 +39,7 @@ function App() {
     const timeout = setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
       toastTimeouts.current.delete(id);
-    }, 2000);
+    }, 1500);
     toastTimeouts.current.set(id, timeout);
   }, []);
 
