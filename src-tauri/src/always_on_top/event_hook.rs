@@ -11,9 +11,9 @@ use tauri::{AppHandle, Emitter};
 use windows::Win32::Foundation::HWND;
 use windows::Win32::UI::Accessibility::{SetWinEventHook, UnhookWinEvent, HWINEVENTHOOK};
 use windows::Win32::UI::WindowsAndMessaging::{
-    SetWindowPos, EVENT_OBJECT_DESTROY, EVENT_OBJECT_FOCUS, EVENT_OBJECT_LOCATIONCHANGE,
+    EVENT_OBJECT_DESTROY, EVENT_OBJECT_FOCUS, EVENT_OBJECT_LOCATIONCHANGE,
     EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_MINIMIZEEND, EVENT_SYSTEM_MINIMIZESTART,
-    EVENT_SYSTEM_MOVESIZEEND, HWND_TOPMOST, SWP_NOMOVE, SWP_NOSIZE,
+    EVENT_SYSTEM_MOVESIZEEND,
 };
 
 /// WINEVENT flags - not exported by windows crate
@@ -137,7 +137,7 @@ unsafe extern "system" fn win_event_callback(
             PinState::cleanup_stale();
             log::info!("Cleaned up destroyed window: {}", hwnd.0 as isize);
             // Notify frontend to refresh the pinned windows list
-            emit_event("window-destroyed");
+            emit_event(crate::events::WINDOW_DESTROYED);
         }
         EVENT_OBJECT_FOCUS | EVENT_SYSTEM_FOREGROUND => {
             // Window gained focus - verify topmost is still set
@@ -152,12 +152,12 @@ unsafe extern "system" fn win_event_callback(
 unsafe fn re_enforce_topmost(hwnd: HWND) {
     if !pin_manager::is_topmost(hwnd) {
         if pin_manager::is_valid_window(hwnd) {
-            let _ = SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+            let _ = pin_manager::apply_topmost(hwnd);
             log::debug!("Re-enforced topmost on window: {}", hwnd.0 as isize);
         } else {
             // Window handle is no longer valid, clean up
             PinState::cleanup(hwnd);
-            emit_event("window-destroyed");
+            emit_event(crate::events::WINDOW_DESTROYED);
         }
     }
 }

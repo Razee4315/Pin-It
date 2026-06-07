@@ -13,22 +13,11 @@ pub enum PinError {
     #[error("Cannot pin {0} — it may be running as administrator")]
     AccessDenied(String),
 
-    #[allow(dead_code)]
-    #[error("Failed to get window info: {0}")]
-    GetWindowInfoFailed(String),
-
     #[error("Failed to set property: {0}")]
     SetPropertyFailed(String),
 
     #[error("Failed to set transparency: {0}")]
     TransparencyFailed(String),
-
-    #[error("Window is excluded from pinning")]
-    WindowExcluded,
-
-    #[allow(dead_code)]
-    #[error("Windows API error: {0}")]
-    WindowsApiError(String),
 }
 
 impl serde::Serialize for PinError {

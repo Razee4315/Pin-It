@@ -3,6 +3,7 @@
 mod always_on_top;
 mod autostart;
 mod commands;
+mod events;
 mod persistence;
 
 use tauri::{
@@ -109,15 +110,11 @@ pub fn run() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            commands::toggle_pin_foreground,
             commands::pin_window,
             commands::unpin_window,
             commands::get_pinned_windows,
-            commands::adjust_opacity,
             commands::set_window_opacity,
-            commands::is_window_topmost,
             commands::focus_window,
-            commands::get_pinned_count,
             commands::get_auto_start,
             commands::set_auto_start,
             commands::get_sound_enabled,
@@ -126,7 +123,6 @@ pub fn run() {
             commands::set_has_seen_tray_notice,
             commands::get_shortcut_config,
             commands::set_shortcut_config,
-            commands::validate_shortcut,
             commands::reset_shortcut_config,
         ])
         .build(tauri::generate_context!())

@@ -24,14 +24,6 @@ export interface ShortcutConfig {
   toggle_window: string;
 }
 
-/** Default shortcut values */
-export const DEFAULT_SHORTCUTS: ShortcutConfig = {
-  toggle_pin: 'super+ctrl+KeyT',
-  opacity_up: 'super+ctrl+Equal',
-  opacity_down: 'super+ctrl+Minus',
-  toggle_window: 'super+ctrl+KeyP',
-};
-
 /** Human-readable labels for each shortcut action */
 export const SHORTCUT_LABELS: Record<keyof ShortcutConfig, string> = {
   toggle_pin: 'Pin/Unpin',

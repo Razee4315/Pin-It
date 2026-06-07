@@ -57,6 +57,20 @@ impl Default for ShortcutConfig {
     }
 }
 
+impl ShortcutConfig {
+    /// (label, shortcut string) pairs for every action, in a fixed order.
+    /// Single source of truth for iterating the config — used for
+    /// registration, duplicate checks, and diffing on update.
+    pub fn entries(&self) -> [(&'static str, &str); 4] {
+        [
+            ("Pin/Unpin", self.toggle_pin.as_str()),
+            ("Opacity +", self.opacity_up.as_str()),
+            ("Opacity -", self.opacity_down.as_str()),
+            ("Show/Hide", self.toggle_window.as_str()),
+        ]
+    }
+}
+
 /// User preferences / settings
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct UserSettings {

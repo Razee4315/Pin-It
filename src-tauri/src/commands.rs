@@ -1,75 +1,50 @@
 //! Tauri IPC commands for the Always on Top functionality.
 
-use crate::always_on_top::{pin_manager, state::PinState, transparency, PinError};
+use crate::always_on_top::{
+    pin_manager,
+    state::{PinState, PinnedWindow},
+    transparency, PinError,
+};
+use windows::Win32::Foundation::HWND;
 
-/// Toggle pin state on the foreground window
-#[tauri::command]
-pub fn toggle_pin_foreground() -> Result<bool, PinError> {
-    let hwnd = pin_manager::get_foreground_window()?;
-    pin_manager::toggle_pin(hwnd)
+/// Convert an IPC window handle (isize) to a Win32 HWND
+fn to_hwnd(hwnd: isize) -> HWND {
+    HWND(hwnd as *mut std::ffi::c_void)
 }
 
 /// Pin a specific window by its handle
 #[tauri::command]
 pub fn pin_window(hwnd: isize) -> Result<bool, PinError> {
-    use windows::Win32::Foundation::HWND;
-    let hwnd = HWND(hwnd as *mut std::ffi::c_void);
-    pin_manager::pin_window(hwnd)
+    pin_manager::pin_window(to_hwnd(hwnd))
 }
 
 /// Unpin a specific window by its handle
 #[tauri::command]
 pub fn unpin_window(hwnd: isize) -> Result<bool, PinError> {
-    use windows::Win32::Foundation::HWND;
-    let hwnd = HWND(hwnd as *mut std::ffi::c_void);
-    pin_manager::unpin_window(hwnd)
+    pin_manager::unpin_window(to_hwnd(hwnd))
 }
 
 /// Get list of all pinned windows (sorted by process name)
 #[tauri::command]
-pub fn get_pinned_windows() -> Vec<state::PinnedWindow> {
+pub fn get_pinned_windows() -> Vec<PinnedWindow> {
     let mut windows = PinState::get_all();
     windows.sort_by(|a, b| a.process_name.to_lowercase().cmp(&b.process_name.to_lowercase()));
     windows
 }
 
-/// Adjust opacity of foreground window (delta can be negative)
-#[tauri::command]
-pub fn adjust_opacity(delta: i32) -> Result<u8, PinError> {
-    let hwnd = pin_manager::get_foreground_window()?;
-
-    // Only adjust if window is pinned
-    if !PinState::is_pinned(hwnd) {
-        return Err(PinError::WindowExcluded);
-    }
-
-    transparency::adjust_opacity(hwnd, delta)
-}
-
 /// Set opacity of a specific pinned window
 #[tauri::command]
 pub fn set_window_opacity(hwnd: isize, percent: u8) -> Result<(), PinError> {
-    use windows::Win32::Foundation::HWND;
-    let hwnd = HWND(hwnd as *mut std::ffi::c_void);
-    transparency::set_opacity(hwnd, percent)
-}
-
-/// Check if a window is currently topmost
-#[tauri::command]
-pub fn is_window_topmost(hwnd: isize) -> bool {
-    use windows::Win32::Foundation::HWND;
-    let hwnd = HWND(hwnd as *mut std::ffi::c_void);
-    pin_manager::is_topmost(hwnd)
+    transparency::set_opacity(to_hwnd(hwnd), percent)
 }
 
 /// Bring a pinned window to focus
 #[tauri::command]
 pub fn focus_window(hwnd: isize) -> Result<(), PinError> {
-    use windows::Win32::Foundation::HWND;
     use windows::Win32::UI::WindowsAndMessaging::{
         IsIconic, SetForegroundWindow, ShowWindow, SW_RESTORE,
     };
-    let hwnd = HWND(hwnd as *mut std::ffi::c_void);
+    let hwnd = to_hwnd(hwnd);
 
     if !pin_manager::is_valid_window(hwnd) {
         return Err(PinError::NoForegroundWindow);
@@ -84,12 +59,6 @@ pub fn focus_window(hwnd: isize) -> Result<(), PinError> {
     }
 
     Ok(())
-}
-
-/// Get the count of currently pinned windows
-#[tauri::command]
-pub fn get_pinned_count() -> usize {
-    PinState::get_all().len()
 }
 
 /// Check if auto-start is enabled
@@ -153,12 +122,6 @@ pub fn set_shortcut_config(
     Ok(())
 }
 
-/// Validate a single shortcut string
-#[tauri::command]
-pub fn validate_shortcut(shortcut: String) -> Result<(), String> {
-    crate::always_on_top::hotkey::validate_shortcut(&shortcut)
-}
-
 /// Reset shortcuts to defaults
 #[tauri::command]
 pub fn reset_shortcut_config(app: tauri::AppHandle) -> Result<crate::persistence::ShortcutConfig, String> {
@@ -167,6 +130,3 @@ pub fn reset_shortcut_config(app: tauri::AppHandle) -> Result<crate::persistence
     crate::persistence::update_shortcut_config(defaults.clone());
     Ok(defaults)
 }
-
-// Re-export PinnedWindow for command return type
-pub use crate::always_on_top::state;

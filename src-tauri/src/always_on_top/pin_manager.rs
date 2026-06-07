@@ -32,9 +32,9 @@ pub fn pin_window(hwnd: HWND) -> Result<bool, PinError> {
             .map_err(|e| PinError::SetPropertyFailed(e.to_string()))?;
 
         // Set HWND_TOPMOST
-        if let Err(e) = SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE) {
+        if let Err(e) = apply_topmost(hwnd) {
             let _ = RemovePropW(hwnd, PCWSTR(prop_name.as_ptr()));
-            return Err(PinError::SetWindowPosFailed(e.to_string()));
+            return Err(e);
         }
 
         // UIPI blocks SetWindowPos against elevated (admin) windows but frequently
@@ -79,6 +79,15 @@ pub fn toggle_pin(hwnd: HWND) -> Result<bool, PinError> {
         unpin_window(hwnd)
     } else {
         pin_window(hwnd)
+    }
+}
+
+/// Apply HWND_TOPMOST without moving or resizing the window.
+/// Shared by the pin path and the event hook's re-enforcement.
+pub fn apply_topmost(hwnd: HWND) -> Result<(), PinError> {
+    unsafe {
+        SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE)
+            .map_err(|e| PinError::SetWindowPosFailed(e.to_string()))
     }
 }
 
