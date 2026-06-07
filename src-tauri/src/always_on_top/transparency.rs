@@ -13,8 +13,21 @@ use windows::Win32::UI::WindowsAndMessaging::{
 
 /// Minimum opacity percentage (20%)
 const MIN_OPACITY_PERCENT: u8 = 20;
-/// Maximum opacity percentage (100%)  
+/// Maximum opacity percentage (100%)
 const MAX_OPACITY_PERCENT: u8 = 100;
+
+/// Convert an opacity percentage (0-100) to an alpha value (0-255), rounded.
+/// Rounding (instead of truncating) in both directions makes the
+/// alpha <-> percent round-trip lossless, so persisted opacity no longer
+/// drifts down ~1% on every restart.
+pub fn percent_to_alpha(percent: u8) -> u8 {
+    ((percent as u32 * 255 + 50) / 100) as u8
+}
+
+/// Convert an alpha value (0-255) to an opacity percentage (0-100), rounded
+pub fn alpha_to_percent(alpha: u8) -> u8 {
+    ((alpha as u32 * 100 + 127) / 255) as u8
+}
 
 /// Set window opacity as percentage (0-100)
 pub fn set_opacity(hwnd: HWND, percent: u8) -> Result<(), PinError> {
@@ -30,7 +43,7 @@ pub fn set_opacity(hwnd: HWND, percent: u8) -> Result<(), PinError> {
         }
 
         // Calculate alpha (0-255)
-        let alpha = ((255u32 * percent as u32) / 100) as u8;
+        let alpha = percent_to_alpha(percent);
 
         // Set alpha
         SetLayeredWindowAttributes(hwnd, COLORREF(0), alpha, LWA_ALPHA)
@@ -72,7 +85,7 @@ pub fn get_opacity_percent(hwnd: HWND) -> u8 {
         if GetLayeredWindowAttributes(hwnd, Some(&mut _color), Some(&mut alpha), Some(&mut _flags))
             .is_ok()
         {
-            ((alpha as u32 * 100) / 255) as u8
+            alpha_to_percent(alpha)
         } else {
             100
         }
@@ -80,7 +93,6 @@ pub fn get_opacity_percent(hwnd: HWND) -> u8 {
 }
 
 /// Restore window to full opacity and remove WS_EX_LAYERED
-#[allow(dead_code)]
 pub fn restore_opacity(hwnd: HWND) -> Result<(), PinError> {
     unsafe {
         // Set to fully opaque first

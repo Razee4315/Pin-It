@@ -99,19 +99,49 @@ fn get_save_path() -> Option<PathBuf> {
     Some(dir.join("pinned.json"))
 }
 
-/// Load saved state from disk
+/// Load saved state from disk.
+/// Falls back to the .bak copy if the main file is corrupted, and only
+/// resets to defaults (with a warning) when both are unreadable.
 pub fn load() -> SavedState {
     let Some(path) = get_save_path() else {
         return SavedState::default();
     };
 
-    match fs::read_to_string(&path) {
-        Ok(content) => serde_json::from_str(&content).unwrap_or_default(),
-        Err(_) => SavedState::default(),
+    match read_state(&path) {
+        Some(state) => state,
+        None => {
+            let backup = path.with_extension("json.bak");
+            match read_state(&backup) {
+                Some(state) => {
+                    log::warn!("State file unreadable, restored from backup {:?}", backup);
+                    state
+                }
+                None => {
+                    if path.exists() {
+                        log::warn!("State file {:?} corrupted and no usable backup; starting fresh", path);
+                    }
+                    SavedState::default()
+                }
+            }
+        }
     }
 }
 
-/// Save current state to disk
+/// Read and parse a state file; None if missing or corrupted
+fn read_state(path: &std::path::Path) -> Option<SavedState> {
+    let content = fs::read_to_string(path).ok()?;
+    match serde_json::from_str(&content) {
+        Ok(state) => Some(state),
+        Err(e) => {
+            log::warn!("Failed to parse {:?}: {}", path, e);
+            None
+        }
+    }
+}
+
+/// Save current state to disk atomically: write to a temp file, keep the
+/// previous file as .bak, then rename over the target. A crash mid-write
+/// can no longer truncate pinned.json.
 pub fn save(state: &SavedState) {
     let Some(path) = get_save_path() else {
         log::warn!("Could not determine save path");
@@ -123,17 +153,30 @@ pub fn save(state: &SavedState) {
         let _ = fs::create_dir_all(parent);
     }
 
-    match serde_json::to_string_pretty(state) {
-        Ok(json) => {
-            if let Err(e) = fs::write(&path, json) {
-                log::error!("Failed to save state: {}", e);
-            } else {
-                log::debug!("State saved to {:?}", path);
-            }
-        }
+    let json = match serde_json::to_string_pretty(state) {
+        Ok(json) => json,
         Err(e) => {
             log::error!("Failed to serialize state: {}", e);
+            return;
         }
+    };
+
+    let tmp = path.with_extension("json.tmp");
+    if let Err(e) = fs::write(&tmp, &json) {
+        log::error!("Failed to write temp state file: {}", e);
+        return;
+    }
+
+    // Keep the last good copy around for recovery
+    if path.exists() {
+        let _ = fs::copy(&path, path.with_extension("json.bak"));
+    }
+
+    if let Err(e) = fs::rename(&tmp, &path) {
+        log::error!("Failed to replace state file: {}", e);
+        let _ = fs::remove_file(&tmp);
+    } else {
+        log::debug!("State saved to {:?}", path);
     }
 }
 
@@ -251,7 +294,8 @@ pub fn restore() {
                         log::info!("Restored pin for: {} (title: {})", saved.process_name, saved.title);
 
                         if saved.opacity < 255 {
-                            let percent = ((saved.opacity as u32 * 100) / 255) as u8;
+                            let percent =
+                                crate::always_on_top::transparency::alpha_to_percent(saved.opacity);
                             let _ = crate::always_on_top::transparency::set_opacity(*hwnd, percent);
                         }
                     }
