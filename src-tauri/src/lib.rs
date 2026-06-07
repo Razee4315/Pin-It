@@ -21,6 +21,15 @@ pub fn run() {
     log::info!("PinIt starting up");
 
     let app = tauri::Builder::default()
+        // Must be the first registered plugin: a second PinIt launch would
+        // otherwise fail to grab the global shortcuts and add a duplicate
+        // tray icon. Instead, surface the existing instance's window.
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
+        }))
         .plugin(tauri_plugin_opener::init())
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()

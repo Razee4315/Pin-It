@@ -52,10 +52,14 @@ pub fn is_enabled() -> bool {
 
 /// Enable auto-start (add to registry)
 pub fn enable() -> Result<(), String> {
-    let exe_path = std::env::current_exe()
-        .map_err(|e| format!("Could not get executable path: {}", e))?
-        .to_string_lossy()
-        .to_string();
+    // Quote the path: unquoted Run-key values containing spaces are ambiguous
+    // ("C:\Program Files\..." could resolve to "C:\Program.exe")
+    let exe_path = format!(
+        "\"{}\"",
+        std::env::current_exe()
+            .map_err(|e| format!("Could not get executable path: {}", e))?
+            .to_string_lossy()
+    );
 
     unsafe {
         let key_path = to_wide(RUN_KEY);
