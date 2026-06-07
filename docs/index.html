@@ -9,6 +9,9 @@
   <meta name="robots" content="index, follow, max-image-preview:large" />
   <meta name="theme-color" content="#c49464" />
   <link rel="icon" type="image/png" href="assets/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500..900;1,9..144,500..900&display=swap" rel="stylesheet" />
 
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
@@ -97,8 +100,13 @@
       }
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html { scroll-padding-top: 76px; }
+    html { scroll-padding-top: 76px; scroll-behavior: smooth; }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
     body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.62; -webkit-font-smoothing: antialiased; }
+    .display { font-family: 'Fraunces', Georgia, 'Times New Roman', serif; font-optical-sizing: auto; }
+    /* paper grain over the whole page, barely-there */
+    body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 99; opacity: 0.035;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
     .wrap { max-width: 1040px; margin: 0 auto; padding: 0 24px; }
     a { color: var(--accent); }
     :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
@@ -135,16 +143,34 @@
     }
     @media (max-width: 720px) { .nav-hide-mobile { display: none; } }
 
-    /* ---- hero (minimal, centered) ---- */
-    header.hero { padding: 76px 0 36px; display: flex; flex-direction: column; align-items: center; text-align: center; }
-    .hero-copy { max-width: 780px; }
-    .eyebrow { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase; color: var(--accent); background: var(--accent-wash); border: 1px solid var(--accent-wash2); padding: 5px 12px; border-radius: 100px; margin-bottom: 18px; }
+    /* ---- hero (editorial, centered) ---- */
+    header.hero { position: relative; padding: 92px 0 56px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+    /* soft caramel glow behind the headline */
+    header.hero::before { content: ""; position: absolute; top: -120px; left: 50%; transform: translateX(-50%); width: min(860px, 96vw); height: 560px; pointer-events: none;
+      background: radial-gradient(ellipse 60% 52% at 50% 38%, var(--accent-wash) 0%, transparent 70%); }
+    .hero-copy { position: relative; max-width: 860px; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase; color: var(--accent); background: var(--accent-wash); border: 1px solid var(--accent-wash2); padding: 5px 12px; border-radius: 100px; margin-bottom: 26px; }
     .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
-    h1 { font-size: clamp(40px, 6vw, 72px); line-height: 1.04; margin: 0 0 16px; letter-spacing: -1.5px; font-weight: 800; }
-    /* editorial: the word "top", tilted in caramel */
-    .pinned-word { display: inline-block; color: var(--accent); transform: rotate(-3deg); transform-origin: 50% 80%; }
-    .sub { font-size: 18px; color: var(--text2); max-width: 540px; margin: 0 auto 28px; }
-    .cta-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; justify-content: center; }
+    h1 { font-family: 'Fraunces', Georgia, serif; font-optical-sizing: auto; font-size: clamp(44px, 7vw, 84px); line-height: 1.02; margin: 0 0 18px; letter-spacing: -1px; font-weight: 600; }
+    /* editorial: "always on top" set in caramel italic */
+    .pinned-word { font-style: italic; font-weight: 640; color: var(--accent); }
+    .h1-sub { display: block; font-size: clamp(20px, 2.6vw, 28px); font-weight: 500; font-style: italic; color: var(--text2); letter-spacing: 0; margin-top: 14px; }
+    .sub { font-size: 18.5px; color: var(--text2); max-width: 560px; margin: 0 auto 30px; }
+    .cta-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; justify-content: center; }
+    /* hand-drawn feel: a short caramel rule under the hero */
+    .hero-rule { width: 68px; height: 3px; border-radius: 2px; background: var(--accent); margin: 34px auto 0; opacity: .85; }
+    /* entrance choreography (opt-in motion, js only) */
+    @media (prefers-reduced-motion: no-preference) {
+      .js .hero-copy > * { opacity: 0; transform: translateY(16px); animation: rise .8s cubic-bezier(.2,.7,.2,1) forwards; }
+      .js .hero-copy > :nth-child(1) { animation-delay: .05s; }
+      .js .hero-copy > :nth-child(2) { animation-delay: .14s; }
+      .js .hero-copy > :nth-child(3) { animation-delay: .26s; }
+      .js .hero-copy > :nth-child(4) { animation-delay: .38s; }
+      .js .hero-copy > :nth-child(5) { animation-delay: .48s; }
+      .js .hero-rule { opacity: .85; transform: scaleX(0); animation: drawRule .7s cubic-bezier(.2,.7,.2,1) .75s forwards; }
+      @keyframes rise { to { opacity: 1; transform: none; } }
+      @keyframes drawRule { to { transform: scaleX(1); } }
+    }
     .btn { display: inline-flex; align-items: center; gap: 8px; padding: 13px 26px; border-radius: 9px; font-weight: 600; text-decoration: none; font-size: 15.5px; }
     @media (prefers-reduced-motion: no-preference) { .btn { transition: transform .15s ease, filter .15s ease, border-color .15s ease, color .15s ease; } }
     .btn:active { transform: translateY(1px); }
@@ -162,9 +188,9 @@
     section { padding: 56px 0; border-top: 1px solid var(--rule); }
     .sec-head { max-width: 640px; margin-bottom: 30px; display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
     @media (max-width: 880px) { .sec-head { justify-content: center; text-align: center; margin-left: auto; margin-right: auto; } }
-    .sec-num { font-size: 13px; font-weight: 800; letter-spacing: 0.5px; color: var(--accent); font-variant-numeric: tabular-nums; flex: none; }
+    .sec-num { font-size: 12px; font-weight: 700; letter-spacing: 0.6px; color: var(--accent); font-variant-numeric: tabular-nums; flex: none; background: var(--accent-wash); border: 1px solid var(--accent-wash2); border-radius: 100px; padding: 3px 10px; }
     .sec-head .sec-text { min-width: 0; }
-    h2 { font-size: clamp(24px, 3vw, 32px); margin-bottom: 8px; letter-spacing: -0.6px; font-weight: 800; line-height: 1.12; }
+    h2 { font-family: 'Fraunces', Georgia, serif; font-optical-sizing: auto; font-size: clamp(26px, 3.4vw, 38px); margin-bottom: 8px; letter-spacing: -0.4px; font-weight: 600; line-height: 1.12; }
     .sec-sub { color: var(--text2); font-size: 16px; }
     h3 { font-size: 17px; margin: 0 0 6px; color: var(--text); font-weight: 700; }
     p, li { color: var(--text2); }
@@ -189,19 +215,28 @@
     .steps li .stxt a { font-weight: 600; }
     .note { font-size: 14px; color: var(--muted); margin-top: 16px; }
 
-    /* table */
-    .tablewrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 14px; background: var(--card); box-shadow: var(--shadow); }
-    table { width: 100%; border-collapse: collapse; font-size: 14.5px; min-width: 560px; }
-    th, td { padding: 13px 16px; text-align: left; border-bottom: 1px solid var(--hairline); }
+    /* ---- comparison (designed module) ---- */
+    .tablewrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 20px; background: var(--card); box-shadow: var(--shadow); }
+    table { width: 100%; border-collapse: collapse; font-size: 14.5px; min-width: 620px; }
+    th, td { padding: 15px 18px; text-align: left; border-bottom: 1px solid var(--hairline); }
     tbody tr:last-child td { border-bottom: none; }
-    th { background: var(--bg2); color: var(--text); font-weight: 700; font-size: 13.5px; }
+    tbody td:first-child { font-weight: 600; color: var(--text); font-size: 14px; }
+    @media (prefers-reduced-motion: no-preference) { tbody tr { transition: background .15s ease; } }
+    tbody tr:hover { background: var(--bg2); }
+    thead th { background: var(--bg2); color: var(--text2); font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.4px; padding-top: 18px; padding-bottom: 18px; }
     td:not(:first-child), th:not(:first-child) { text-align: center; }
-    /* highlight PinIt column (2nd) */
-    th:nth-child(2), td:nth-child(2) { background: var(--accent-wash); position: relative; }
-    th:nth-child(2) { color: var(--accent); font-weight: 800; box-shadow: inset 0 2px 0 var(--accent); }
-    .y { color: var(--green); font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
+    /* the PinIt column: elevated, branded */
+    th:nth-child(2), td:nth-child(2) { background: var(--accent-wash); border-left: 1px solid var(--accent-wash2); border-right: 1px solid var(--accent-wash2); }
+    tbody tr:hover td:nth-child(2) { background: var(--accent-wash2); }
+    th.th-pinit { text-transform: none; letter-spacing: 0; box-shadow: inset 0 3px 0 var(--accent); }
+    .th-brand { display: inline-flex; align-items: center; gap: 8px; font-family: 'Fraunces', Georgia, serif; font-size: 17px; font-weight: 600; color: var(--text); }
+    .th-brand img { width: 22px; height: 22px; }
+    .us-chip { display: block; margin: 6px auto 0; width: max-content; font-size: 10.5px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--accent-ink); background: var(--accent); border-radius: 100px; padding: 2px 9px; }
+    .th-note { display: block; font-weight: 500; font-size: 11px; color: var(--muted); text-transform: none; letter-spacing: 0; margin-top: 3px; }
+    .y { color: var(--green); font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
     .y svg { width: 15px; height: 15px; flex: none; }
-    .n { color: var(--red); }
+    .n { color: var(--red); display: inline-flex; align-items: center; gap: 6px; opacity: .85; }
+    .n svg { width: 13px; height: 13px; flex: none; opacity: .8; }
     /* check animation (opt-in only) */
     @media (prefers-reduced-motion: no-preference) {
       .reveal-table .y svg .chk { stroke-dasharray: 18; stroke-dashoffset: 18; }
@@ -210,6 +245,11 @@
       @keyframes drawChk { to { stroke-dashoffset: 0; } }
     }
     .note em { font-style: italic; }
+    /* verdict strip under the table */
+    .verdict { display: flex; align-items: center; gap: 14px; margin-top: 18px; background: var(--card); border: 1px solid var(--accent-wash2); border-left: 3px solid var(--accent); border-radius: 12px; padding: 16px 20px; }
+    .verdict svg { flex: none; width: 22px; height: 22px; color: var(--accent); }
+    .verdict p { font-size: 15px; color: var(--text); margin: 0; }
+    .verdict p em { font-family: 'Fraunces', Georgia, serif; font-style: italic; color: var(--accent); }
 
     /* faq */
     .faq-list { display: grid; gap: 10px; }
@@ -223,15 +263,21 @@
     details[open] summary .caret { transform: rotate(45deg); color: var(--accent); }
     details p { padding: 0 0 16px; font-size: 14.5px; }
 
-    /* download CTA band */
-    .cta-band { background: var(--accent-wash); border: 1px solid var(--accent-wash2); border-radius: 18px; padding: 40px 32px; text-align: center; }
-    .cta-band h2 { margin-bottom: 8px; }
-    .cta-band p { max-width: 460px; margin: 0 auto 22px; color: var(--text2); }
-    .cta-band .cta-row { justify-content: center; }
-    .byte-cap { font-size: 13px; color: var(--muted); margin-top: 14px; }
+    /* download CTA band: bold caramel moment */
+    .cta-band { position: relative; overflow: hidden; background: var(--accent); border-radius: 24px; padding: 56px 32px; text-align: center; }
+    .cta-band::after { content: ""; position: absolute; right: -40px; bottom: -52px; width: 230px; height: 230px; pointer-events: none; opacity: .12;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231e1c1a' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 17v5'/%3E%3Cpath d='M9 10.8V4h6v6.8l2 3.2H7l2-3.2z'/%3E%3C/svg%3E") center / contain no-repeat;
+      transform: rotate(18deg); }
+    .cta-band h2 { margin-bottom: 10px; color: var(--accent-ink); }
+    .cta-band p { max-width: 460px; margin: 0 auto 24px; color: var(--accent-ink); opacity: .85; }
+    .cta-band .cta-row { justify-content: center; position: relative; z-index: 1; }
+    .cta-band .btn-primary { background: var(--text); color: var(--bg); }
+    .cta-band .btn-ghost { border-color: rgba(30,28,26,0.35); color: var(--accent-ink); background: transparent; }
+    .cta-band .btn-ghost:hover { border-color: var(--accent-ink); color: var(--accent-ink); }
+    .byte-cap { font-size: 13px; color: var(--accent-ink); opacity: .7; margin-top: 16px; position: relative; z-index: 1; }
 
-    footer { padding: 48px 0 60px; text-align: center; border-top: 1px solid var(--rule); }
-    footer .sig { font-size: clamp(22px, 4vw, 30px); font-weight: 800; letter-spacing: -0.6px; color: var(--text); margin-bottom: 16px; }
+    footer { padding: 56px 0 64px; text-align: center; border-top: 1px solid var(--rule); }
+    footer .sig { font-family: 'Fraunces', Georgia, serif; font-style: italic; font-size: clamp(26px, 4.6vw, 38px); font-weight: 600; letter-spacing: -0.4px; color: var(--text); margin-bottom: 16px; }
     footer .sig .pin-ink { color: var(--accent); }
     footer p.byline { font-size: 13.5px; color: var(--muted); max-width: 60ch; margin: 0 auto; }
     footer a { color: var(--accent); }
@@ -261,16 +307,19 @@
     </div>
   </nav>
 
-  <!-- single, deduped check-mark glyph referenced by every comparison cell -->
-  <svg style="display:none" aria-hidden="true"><symbol id="chk" viewBox="0 0 24 24"><path class="chk" d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol></svg>
+  <!-- deduped check + cross glyphs referenced by every comparison cell -->
+  <svg style="display:none" aria-hidden="true">
+    <symbol id="chk" viewBox="0 0 24 24"><path class="chk" d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="crs" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></symbol>
+  </svg>
 
   <div class="wrap" id="top">
 
     <header class="hero">
       <div class="hero-copy">
         <span class="eyebrow"><span class="dot"></span>Free &amp; open source · Windows 10 &amp; 11</span>
-        <h1>Keep Any Window Always on <span class="pinned-word">top</span> — Free for Windows 10 &amp; 11</h1>
-        <p class="sub">PinIt pins any window so it stays on top with a single global hotkey — <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd>. Make it see-through. It re-pins itself after a reboot.</p>
+        <h1>Keep any window <span class="pinned-word">always on top</span>.<span class="h1-sub">Free for Windows 11 &amp; 10.</span></h1>
+        <p class="sub">PinIt pins any window so it stays on top with one global hotkey: <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd>. Make it see-through. It re-pins itself after a reboot.</p>
         <div class="cta-row">
           <a class="btn btn-primary" href="https://github.com/Razee4315/Pin-It/releases/latest">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
@@ -282,6 +331,7 @@
           </a>
         </div>
         <p class="meta-line"><strong>~2.5 MB installer</strong> · Windows 10 &amp; 11 · Built with Rust + Tauri</p>
+        <div class="hero-rule" aria-hidden="true"></div>
         <!-- TODO: add assets/demo.mp4 (autoplay muted loop) here once recorded — a moving demo converts far better -->
         <img class="shot" src="assets/screenshot.png" alt="PinIt interface pinning windows always on top in Windows 11 with per-window opacity sliders" loading="lazy" width="320" height="240" />
       </div>
@@ -293,7 +343,7 @@
         <span class="sec-num">01</span>
         <div class="sec-text">
           <h2 id="features-h">What PinIt Does</h2>
-          <p class="sec-sub">A single-purpose tool that does pinning properly — nothing more, nothing less.</p>
+          <p class="sec-sub">A single-purpose tool that does pinning properly. Nothing more, nothing less.</p>
         </div>
       </div>
       <div class="grid">
@@ -343,7 +393,7 @@
         <li class="reveal d1"><span class="stxt">Click the window you want to keep visible, then press <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd>.</span></li>
         <li class="reveal d2"><span class="stxt">Optional: press <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>-</kbd> to make it see-through, <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>=</kbd> to solidify.</span></li>
       </ol>
-      <p class="note">To keep a window always on top in Windows 11 or Windows 10, that's all there is — Windows itself has no built-in always-on-top button.</p>
+      <p class="note">To keep a window always on top in Windows 11 or Windows 10, that's all there is. Windows itself has no built-in always-on-top button.</p>
     </section>
 
     <section id="compare" aria-labelledby="compare-h">
@@ -357,17 +407,26 @@
       <div class="tablewrap reveal-table">
         <table>
           <thead>
-            <tr><th scope="col">Feature</th><th scope="col">PinIt</th><th scope="col">PowerToys (Always On Top)</th><th scope="col">DeskPins</th></tr>
+            <tr>
+              <th scope="col">Feature</th>
+              <th scope="col" class="th-pinit"><span class="th-brand"><img src="assets/logo.png" alt="" width="22" height="22" />PinIt</span><span class="us-chip">That's us</span></th>
+              <th scope="col">PowerToys<span class="th-note">Always On Top module</span></th>
+              <th scope="col">DeskPins<span class="th-note">Classic freeware</span></th>
+            </tr>
           </thead>
           <tbody>
             <tr><td>Price</td><td><span class="y"><svg aria-hidden="true"><use href="#chk"/></svg>Free</span></td><td><span class="y"><svg aria-hidden="true"><use href="#chk"/></svg>Free</span></td><td><span class="y"><svg aria-hidden="true"><use href="#chk"/></svg>Free</span></td></tr>
-            <tr><td>Single-purpose / lightweight</td><td><span class="y"><svg aria-hidden="true"><use href="#chk"/></svg>Yes — ~2.5 MB</span></td><td class="n">No — full utility suite</td><td><span class="y"><svg aria-hidden="true"><use href="#chk"/></svg>Yes</span></td></tr>
+            <tr><td>Single-purpose, lightweight</td><td><span class="y"><svg aria-hidden="true"><use href="#chk"/></svg>~2.5 MB</span></td><td><span class="n"><svg aria-hidden="true"><use href="#crs"/></svg>Full utility suite</span></td><td><span class="y"><svg aria-hidden="true"><use href="#chk"/></svg>Yes</span></td></tr>
             <tr><td>Global hotkey to pin</td><td><span class="y"><svg aria-hidden="true"><use href="#chk"/></svg>Yes</span></td><td><span class="y"><svg aria-hidden="true"><use href="#chk"/></svg>Yes</span></td><td><span class="y"><svg aria-hidden="true"><use href="#chk"/></svg>Yes</span></td></tr>
-            <tr><td>True per-window transparency</td><td><span class="y"><svg aria-hidden="true"><use href="#chk"/></svg>Yes</span></td><td class="n">No¹</td><td class="n">No</td></tr>
-            <tr><td>Pins persist across restart</td><td><span class="y"><svg aria-hidden="true"><use href="#chk"/></svg>Yes</span></td><td class="n">No</td><td class="n">No</td></tr>
-            <tr><td>Actively maintained</td><td><span class="y"><svg aria-hidden="true"><use href="#chk"/></svg>Yes</span></td><td><span class="y"><svg aria-hidden="true"><use href="#chk"/></svg>Yes</span></td><td class="n">Last release 2018</td></tr>
+            <tr><td>True per-window transparency</td><td><span class="y"><svg aria-hidden="true"><use href="#chk"/></svg>20 to 100%</span></td><td><span class="n"><svg aria-hidden="true"><use href="#crs"/></svg>No¹</span></td><td><span class="n"><svg aria-hidden="true"><use href="#crs"/></svg>No</span></td></tr>
+            <tr><td>Pins persist across restart</td><td><span class="y"><svg aria-hidden="true"><use href="#chk"/></svg>Automatic</span></td><td><span class="n"><svg aria-hidden="true"><use href="#crs"/></svg>Forgets on reboot</span></td><td><span class="n"><svg aria-hidden="true"><use href="#crs"/></svg>No</span></td></tr>
+            <tr><td>Actively maintained</td><td><span class="y"><svg aria-hidden="true"><use href="#chk"/></svg>Yes</span></td><td><span class="y"><svg aria-hidden="true"><use href="#chk"/></svg>Yes</span></td><td><span class="n"><svg aria-hidden="true"><use href="#crs"/></svg>Last release 2018</span></td></tr>
           </tbody>
         </table>
+      </div>
+      <div class="verdict reveal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17v5"/><path d="M9 10.8V4h6v6.8l2 3.2H7l2-3.2z"/></svg>
+        <p>The short version: if pinning is all you need, <em>PinIt is the smallest tool that does all of it</em> and the only one that remembers your pins after a reboot.</p>
       </div>
       <p class="note">¹ PowerToys' "Opacity" setting changes the highlight <em>border</em> around pinned windows, not the window content itself — true window transparency is a long-standing open <a href="https://github.com/microsoft/PowerToys/issues/26049">feature request</a>.</p>
     </section>
@@ -430,7 +489,7 @@
 
     <footer>
       <p class="sig">Pin it. <span class="pin-ink">Forget it.</span></p>
-      <p class="byline">PinIt — a free, open-source (Apache 2.0) Always on Top utility for Windows, by <a href="https://github.com/Razee4315">Saqlain Abbas</a>.</p>
+      <p class="byline">PinIt is a free, open-source (Apache 2.0) Always on Top utility for Windows, by <a href="https://github.com/Razee4315">Saqlain Abbas</a>.</p>
       <p class="flinks"><a href="https://github.com/Razee4315/Pin-It">Source code</a> · <a href="https://github.com/Razee4315/Pin-It/releases/latest">Download</a> · <a href="https://github.com/Razee4315/Pin-It/issues">Report an issue</a></p>
     </footer>
 

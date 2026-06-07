@@ -60,16 +60,20 @@ All shortcuts can be customized from within the app.
 
 ## How PinIt compares
 
-| | PinIt | PowerToys (Always On Top) | DeskPins |
-|---|:---:|:---:|:---:|
-| Free | ✅ | ✅ | ✅ |
-| Single-purpose, lightweight | ✅ ~2.5 MB | ❌ full utility suite | ✅ |
-| Global hotkey to pin | ✅ | ✅ | ✅ |
-| True per-window transparency | ✅ | ❌ ¹ | ❌ |
-| Pins persist across restarts | ✅ | ❌ | ❌ |
-| Actively maintained | ✅ | ✅ | ❌ (last release 2018) |
+PowerToys is great when you want twenty utilities. PinIt is for when you want exactly one, done properly:
 
-¹ PowerToys' "Opacity" setting changes the highlight *border* around pinned windows, not the window content itself — true window transparency is a long-standing open feature request ([#26049](https://github.com/microsoft/PowerToys/issues/26049)).
+| Feature | **PinIt** | PowerToys <sub>Always On Top module</sub> | DeskPins <sub>classic freeware</sub> |
+|---|:---:|:---:|:---:|
+| Price | ✅ Free | ✅ Free | ✅ Free |
+| Single-purpose, lightweight | ✅ **~2.5 MB** | ❌ Full utility suite | ✅ Yes |
+| Global hotkey to pin | ✅ `Win+Ctrl+T` | ✅ Yes | ✅ Yes |
+| True per-window transparency | ✅ **20 to 100%** | ❌ No ¹ | ❌ No |
+| Pins persist across restarts | ✅ **Automatic** | ❌ Forgets on reboot | ❌ No |
+| Actively maintained | ✅ Yes | ✅ Yes | ❌ Last release 2018 |
+
+> **The short version:** if pinning is all you need, PinIt is the smallest tool that does all of it, and the only one that remembers your pins after a reboot.
+
+¹ PowerToys' "Opacity" setting changes the highlight *border* around pinned windows, not the window content itself. True window transparency is a long-standing open feature request ([#26049](https://github.com/microsoft/PowerToys/issues/26049)).
 
 ## FAQ
 
