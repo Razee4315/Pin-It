@@ -135,27 +135,16 @@
     }
     @media (max-width: 720px) { .nav-hide-mobile { display: none; } }
 
-    /* ---- hero ---- */
-    header.hero { padding: 60px 0 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
-    @media (max-width: 880px) { header.hero { grid-template-columns: 1fr; gap: 36px; padding: 40px 0 16px; text-align: center; } }
+    /* ---- hero (minimal, centered) ---- */
+    header.hero { padding: 76px 0 36px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+    .hero-copy { max-width: 780px; }
     .eyebrow { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase; color: var(--accent); background: var(--accent-wash); border: 1px solid var(--accent-wash2); padding: 5px 12px; border-radius: 100px; margin-bottom: 18px; }
     .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
     h1 { font-size: clamp(40px, 6vw, 72px); line-height: 1.04; margin: 0 0 16px; letter-spacing: -1.5px; font-weight: 800; }
-    /* editorial: the word "top", tilted in caramel with a pin glyph stuck in it */
-    .pinned-word { position: relative; display: inline-block; color: var(--accent); transform: rotate(-3deg); transform-origin: 50% 80%; padding-right: 8px; }
-    .pinned-word .pin-glyph { position: absolute; top: -0.5em; right: -0.16em; width: 0.46em; height: 0.46em; transform: rotate(20deg); color: var(--accent); }
-    @media (prefers-reduced-motion: no-preference) {
-      .pinned-word .pin-glyph { animation: pin-tap 5s ease-in-out infinite; }
-      @keyframes pin-tap {
-        0%, 86%, 100% { transform: rotate(20deg) translateY(0); }
-        90% { transform: rotate(20deg) translateY(-3px); }
-        94% { transform: rotate(20deg) translateY(0); }
-      }
-    }
-    .sub { font-size: 18px; color: var(--text2); max-width: 480px; margin-bottom: 26px; }
-    @media (max-width: 880px) { .sub { margin-left: auto; margin-right: auto; } }
-    .cta-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
-    @media (max-width: 880px) { .cta-row { justify-content: center; } }
+    /* editorial: the word "top", tilted in caramel */
+    .pinned-word { display: inline-block; color: var(--accent); transform: rotate(-3deg); transform-origin: 50% 80%; }
+    .sub { font-size: 18px; color: var(--text2); max-width: 540px; margin: 0 auto 28px; }
+    .cta-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; justify-content: center; }
     .btn { display: inline-flex; align-items: center; gap: 8px; padding: 13px 26px; border-radius: 9px; font-weight: 600; text-decoration: none; font-size: 15.5px; }
     @media (prefers-reduced-motion: no-preference) { .btn { transition: transform .15s ease, filter .15s ease, border-color .15s ease, color .15s ease; } }
     .btn:active { transform: translateY(1px); }
@@ -166,89 +155,8 @@
     .meta-line { font-size: 13px; color: var(--muted); }
     .meta-line strong { color: var(--text2); font-weight: 600; }
 
-    /* ---- hero diorama (CSS built) ---- */
-    .diorama { position: relative; }
-    .stage { position: relative; background: linear-gradient(160deg, var(--bg2), var(--card)); border: 1px solid var(--border); border-radius: 18px; padding: 30px 26px 26px; box-shadow: var(--shadow); overflow: hidden; }
-    /* flat geometric grid texture with radial mask (from v1) */
-    .stage::before { content: ""; position: absolute; inset: 0;
-      background-image:
-        linear-gradient(var(--hairline) 1px, transparent 1px),
-        linear-gradient(90deg, var(--hairline) 1px, transparent 1px);
-      background-size: 24px 24px; opacity: .55; pointer-events: none;
-      mask-image: radial-gradient(ellipse 80% 80% at 60% 42%, #000 36%, transparent 88%);
-      -webkit-mask-image: radial-gradient(ellipse 80% 80% at 60% 42%, #000 36%, transparent 88%); }
-    /* the muted document card sitting behind */
-    .behind-doc { position: relative; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin: 6px 8px 0 28px; box-shadow: 0 4px 18px rgba(42,38,34,0.06); will-change: transform, opacity; }
-    .behind-doc .bar { background: var(--bg2); border: 1px solid var(--border); height: 9px; border-radius: 4px; margin: 7px 0; }
-    .behind-doc .bar.w90 { width: 90%; } .behind-doc .bar.w70 { width: 70%; } .behind-doc .bar.w80 { width: 80%; } .behind-doc .bar.w55 { width: 55%; }
-    .behind-label { font-size: 11px; color: var(--muted); font-weight: 600; letter-spacing: .4px; text-transform: uppercase; }
-
-    /* the mock pinned window */
-    .mockwin { position: relative; margin: -64px 0 0 0; background: var(--card); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 14px 40px rgba(42,38,34,0.16); overflow: visible; will-change: transform, opacity; }
-    .mockwin .frame { border-radius: 12px; overflow: hidden; }
-    @media (prefers-reduced-motion: no-preference) { .mockwin .frame { transition: opacity .08s linear; } }
-    .mockwin .titlebar { display: flex; align-items: center; gap: 9px; padding: 10px 13px; background: var(--bg2); border-bottom: 1px solid var(--border); }
-    .traffic { display: flex; gap: 6px; }
-    .traffic i { width: 10px; height: 10px; border-radius: 50%; display: block; background: var(--border); }
-    .wintitle { font-size: 13px; font-weight: 600; color: var(--text); }
-    .wintitle svg { vertical-align: -2px; margin-right: 4px; }
-    .mockwin .body { padding: 15px 16px 18px; }
-    .note-line { display: block; height: 9px; border-radius: 4px; background: var(--bg2); margin: 8px 0; }
-    .note-line.w95 { width: 95%; } .note-line.w85 { width: 85%; } .note-line.w60 { width: 60%; }
-    .note-accent { height: 9px; width: 40%; border-radius: 4px; background: var(--accent); opacity: .7; margin: 8px 0; }
-
-    /* the caramel pin */
-    .pin { position: absolute; top: -16px; right: -10px; width: 40px; height: 40px; transform-origin: 50% 100%; pointer-events: none; opacity: 1; transform: none; will-change: transform, opacity; }
-    @media (prefers-reduced-motion: no-preference) {
-      .pin { opacity: 0; transform: scale(.4) rotate(-18deg); }
-      .pin.planted { animation: pinDrop .7s cubic-bezier(.3,1.4,.5,1) forwards; }
-      .pin.pulled { animation: pinPull .3s ease forwards; }
-      @keyframes pinDrop { 0% { opacity:0; transform: translateY(-26px) scale(.5) rotate(-22deg);} 60% { opacity:1; transform: translateY(4px) scale(1.08) rotate(6deg);} 100% { opacity:1; transform: translateY(0) scale(1) rotate(0);} }
-      @keyframes pinPull { 0% { opacity:1; transform: scale(1);} 100% { opacity:0; transform: translateY(-18px) scale(.5) rotate(-16deg);} }
-    }
-
-    /* topmost ring */
-    .topmost-ring { position: absolute; inset: -5px; border: 2px solid var(--accent); border-radius: 15px; opacity: 0; pointer-events: none; box-shadow: 0 0 0 4px var(--accent-wash); }
-    @media (prefers-reduced-motion: no-preference) { .topmost-ring { transition: opacity .35s ease; } }
-    .mockwin.pinned .topmost-ring { opacity: 1; }
-
-    /* floating Win+Ctrl+T keyboard combo (self-presses once, v1) */
-    .kbd-float { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; z-index: 7; opacity: 1; }
-    @media (prefers-reduced-motion: no-preference) { .js .kbd-float { opacity: 0; } .js .kbd-float.shown { opacity: 1; transition: opacity .5s ease; } }
-    .kbd-float kbd { font-size: 12px; padding: 3px 8px; background: var(--card); box-shadow: 0 3px 8px rgba(42,38,34,0.18); }
-    @media (prefers-reduced-motion: no-preference) {
-      .kbd-float kbd { transition: transform .12s ease, box-shadow .12s ease, background .12s ease, color .12s ease; }
-      .kbd-float kbd.press { transform: translateY(2px); background: var(--accent); color: var(--accent-ink); box-shadow: 0 1px 2px rgba(42,38,34,0.18); }
-    }
-
-    /* control deck */
-    .deck { margin-top: 18px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; box-shadow: 0 6px 18px rgba(42,38,34,0.06); }
-    .deck-row { display: flex; align-items: center; gap: 12px; }
-    .deck-label { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; }
-    .opacity-badge { margin-left: auto; font-size: 12.5px; font-weight: 700; color: var(--accent); background: var(--accent-wash); border: 1px solid var(--accent-wash2); border-radius: 100px; padding: 3px 10px; min-width: 52px; text-align: center; font-variant-numeric: tabular-nums; }
-    input[type=range].opslider { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 100px; background: linear-gradient(90deg, var(--accent) 0%, var(--accent) 50%, var(--bg2) 50%, var(--bg2) 100%); outline: none; cursor: pointer; margin: 4px 0; }
-    input[type=range].opslider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--card); border: 3px solid var(--accent); box-shadow: 0 2px 6px rgba(42,38,34,0.2); cursor: pointer; }
-    @media (prefers-reduced-motion: no-preference) {
-      input[type=range].opslider::-webkit-slider-thumb { transition: transform .12s ease; }
-      input[type=range].opslider::-webkit-slider-thumb:hover { transform: scale(1.12); }
-    }
-    input[type=range].opslider::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: var(--card); border: 3px solid var(--accent); box-shadow: 0 2px 6px rgba(42,38,34,0.2); cursor: pointer; }
-    .deck-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--hairline); }
-    .pin-toggle { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--accent); background: var(--card); color: var(--accent); font-weight: 600; font-size: 13.5px; padding: 8px 16px; border-radius: 9px; cursor: pointer; font-family: inherit; }
-    @media (prefers-reduced-motion: no-preference) {
-      .pin-toggle { transition: background .15s ease, color .15s ease, transform .12s ease; }
-      .pin-toggle:hover { transform: translateY(-1px); }
-    }
-    .pin-toggle[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
-    @media (prefers-reduced-motion: no-preference) { .pin-toggle svg { transition: transform .2s ease; } }
-    .pin-toggle[aria-pressed="true"] svg { transform: rotate(-35deg); }
-    .deck-hint { font-size: 12px; color: var(--muted); }
-    .deck-hint kbd { font-size: 11px; }
-
-    /* fallback screenshot (shown only when JS disabled) */
-    .shot { display: none; margin: 18px auto 0; max-width: 320px; width: 100%; border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow); }
-    .no-js .shot { display: block; }
-    .no-js .diorama .stage, .no-js .diorama .deck, .no-js .diorama .kbd-float { display: none; }
+    /* screenshot kept in the DOM for SEO/image search; visually hidden */
+    .shot { position: absolute; width: 1px; height: 1px; clip: rect(0 0 0 0); clip-path: inset(50%); overflow: hidden; white-space: nowrap; }
 
     /* ---- sections (editorial: numbered, hairline-ruled) ---- */
     section { padding: 56px 0; border-top: 1px solid var(--rule); }
@@ -361,7 +269,7 @@
     <header class="hero">
       <div class="hero-copy">
         <span class="eyebrow"><span class="dot"></span>Free &amp; open source · Windows 10 &amp; 11</span>
-        <h1>Keep Any Window Always on <span class="pinned-word">top<svg class="pin-glyph" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14.4 3.6 12 1.2l-1.6 5.6L4.8 9.4l5.6 1.6.4 8 1.4-7.8 6-1.4-5.6-1.6 1.8-4.2z"/></svg></span> — Free for Windows 10 &amp; 11</h1>
+        <h1>Keep Any Window Always on <span class="pinned-word">top</span> — Free for Windows 10 &amp; 11</h1>
         <p class="sub">PinIt pins any window so it stays on top with a single global hotkey — <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd>. Make it see-through. It re-pins itself after a reboot.</p>
         <div class="cta-row">
           <a class="btn btn-primary" href="https://github.com/Razee4315/Pin-It/releases/latest">
@@ -374,69 +282,7 @@
           </a>
         </div>
         <p class="meta-line"><strong>~2.5 MB installer</strong> · Windows 10 &amp; 11 · Built with Rust + Tauri</p>
-      </div>
-
-      <!-- CSS-built interactive diorama -->
-      <div class="diorama" id="diorama">
-        <div class="stage" aria-hidden="false">
-          <!-- self-pressing Win+Ctrl+T combo -->
-          <div class="kbd-float" id="kbdfloat" aria-hidden="true">
-            <kbd data-k="0">Win</kbd><kbd data-k="1">Ctrl</kbd><kbd data-k="2">T</kbd>
-          </div>
-          <p class="behind-label" style="margin:0 8px 8px 28px;">Your work, behind</p>
-          <!-- the muted document card visible THROUGH the pinned window when faded -->
-          <div class="behind-doc">
-            <div class="bar w90"></div>
-            <div class="bar w70"></div>
-            <div class="bar w80"></div>
-            <div class="bar w55"></div>
-          </div>
-
-          <!-- the pinned mock window -->
-          <div class="mockwin" id="mockwin">
-            <span class="topmost-ring" aria-hidden="true"></span>
-            <span class="pin" id="pin" aria-hidden="true">
-              <svg viewBox="0 0 40 40" fill="none">
-                <circle cx="20" cy="13" r="11" fill="var(--accent)"/>
-                <circle cx="20" cy="13" r="4.5" fill="var(--card)" opacity="0.5"/>
-                <path d="M20 24 L20 38" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/>
-              </svg>
-            </span>
-            <div class="frame" id="mockframe">
-              <div class="titlebar">
-                <span class="traffic"><i></i><i></i><i></i></span>
-                <span class="wintitle">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h14a2 2 0 0 1 2 2v3H3V5a2 2 0 0 1 2-2z"/><path d="M3 8v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8"/></svg>
-                  Sticky Notes
-                </span>
-              </div>
-              <div class="body">
-                <span class="note-line w95"></span>
-                <span class="note-accent"></span>
-                <span class="note-line w85"></span>
-                <span class="note-line w60"></span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- live control deck -->
-        <div class="deck" role="group" aria-label="Live demo controls">
-          <div class="deck-row">
-            <span class="deck-label">Opacity</span>
-            <span class="opacity-badge" id="opval" aria-live="polite">100%</span>
-          </div>
-          <input type="range" class="opslider" id="opslider" min="20" max="100" value="100" step="1" aria-label="Mock window opacity" />
-          <div class="deck-actions">
-            <button type="button" class="pin-toggle" id="pinbtn" aria-pressed="true">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17v5"/><path d="M9 10.8V4h6v6.8l2 3.2H7l2-3.2z"/></svg>
-              <span id="pinlabel">Unpin window</span>
-            </button>
-            <span class="deck-hint">Try it — same controls as <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd></span>
-          </div>
-        </div>
-
-        <!-- TODO: replace with assets/demo.mp4 (autoplay muted loop) once recorded — a moving demo converts far better -->
+        <!-- TODO: add assets/demo.mp4 (autoplay muted loop) here once recorded — a moving demo converts far better -->
         <img class="shot" src="assets/screenshot.png" alt="PinIt interface pinning windows always on top in Windows 11 with per-window opacity sliders" loading="lazy" width="320" height="240" />
       </div>
     </header>
@@ -596,148 +442,6 @@
     document.body.classList.remove('no-js');
     document.documentElement.classList.add('js');
     var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    /* ---- live opacity slider ---- */
-    var slider = document.getElementById('opslider');
-    var opval = document.getElementById('opval');
-    var frame = document.getElementById('mockframe');
-    function paintSlider(pct) {
-      var p = ((pct - slider.min) / (slider.max - slider.min)) * 100;
-      slider.style.background =
-        'linear-gradient(90deg, var(--accent) 0%, var(--accent) ' + p + '%, var(--bg2) ' + p + '%, var(--bg2) 100%)';
-    }
-    function applyOpacity(v) {
-      var pct = Math.max(20, Math.min(100, v | 0));
-      frame.style.opacity = (pct / 100).toFixed(2);
-      opval.textContent = pct + '%';
-      slider.value = pct;
-      paintSlider(pct);
-    }
-    applyOpacity(+slider.value);
-
-    /* ---- pin / unpin toggle ---- */
-    var pinBtn = document.getElementById('pinbtn');
-    var pinLabel = document.getElementById('pinlabel');
-    var pinEl = document.getElementById('pin');
-    var mockwin = document.getElementById('mockwin');
-    var pinned = true;
-    mockwin.classList.add('pinned');
-    function setPinned(state) {
-      pinned = state;
-      pinBtn.setAttribute('aria-pressed', String(state));
-      pinLabel.textContent = state ? 'Unpin window' : 'Pin window';
-      if (state) {
-        mockwin.classList.add('pinned');
-        pinEl.classList.remove('pulled');
-        if (!reduce) { pinEl.classList.remove('planted'); void pinEl.offsetWidth; pinEl.classList.add('planted'); }
-      } else {
-        mockwin.classList.remove('pinned');
-        if (!reduce) { pinEl.classList.remove('planted'); void pinEl.offsetWidth; pinEl.classList.add('pulled'); }
-        else { pinEl.classList.remove('planted'); }
-      }
-    }
-
-    /* ---- self-playing hero choreography (v1) ---- */
-    var diorama = document.getElementById('diorama');
-    var kbdFloat = document.getElementById('kbdfloat');
-    var keys = kbdFloat ? kbdFloat.querySelectorAll('kbd') : [];
-    var rafId = null;          // opacity-breathe loop handle
-    var loopStarted = false;   // whether the breathe loop is currently scheduled
-    var userOwns = false;      // user has touched a real control → auto-loop dies forever
-    var choreoStarted = false; // entrance sequence has run once
-
-    function syncOpacityVisual(pct) {
-      // drives BOTH the mock window AND the slider fill/knob/percentage in sync
-      frame.style.opacity = (pct / 100).toFixed(2);
-      opval.textContent = pct + '%';
-      slider.value = pct;
-      paintSlider(pct);
-    }
-
-    function startBreatheLoop() {
-      if (reduce || userOwns) return;
-      if (rafId) return;
-      loopStarted = true;
-      var start = null, period = 5200; // 100 -> 60 -> 100
-      function frameStep(ts) {
-        if (userOwns) { rafId = null; return; }
-        if (start === null) start = ts;
-        var t = ((ts - start) % period) / period;     // 0..1
-        var tri = t < 0.5 ? (t * 2) : (2 - t * 2);     // 0..1..0
-        var eased = tri * tri * (3 - 2 * tri);         // smoothstep
-        var pct = Math.round(100 - eased * 40);        // 100 .. 60
-        syncOpacityVisual(pct);
-        rafId = requestAnimationFrame(frameStep);
-      }
-      rafId = requestAnimationFrame(frameStep);
-    }
-    function stopBreatheLoop() {
-      if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
-      loopStarted = false;
-    }
-
-    function pressKeysOnce() {
-      if (reduce || userOwns) return;
-      if (kbdFloat) { kbdFloat.classList.add('shown'); }
-      keys.forEach(function (k, i) {
-        setTimeout(function () {
-          if (userOwns) return;
-          k.classList.add('press');
-          setTimeout(function () { k.classList.remove('press'); }, 300);
-        }, i * 220);
-      });
-    }
-
-    function runChoreography() {
-      if (choreoStarted) return;
-      choreoStarted = true;
-      // back cards fly in (CSS handles via reveal of stage children is implicit — here we drive the pin + ring + keys)
-      // 1. spring the pin down with overshoot
-      setTimeout(function () { if (!userOwns) { pinEl.classList.add('planted'); } }, 350);
-      // 2. light up the topmost ring
-      setTimeout(function () { if (!userOwns) { mockwin.classList.add('pinned'); } }, 850);
-      // 3. press the Win+Ctrl+T combo once
-      setTimeout(pressKeysOnce, 1250);
-      // 4. begin the gentle opacity breathe loop
-      setTimeout(startBreatheLoop, 2100);
-    }
-
-    // The moment the user touches a real control, the auto-loop stops permanently.
-    function claimDemo() {
-      if (userOwns) return;
-      userOwns = true;
-      stopBreatheLoop();
-      if (kbdFloat) { kbdFloat.classList.add('shown'); keys.forEach(function (k) { k.classList.remove('press'); }); }
-      // snap mock window back to a clean, solid, legible state owned by the slider value
-      applyOpacity(+slider.value);
-    }
-    slider.addEventListener('input', function () { claimDemo(); applyOpacity(+slider.value); });
-    pinBtn.addEventListener('click', function () { claimDemo(); setPinned(!pinned); });
-
-    // Gate the whole choreography behind reduced-motion + visibility.
-    if (reduce) {
-      // motion off by default for reduced-motion users: static, pinned, solid, legible
-      mockwin.classList.add('pinned');
-      pinEl.classList.add('planted');
-      if (kbdFloat) kbdFloat.classList.add('shown');
-      applyOpacity(100);
-    } else if ('IntersectionObserver' in window && diorama) {
-      var dObs = new IntersectionObserver(function (entries) {
-        entries.forEach(function (e) {
-          if (e.isIntersecting) {
-            if (!choreoStarted) { runChoreography(); }
-            else if (!userOwns && loopStarted && !rafId) { startBreatheLoop(); }
-          } else {
-            // off-screen: cancelAnimationFrame, will restart on re-entry
-            if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
-          }
-        });
-      }, { threshold: 0.35 });
-      dObs.observe(diorama);
-    } else {
-      // no IO support: run choreography immediately
-      runChoreography();
-    }
 
     /* ---- IntersectionObserver scroll reveals (no scroll listeners) ---- */
     if ('IntersectionObserver' in window && !reduce) {
