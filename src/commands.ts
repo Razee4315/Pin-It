@@ -2,7 +2,7 @@
  * Tauri command bindings for Always on Top functionality
  */
 import { invoke } from '@tauri-apps/api/core';
-import type { PinnedWindow, ShortcutConfig } from './types';
+import type { PinnableWindow, PinnedWindow, ShortcutConfig } from './types';
 
 /** Pin a specific window by its handle */
 export async function pinWindow(hwnd: number): Promise<boolean> {
@@ -17,6 +17,11 @@ export async function unpinWindow(hwnd: number): Promise<boolean> {
 /** Get list of all pinned windows */
 export async function getPinnedWindows(): Promise<PinnedWindow[]> {
     return invoke<PinnedWindow[]>('get_pinned_windows');
+}
+
+/** List open windows that could be pinned (for the picker) */
+export async function listPinnableWindows(): Promise<PinnableWindow[]> {
+    return invoke<PinnableWindow[]>('list_pinnable_windows');
 }
 
 /** Set opacity of a specific pinned window */

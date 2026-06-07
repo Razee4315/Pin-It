@@ -1,10 +1,12 @@
 //! Tauri IPC commands for the Always on Top functionality.
 
 use crate::always_on_top::{
+    hotkey::{self, PinToggledPayload},
     pin_manager,
     state::{PinState, PinnedWindow},
     transparency, PinError,
 };
+use tauri::Emitter;
 use windows::Win32::Foundation::HWND;
 
 /// Convert an IPC window handle (isize) to a Win32 HWND
@@ -12,16 +14,46 @@ fn to_hwnd(hwnd: isize) -> HWND {
     HWND(hwnd as *mut std::ffi::c_void)
 }
 
-/// Pin a specific window by its handle
+/// Pin a specific window by its handle.
+/// Emits the same pin-toggled event as the hotkey path so the UI gets
+/// its toast/sound/refresh from one place.
 #[tauri::command]
-pub fn pin_window(hwnd: isize) -> Result<bool, PinError> {
-    pin_manager::pin_window(to_hwnd(hwnd))
+pub fn pin_window(app: tauri::AppHandle, hwnd: isize) -> Result<bool, PinError> {
+    let hwnd = to_hwnd(hwnd);
+    let title = pin_manager::get_window_title_pub(hwnd);
+    let process_name = pin_manager::get_process_name_pub(hwnd);
+    let result = pin_manager::pin_window(hwnd)?;
+    let _ = app.emit(
+        crate::events::PIN_TOGGLED,
+        PinToggledPayload { is_pinned: true, title, process_name },
+    );
+    hotkey::update_tray_tooltip(&app);
+    Ok(result)
 }
 
 /// Unpin a specific window by its handle
 #[tauri::command]
-pub fn unpin_window(hwnd: isize) -> Result<bool, PinError> {
-    pin_manager::unpin_window(to_hwnd(hwnd))
+pub fn unpin_window(app: tauri::AppHandle, hwnd: isize) -> Result<bool, PinError> {
+    let hwnd = to_hwnd(hwnd);
+    let title = pin_manager::get_window_title_pub(hwnd);
+    let process_name = pin_manager::get_process_name_pub(hwnd);
+    let result = pin_manager::unpin_window(hwnd)?;
+    let _ = app.emit(
+        crate::events::PIN_TOGGLED,
+        PinToggledPayload { is_pinned: false, title, process_name },
+    );
+    // The tray tooltip previously went stale when unpinning via the UI
+    // button (only the hotkey path updated it)
+    hotkey::update_tray_tooltip(&app);
+    Ok(result)
+}
+
+/// List visible top-level windows that could be pinned (for the picker)
+#[tauri::command]
+pub fn list_pinnable_windows() -> Vec<pin_manager::PinnableWindow> {
+    let mut windows = pin_manager::list_pinnable();
+    windows.sort_by(|a, b| a.process_name.to_lowercase().cmp(&b.process_name.to_lowercase()));
+    windows
 }
 
 /// Get list of all pinned windows (sorted by process name)

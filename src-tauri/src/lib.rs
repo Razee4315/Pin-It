@@ -113,6 +113,7 @@ pub fn run() {
             commands::pin_window,
             commands::unpin_window,
             commands::get_pinned_windows,
+            commands::list_pinnable_windows,
             commands::set_window_opacity,
             commands::focus_window,
             commands::get_auto_start,

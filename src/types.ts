@@ -16,6 +16,13 @@ export interface PinnedWindow {
   original_opacity: number | null;
 }
 
+/** A window eligible for pinning (matches Rust PinnableWindow) */
+export interface PinnableWindow {
+  hwnd: number;
+  title: string;
+  process_name: string;
+}
+
 /** Keyboard shortcut configuration (matches Rust ShortcutConfig) */
 export interface ShortcutConfig {
   toggle_pin: string;

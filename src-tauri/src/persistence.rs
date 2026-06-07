@@ -252,74 +252,41 @@ pub fn restore() {
 
     log::info!("Restoring {} saved pin(s)", state.pins.len());
 
-    unsafe {
-        use windows::Win32::Foundation::{BOOL, HWND, LPARAM};
-        use windows::Win32::UI::WindowsAndMessaging::{
-            EnumWindows, GetWindowLongW, IsWindowVisible, GWL_EXSTYLE, GWL_STYLE, WS_EX_TOOLWINDOW,
-            WS_VISIBLE,
-        };
+    use windows::Win32::Foundation::HWND;
 
-        // Collect all visible top-level windows
-        unsafe extern "system" fn enum_callback(hwnd: HWND, lparam: LPARAM) -> BOOL {
-            let windows = &mut *(lparam.0 as *mut Vec<HWND>);
+    // Build a lookup: process_name -> Vec<(hwnd, title)>
+    let mut window_map: HashMap<String, Vec<(HWND, String)>> = HashMap::new();
+    for (hwnd, title, process_name) in crate::always_on_top::pin_manager::enumerate_windows() {
+        window_map.entry(process_name).or_default().push((hwnd, title));
+    }
 
-            // Only consider visible, non-tool windows
-            if !IsWindowVisible(hwnd).as_bool() {
-                return BOOL::from(true);
-            }
+    // Track which hwnds we've already pinned to avoid double-pinning
+    let mut pinned_hwnds: std::collections::HashSet<isize> = std::collections::HashSet::new();
 
-            let style = GetWindowLongW(hwnd, GWL_STYLE) as u32;
-            let ex_style = GetWindowLongW(hwnd, GWL_EXSTYLE) as u32;
+    for saved in state.pins.values() {
+        if let Some(candidates) = window_map.get(&saved.process_name) {
+            // Prefer exact title match, fall back to first available
+            let best = candidates.iter()
+                .find(|(hwnd, title)| !pinned_hwnds.contains(&(hwnd.0 as isize)) && !saved.title.is_empty() && title == &saved.title)
+                .or_else(|| candidates.iter().find(|(hwnd, _)| !pinned_hwnds.contains(&(hwnd.0 as isize))));
 
-            if (style & WS_VISIBLE.0) != 0 && (ex_style & WS_EX_TOOLWINDOW.0) == 0 {
-                windows.push(hwnd);
-            }
+            if let Some((hwnd, _)) = best {
+                if let Ok(true) = crate::always_on_top::pin_manager::pin_window(*hwnd) {
+                    pinned_hwnds.insert(hwnd.0 as isize);
+                    log::info!("Restored pin for: {} (title: {})", saved.process_name, saved.title);
 
-            BOOL::from(true)
-        }
-
-        let mut windows: Vec<HWND> = Vec::new();
-        let _ = EnumWindows(
-            Some(enum_callback),
-            LPARAM(&mut windows as *mut Vec<HWND> as isize),
-        );
-
-        // Build a lookup: process_name -> Vec<(hwnd, title)>
-        let mut window_map: HashMap<String, Vec<(HWND, String)>> = HashMap::new();
-        for hwnd in &windows {
-            let process_name = crate::always_on_top::pin_manager::get_process_name_pub(*hwnd);
-            let title = crate::always_on_top::pin_manager::get_window_title_pub(*hwnd);
-            window_map.entry(process_name).or_default().push((*hwnd, title));
-        }
-
-        // Track which hwnds we've already pinned to avoid double-pinning
-        let mut pinned_hwnds: std::collections::HashSet<isize> = std::collections::HashSet::new();
-
-        for saved in state.pins.values() {
-            if let Some(candidates) = window_map.get(&saved.process_name) {
-                // Prefer exact title match, fall back to first available
-                let best = candidates.iter()
-                    .find(|(hwnd, title)| !pinned_hwnds.contains(&(hwnd.0 as isize)) && !saved.title.is_empty() && title == &saved.title)
-                    .or_else(|| candidates.iter().find(|(hwnd, _)| !pinned_hwnds.contains(&(hwnd.0 as isize))));
-
-                if let Some((hwnd, _)) = best {
-                    if let Ok(true) = crate::always_on_top::pin_manager::pin_window(*hwnd) {
-                        pinned_hwnds.insert(hwnd.0 as isize);
-                        log::info!("Restored pin for: {} (title: {})", saved.process_name, saved.title);
-
-                        if saved.opacity < 255 {
-                            let percent =
-                                crate::always_on_top::transparency::alpha_to_percent(saved.opacity);
-                            let _ = crate::always_on_top::transparency::set_opacity(*hwnd, percent);
-                        }
+                    if saved.opacity < 255 {
+                        let percent =
+                            crate::always_on_top::transparency::alpha_to_percent(saved.opacity);
+                        let _ = crate::always_on_top::transparency::set_opacity(*hwnd, percent);
                     }
                 }
             }
         }
+    }
 
-        let count = pinned_hwnds.len();
-        if count > 0 {
-            log::info!("Successfully restored {} pinned window(s)", count);
-        }
+    let count = pinned_hwnds.len();
+    if count > 0 {
+        log::info!("Successfully restored {} pinned window(s)", count);
     }
 }

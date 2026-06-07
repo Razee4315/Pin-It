@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { Window } from '@tauri-apps/api/window';
-import { getPinnedWindows, unpinWindow, setWindowOpacity, focusWindow, getAutoStart, setAutoStart, getSoundEnabled, setSoundEnabled, getHasSeenTrayNotice, setHasSeenTrayNotice, getShortcutConfig, setShortcutConfig, resetShortcutConfig } from './commands';
+import { getPinnedWindows, pinWindow, unpinWindow, setWindowOpacity, focusWindow, getAutoStart, setAutoStart, getSoundEnabled, setSoundEnabled, getHasSeenTrayNotice, setHasSeenTrayNotice, getShortcutConfig, setShortcutConfig, resetShortcutConfig } from './commands';
 import type { PinnedWindow, PinToggledPayload, ShortcutConfig, ToastData } from './types';
 import { EVENTS, SHORTCUT_LABELS } from './types';
 import { keyEventToShortcutString } from './shortcutUtils';
@@ -13,6 +13,7 @@ import { WindowList } from './components/WindowList';
 import { SettingsSection } from './components/SettingsSection';
 import { ToastStack } from './components/ToastStack';
 import { TrayNotice } from './components/TrayNotice';
+import { AddWindowPicker } from './components/AddWindowPicker';
 import './App.css';
 
 let toastId = 0;
@@ -25,6 +26,7 @@ function App() {
   const [soundEnabled, setSoundEnabledState] = useState(true);
   const soundEnabledRef = useRef(true);
   const [showTrayNotice, setShowTrayNotice] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [shortcuts, setShortcuts] = useState<ShortcutConfig | null>(null);
   const [editingKey, setEditingKey] = useState<keyof ShortcutConfig | null>(null);
   const [captureValue, setCaptureValue] = useState<string | null>(null);
@@ -123,6 +125,16 @@ function App() {
       refreshPinnedWindows();
     } catch (err) {
       console.error('Failed to unpin:', err);
+    }
+  }
+
+  async function handlePickWindow(hwnd: number) {
+    setPickerOpen(false);
+    try {
+      // Toast/sound/refresh arrive via the pin-toggled event the command emits
+      await pinWindow(hwnd);
+    } catch (err) {
+      addToast(String(err), 'error');
     }
   }
 
@@ -282,6 +294,8 @@ function App() {
     <div className="app-wrapper">
       {showTrayNotice && <TrayNotice onDismiss={dismissTrayNotice} />}
 
+      {pickerOpen && <AddWindowPicker onPin={handlePickWindow} onClose={() => setPickerOpen(false)} />}
+
       <ToastStack toasts={toasts} />
 
       <Titlebar
@@ -312,6 +326,7 @@ function App() {
           onFocus={handleFocusWindow}
           onUnpin={handleUnpin}
           onOpacityChange={handleOpacityChange}
+          onAddWindow={() => setPickerOpen(true)}
         />
 
         {shortcuts && <ShortcutsReference shortcuts={shortcuts} />}

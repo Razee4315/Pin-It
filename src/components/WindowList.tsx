@@ -8,9 +8,10 @@ interface WindowListProps {
   onFocus: (hwnd: number) => void;
   onUnpin: (hwnd: number) => void;
   onOpacityChange: (hwnd: number, percent: number) => void;
+  onAddWindow: () => void;
 }
 
-export function WindowList({ windows, shortcuts, onFocus, onUnpin, onOpacityChange }: WindowListProps) {
+export function WindowList({ windows, shortcuts, onFocus, onUnpin, onOpacityChange, onAddWindow }: WindowListProps) {
   return (
     <section className="pinned-section">
       <h2 className="section-heading">
@@ -19,6 +20,11 @@ export function WindowList({ windows, shortcuts, onFocus, onUnpin, onOpacityChan
         </svg>
         Pinned
         {windows.length > 0 && <span className="pin-count">{windows.length}</span>}
+        <button className="add-pin-btn" onClick={onAddWindow} title="Pin a window…" aria-label="Pin a window">
+          <svg aria-hidden="true" width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+            <path d="M5 1v8M1 5h8" />
+          </svg>
+        </button>
       </h2>
 
       {windows.length === 0 ? (

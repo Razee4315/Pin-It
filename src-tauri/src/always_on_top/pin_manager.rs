@@ -5,15 +5,17 @@
 
 use super::error::PinError;
 use super::state::PinState;
+use serde::Serialize;
 use windows::core::{PCWSTR, PWSTR};
-use windows::Win32::Foundation::{BOOL, CloseHandle, HWND, MAX_PATH};
+use windows::Win32::Foundation::{BOOL, CloseHandle, HWND, LPARAM, MAX_PATH};
 use windows::Win32::System::Threading::{
     OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32, PROCESS_QUERY_LIMITED_INFORMATION,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
-    GetForegroundWindow, GetWindowLongW, GetWindowTextLengthW, GetWindowTextW,
-    GetWindowThreadProcessId, IsWindow, RemovePropW, SetPropW, SetWindowPos, GWL_EXSTYLE,
-    HWND_NOTOPMOST, HWND_TOPMOST, SWP_NOMOVE, SWP_NOSIZE, WS_EX_TOPMOST,
+    EnumWindows, GetForegroundWindow, GetWindowLongW, GetWindowTextLengthW, GetWindowTextW,
+    GetWindowThreadProcessId, IsWindow, IsWindowVisible, RemovePropW, SetPropW, SetWindowPos,
+    GWL_EXSTYLE, HWND_NOTOPMOST, HWND_TOPMOST, SWP_NOMOVE, SWP_NOSIZE, WS_EX_TOOLWINDOW,
+    WS_EX_TOPMOST,
 };
 
 /// Property name used to tag windows as pinned by our app
@@ -142,6 +144,71 @@ fn get_window_title(hwnd: HWND) -> String {
 /// Check if a window handle is still valid
 pub fn is_valid_window(hwnd: HWND) -> bool {
     unsafe { IsWindow(hwnd).as_bool() }
+}
+
+/// A window eligible for pinning (used by the in-app picker)
+#[derive(Clone, Serialize)]
+pub struct PinnableWindow {
+    pub hwnd: isize,
+    pub title: String,
+    pub process_name: String,
+}
+
+/// Enumerate visible, non-tool top-level windows as (hwnd, title, process_name).
+/// Shared by persistence::restore and the add-window picker.
+pub fn enumerate_windows() -> Vec<(HWND, String, String)> {
+    unsafe extern "system" fn enum_callback(hwnd: HWND, lparam: LPARAM) -> BOOL {
+        let windows = &mut *(lparam.0 as *mut Vec<HWND>);
+
+        // Only consider visible, non-tool windows
+        if IsWindowVisible(hwnd).as_bool() {
+            let ex_style = GetWindowLongW(hwnd, GWL_EXSTYLE) as u32;
+            if (ex_style & WS_EX_TOOLWINDOW.0) == 0 {
+                windows.push(hwnd);
+            }
+        }
+
+        BOOL::from(true)
+    }
+
+    let mut handles: Vec<HWND> = Vec::new();
+    unsafe {
+        let _ = EnumWindows(
+            Some(enum_callback),
+            LPARAM(&mut handles as *mut Vec<HWND> as isize),
+        );
+    }
+
+    handles
+        .into_iter()
+        .map(|hwnd| {
+            let title = get_window_title(hwnd);
+            let process = get_process_name(hwnd);
+            (hwnd, title, process)
+        })
+        .collect()
+}
+
+/// Windows the user could pin from the in-app picker: visible, titled,
+/// not PinIt itself, and not already pinned.
+pub fn list_pinnable() -> Vec<PinnableWindow> {
+    let own_pid = std::process::id();
+    enumerate_windows()
+        .into_iter()
+        .filter(|(hwnd, title, _)| {
+            if title.is_empty() || title == "Unknown" || PinState::is_pinned(*hwnd) {
+                return false;
+            }
+            let mut pid = 0u32;
+            unsafe { GetWindowThreadProcessId(*hwnd, Some(&mut pid)) };
+            pid != own_pid
+        })
+        .map(|(hwnd, title, process_name)| PinnableWindow {
+            hwnd: hwnd.0 as isize,
+            title,
+            process_name,
+        })
+        .collect()
 }
 
 /// Get process name for a window
