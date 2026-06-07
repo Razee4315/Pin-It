@@ -22,7 +22,7 @@ export function Titlebar({
   return (
     <header className="titlebar" data-tauri-drag-region>
       <div className="titlebar-left" data-tauri-drag-region>
-        <img src="/logo.svg" alt="PinIt" width="14" height="14" />
+        <img src="/logo.png" alt="PinIt" width="14" height="14" />
         <span>PinIt</span>
       </div>
       <div className="titlebar-right">
