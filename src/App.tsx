@@ -72,6 +72,8 @@ function App() {
   const [editingKey, setEditingKey] = useState<keyof ShortcutConfig | null>(null);
   const [captureValue, setCaptureValue] = useState<string | null>(null);
   const toastTimeouts = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
+  const opacityFlush = useRef<Map<number, { timer: ReturnType<typeof setTimeout>; latest: number }>>(new Map());
+  const popoverRef = useRef<HTMLDivElement | null>(null);
 
   const addToast = useCallback((message: string, type: 'pin' | 'unpin' | 'error') => {
     const id = ++toastId;
@@ -125,8 +127,29 @@ function App() {
       unlistenError.then((fn) => fn());
       unlistenShortcuts.then((fn) => fn());
       toastTimeouts.current.forEach((t) => clearTimeout(t));
+      opacityFlush.current.forEach((entry) => clearTimeout(entry.timer));
     };
   }, [addToast]);
+
+  // Close the shortcuts popover on Escape or a click outside it
+  useEffect(() => {
+    if (!shortcutsOpen) return;
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setShortcutsOpen(false);
+    }
+    function onMouseDown(e: MouseEvent) {
+      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+        setShortcutsOpen(false);
+      }
+    }
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('mousedown', onMouseDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('mousedown', onMouseDown);
+    };
+  }, [shortcutsOpen]);
 
   async function refreshPinnedWindows() {
     try {
@@ -146,13 +169,41 @@ function App() {
     }
   }
 
-  async function handleOpacityChange(hwnd: number, opacity: number) {
-    try {
-      await setWindowOpacity(hwnd, opacity);
-      refreshPinnedWindows();
-    } catch (err) {
-      console.error('Failed to set opacity:', err);
+  function handleOpacityChange(hwnd: number, percent: number) {
+    // Optimistic UI update — a slider drag fires dozens of change events,
+    // and refreshing the whole list after each invoke caused an IPC storm
+    // plus a race where the refresh reverted the thumb mid-drag.
+    setPinnedWindows((prev) =>
+      prev.map((w) =>
+        w.hwnd === hwnd ? { ...w, opacity: Math.round((percent * 255) / 100) } : w
+      )
+    );
+
+    // Throttle the backend call: apply immediately, then coalesce further
+    // drag ticks into one trailing call.
+    const pending = opacityFlush.current.get(hwnd);
+    if (pending) {
+      pending.latest = percent;
+      return;
     }
+    setWindowOpacity(hwnd, percent).catch((err) => {
+      console.error('Failed to set opacity:', err);
+      refreshPinnedWindows();
+    });
+    const entry = {
+      latest: percent,
+      timer: setTimeout(() => {
+        const e = opacityFlush.current.get(hwnd);
+        opacityFlush.current.delete(hwnd);
+        if (e && e.latest !== percent) {
+          setWindowOpacity(hwnd, e.latest).catch((err) => {
+            console.error('Failed to set opacity:', err);
+            refreshPinnedWindows();
+          });
+        }
+      }, 80),
+    };
+    opacityFlush.current.set(hwnd, entry);
   }
 
   async function handleFocusWindow(hwnd: number) {
@@ -185,8 +236,11 @@ function App() {
   }
 
   async function handleMinimize() {
-    const appWindow = Window.getCurrent();
-    await appWindow.minimize();
+    try {
+      await Window.getCurrent().minimize();
+    } catch (err) {
+      console.error('Failed to minimize:', err);
+    }
   }
 
   async function handleClose() {
@@ -200,14 +254,20 @@ function App() {
     } catch {
       // If we can't check, just close
     }
-    const appWindow = Window.getCurrent();
-    await appWindow.hide();
+    try {
+      await Window.getCurrent().hide();
+    } catch (err) {
+      console.error('Failed to hide window:', err);
+    }
   }
 
   async function dismissTrayNotice() {
     setShowTrayNotice(false);
-    const appWindow = Window.getCurrent();
-    await appWindow.hide();
+    try {
+      await Window.getCurrent().hide();
+    } catch (err) {
+      console.error('Failed to hide window:', err);
+    }
   }
 
   function handleEditShortcut(key: keyof ShortcutConfig) {
@@ -231,6 +291,14 @@ function App() {
 
   async function handleSaveShortcut() {
     if (!editingKey || !captureValue || !shortcuts) return;
+    // Catch duplicates here instead of surfacing a raw backend error after the fact
+    const conflict = (Object.keys(SHORTCUT_LABELS) as (keyof ShortcutConfig)[]).find(
+      (key) => key !== editingKey && shortcuts[key] === captureValue
+    );
+    if (conflict) {
+      addToast(`Already used by ${SHORTCUT_LABELS[conflict]}`, 'error');
+      return;
+    }
     const newConfig = { ...shortcuts, [editingKey]: captureValue };
     try {
       await setShortcutConfig(newConfig);
@@ -270,7 +338,7 @@ function App() {
       <div className="toast-container">
         {toasts.map((toast) => (
           <div key={toast.id} className={`toast toast-${toast.type}`}>
-            <svg className="toast-icon" width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+            <svg aria-hidden="true" className="toast-icon" width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
               <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
             </svg>
             {toast.message}
@@ -285,7 +353,7 @@ function App() {
           <span>PinIt</span>
         </div>
         <div className="titlebar-right">
-          <div className="shortcuts-popover-wrapper">
+          <div className="shortcuts-popover-wrapper" ref={popoverRef}>
             <button
               className="titlebar-btn"
               onClick={() => setShortcutsOpen(!shortcutsOpen)}
@@ -293,7 +361,7 @@ function App() {
               aria-expanded={shortcutsOpen}
               aria-controls="shortcuts-panel"
             >
-              <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
+              <svg aria-hidden="true" width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
                 <path d="M8 0a1 1 0 00-1 1v.1A5.96 5.96 0 005.05 1.9l-.07-.07a1 1 0 00-1.41 0L2.63 2.76a1 1 0 000 1.41l.07.07A5.96 5.96 0 001.9 6.19H1a1 1 0 00-1 1v1.62a1 1 0 001 1h.1a5.96 5.96 0 00.8 1.95l-.07.07a1 1 0 000 1.41l.94.94a1 1 0 001.41 0l.07-.07c.57.37 1.23.64 1.95.8V15a1 1 0 001 1h1.62a1 1 0 001-1v-.1a5.96 5.96 0 001.95-.8l.07.07a1 1 0 001.41 0l.94-.94a1 1 0 000-1.41l-.07-.07c.37-.57.64-1.23.8-1.95H15a1 1 0 001-1V7.19a1 1 0 00-1-1h-.1a5.96 5.96 0 00-.8-1.95l.07-.07a1 1 0 000-1.41l-.94-.94a1 1 0 00-1.41 0l-.07.07A5.96 5.96 0 009.81 1.1V1a1 1 0 00-1-1H8zM8 5a3 3 0 110 6 3 3 0 010-6z"/>
               </svg>
             </button>
@@ -334,7 +402,7 @@ function App() {
                               onMouseDown={(e) => { e.preventDefault(); handleSaveShortcut(); }}
                               title="Save shortcut"
                             >
-                              <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <svg aria-hidden="true" width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M2 6l3 3 5-5" />
                               </svg>
                             </button>
@@ -352,7 +420,7 @@ function App() {
                             onClick={() => handleEditShortcut(key)}
                             title="Edit shortcut"
                           >
-                            <svg width="9" height="9" viewBox="0 0 12 12" fill="currentColor">
+                            <svg aria-hidden="true" width="9" height="9" viewBox="0 0 12 12" fill="currentColor">
                               <path d="M9.5.5a1.4 1.4 0 012 2L4 10l-3 1 1-3L9.5.5z"/>
                             </svg>
                           </button>
@@ -368,12 +436,12 @@ function App() {
             )}
           </div>
           <button className="titlebar-btn" onClick={handleMinimize} title="Minimize">
-            <svg width="10" height="1" viewBox="0 0 10 1">
+            <svg aria-hidden="true" width="10" height="1" viewBox="0 0 10 1">
               <rect width="10" height="1" fill="currentColor" />
             </svg>
           </button>
           <button className="titlebar-btn close" onClick={handleClose} title="Close">
-            <svg width="10" height="10" viewBox="0 0 10 10">
+            <svg aria-hidden="true" width="10" height="10" viewBox="0 0 10 10">
               <path d="M1 1L9 9M9 1L1 9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
             </svg>
           </button>
@@ -384,7 +452,7 @@ function App() {
         {/* Pinned Windows */}
         <section className="pinned-section">
           <h2 className="section-heading">
-            <svg className="pin-heading-icon" width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+            <svg aria-hidden="true" className="pin-heading-icon" width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
               <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
             </svg>
             Pinned
@@ -393,7 +461,7 @@ function App() {
 
           {pinnedWindows.length === 0 ? (
             <div className="empty-state">
-              <svg className="empty-state-icon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" opacity="0.3">
+              <svg aria-hidden="true" className="empty-state-icon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" opacity="0.3">
                 <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
               </svg>
               <span>No windows pinned</span>
@@ -424,7 +492,7 @@ function App() {
                         <span className="window-title" title={win.title}>{win.title || 'Untitled'}</span>
                         <span className="window-process">
                           {win.process_name}
-                          <svg className="focus-icon" width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <svg aria-hidden="true" className="focus-icon" width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M7 1h4v4M11 1L6 6M5 1H2a1 1 0 00-1 1v8a1 1 0 001 1h8a1 1 0 001-1V7" />
                           </svg>
                         </span>
@@ -456,7 +524,7 @@ function App() {
                           title="Unpin this window"
                           aria-label={`Unpin ${win.process_name}`}
                         >
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                          <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
                             <line x1="3" y1="3" x2="21" y2="21" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
                           </svg>
@@ -474,7 +542,7 @@ function App() {
         {shortcuts && (
           <section className="shortcuts-reference">
             <h2 className="section-heading">
-              <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" opacity="0.6">
+              <svg aria-hidden="true" width="11" height="11" viewBox="0 0 16 16" fill="currentColor" opacity="0.6">
                 <path d="M0 3a2 2 0 012-2h12a2 2 0 012 2v7a2 2 0 01-2 2H2a2 2 0 01-2-2V3zm3 1a1 1 0 100 2h1a1 1 0 100-2H3zm4 0a1 1 0 100 2h1a1 1 0 100-2H7zm4 0a1 1 0 100 2h1a1 1 0 100-2h-1zM3 7a1 1 0 100 2h10a1 1 0 100-2H3z"/>
               </svg>
               Shortcuts
