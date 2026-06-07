@@ -1,7 +1,9 @@
 <p align="center">
-  <img src="public/logo.svg" width="80" alt="PinIt Logo">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/wordmark-dark.png">
+    <img src="docs/assets/wordmark-light.png" width="360" alt="PinIt — pin any window always on top">
+  </picture>
 </p>
-<h1 align="center">PinIt</h1>
 
 <p align="center">
   <b>Keep any window always on top on Windows 11 & 10 — instantly, with a global hotkey.</b>
