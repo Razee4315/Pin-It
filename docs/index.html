@@ -78,152 +78,678 @@
 
   <style>
     :root {
-      --bg: #f8f6f2; --bg2: #f0ede6; --card: #ffffff; --accent: #c49464;
+      --bg: #f8f6f2; --bg2: #f0ede6; --card: #ffffff; --accent: #c49464; --accent-ink: #ffffff;
       --text: #2a2622; --text2: #5a564e; --muted: #6b6760; --border: rgba(0,0,0,0.08);
-      --green: #2e7d32; --red: #c62828;
+      --accent-wash: rgba(196,148,100,0.08); --accent-wash2: rgba(196,148,100,0.14);
+      --green: #2e7d32; --red: #c62828; --hairline: rgba(42,38,34,0.10); --rule: rgba(42,38,34,0.20);
+      --ring: rgba(196,148,100,0.45); --shadow: 0 12px 40px rgba(42,38,34,0.10);
+      --win-back: #efe9e0; --win-bar: #e6ddd0;
     }
     @media (prefers-color-scheme: dark) {
       :root {
-        --bg: #1e1c1a; --bg2: #252320; --card: #2d2b28; --accent: #d4a373;
+        --bg: #1e1c1a; --bg2: #252320; --card: #2d2b28; --accent: #d4a373; --accent-ink: #1e1c1a;
         --text: #e8e4de; --text2: #b8b4ae; --muted: #908c86; --border: rgba(255,255,255,0.08);
-        --green: #66bb6a; --red: #ef9a9a;
+        --accent-wash: rgba(212,163,115,0.10); --accent-wash2: rgba(212,163,115,0.18);
+        --green: #66bb6a; --red: #ef9a9a; --hairline: rgba(232,228,222,0.12); --rule: rgba(232,228,222,0.22);
+        --ring: rgba(212,163,115,0.5); --shadow: 0 12px 40px rgba(0,0,0,0.45);
+        --win-back: #38342f; --win-bar: #423d37;
       }
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
-    .wrap { max-width: 880px; margin: 0 auto; padding: 0 20px; }
-    header.hero { text-align: center; padding: 64px 0 48px; }
-    .hero img.logo { width: 72px; height: 72px; }
-    h1 { font-size: clamp(28px, 5vw, 42px); line-height: 1.2; margin: 16px 0 12px; letter-spacing: -0.5px; }
-    .sub { font-size: 18px; color: var(--text2); max-width: 560px; margin: 0 auto 28px; }
-    .sub kbd, li kbd, td kbd { background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; font-family: inherit; font-size: 0.9em; box-shadow: 0 1px 1px rgba(0,0,0,0.06); }
-    .cta-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
-    .btn { display: inline-block; padding: 12px 28px; border-radius: 8px; font-weight: 600; text-decoration: none; font-size: 16px; }
-    .btn-primary { background: var(--accent); color: #fff; }
-    .btn-primary:hover { filter: brightness(1.05); }
-    .btn-ghost { border: 1px solid var(--border); color: var(--text2); background: var(--card); }
-    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
-    .meta-line { font-size: 13px; color: var(--muted); }
-    .shot { display: block; margin: 40px auto 0; max-width: 320px; width: 100%; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 12px 40px rgba(0,0,0,0.12); }
-    section { padding: 40px 0; border-top: 1px solid var(--border); }
-    h2 { font-size: 26px; margin-bottom: 20px; letter-spacing: -0.3px; }
-    h3 { font-size: 17px; margin: 22px 0 6px; }
-    p, li { color: var(--text2); }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
-    .card b { display: block; color: var(--text); margin-bottom: 4px; }
-    .card p { font-size: 14px; }
-    ol.steps { padding-left: 22px; font-size: 16px; }
-    ol.steps li { margin-bottom: 8px; }
-    table { width: 100%; border-collapse: collapse; font-size: 14px; background: var(--card); border-radius: 10px; overflow: hidden; }
-    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
-    th { background: var(--bg2); color: var(--text); }
-    td:not(:first-child), th:not(:first-child) { text-align: center; }
-    .y { color: var(--green); font-weight: 600; }
-    .n { color: var(--red); }
-    .note { font-size: 13px; color: var(--muted); margin-top: 10px; }
-    details { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; margin-bottom: 10px; }
-    summary { cursor: pointer; font-weight: 600; color: var(--text); font-size: 15px; }
-    details p { margin-top: 8px; font-size: 14px; }
-    footer { padding: 36px 0 48px; text-align: center; font-size: 13px; color: var(--muted); border-top: 1px solid var(--border); }
-    footer a { color: var(--accent); }
+    html { scroll-padding-top: 76px; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.62; -webkit-font-smoothing: antialiased; }
+    .wrap { max-width: 1040px; margin: 0 auto; padding: 0 24px; }
     a { color: var(--accent); }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+
+    /* ---- skip link ---- */
+    .skip { position: absolute; left: -999px; top: 0; background: var(--accent); color: var(--accent-ink); padding: 9px 16px; border-radius: 0 0 6px 0; z-index: 100; font-weight: 600; text-decoration: none; }
+    .skip:focus { left: 0; }
+
+    /* ---- kbd ---- */
+    kbd { background: var(--bg2); border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; font-family: inherit; font-size: 0.86em; color: var(--text); box-shadow: 0 1px 0 rgba(0,0,0,0.04); display: inline-block; }
+    @media (prefers-reduced-motion: no-preference) {
+      kbd { transition: transform .12s ease, border-color .12s ease, color .12s ease; }
+      kbd:hover { transform: translateY(-1px); border-color: var(--accent); color: var(--accent); }
+    }
+
+    /* ---- nav ---- */
+    nav { position: sticky; top: 0; z-index: 50; background: var(--bg); border-bottom: 1px solid var(--hairline); }
+    .nav-inner { max-width: 1040px; margin: 0 auto; padding: 12px 24px; display: flex; align-items: center; gap: 18px; }
+    .brand { display: flex; align-items: center; gap: 9px; font-weight: 700; color: var(--text); text-decoration: none; letter-spacing: -0.2px; font-size: 17px; }
+    .brand img { width: 26px; height: 26px; }
+    .nav-links { display: flex; gap: 4px; margin-left: auto; align-items: center; }
+    .nav-links a { color: var(--text2); text-decoration: none; font-size: 14px; font-weight: 500; padding: 7px 11px; border-radius: 7px; }
+    @media (prefers-reduced-motion: no-preference) { .nav-links a { transition: color .15s ease, background .15s ease; } }
+    .nav-links a:not(.nav-dl):hover { color: var(--text); background: var(--bg2); }
+    .nav-dl { background: var(--accent); color: var(--accent-ink) !important; font-weight: 600; padding: 8px 16px !important; }
+    .nav-dl:hover { filter: brightness(1.05); background: var(--accent); }
+    @media (prefers-reduced-motion: no-preference) {
+      .pulse-once { animation: pulseOnce 1.1s ease 0.6s 1; }
+      @keyframes pulseOnce {
+        0% { box-shadow: 0 0 0 0 var(--ring); }
+        60% { box-shadow: 0 0 0 10px rgba(196,148,100,0); }
+        100% { box-shadow: 0 0 0 0 rgba(196,148,100,0); }
+      }
+    }
+    @media (max-width: 720px) { .nav-hide-mobile { display: none; } }
+
+    /* ---- hero ---- */
+    header.hero { padding: 60px 0 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+    @media (max-width: 880px) { header.hero { grid-template-columns: 1fr; gap: 36px; padding: 40px 0 16px; text-align: center; } }
+    .eyebrow { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase; color: var(--accent); background: var(--accent-wash); border: 1px solid var(--accent-wash2); padding: 5px 12px; border-radius: 100px; margin-bottom: 18px; }
+    .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+    h1 { font-size: clamp(40px, 6vw, 72px); line-height: 1.04; margin: 0 0 16px; letter-spacing: -1.5px; font-weight: 800; }
+    /* editorial: the word "top", tilted in caramel with a pin glyph stuck in it */
+    .pinned-word { position: relative; display: inline-block; color: var(--accent); transform: rotate(-3deg); transform-origin: 50% 80%; padding-right: 8px; }
+    .pinned-word .pin-glyph { position: absolute; top: -0.5em; right: -0.16em; width: 0.46em; height: 0.46em; transform: rotate(20deg); color: var(--accent); }
+    @media (prefers-reduced-motion: no-preference) {
+      .pinned-word .pin-glyph { animation: pin-tap 5s ease-in-out infinite; }
+      @keyframes pin-tap {
+        0%, 86%, 100% { transform: rotate(20deg) translateY(0); }
+        90% { transform: rotate(20deg) translateY(-3px); }
+        94% { transform: rotate(20deg) translateY(0); }
+      }
+    }
+    .sub { font-size: 18px; color: var(--text2); max-width: 480px; margin-bottom: 26px; }
+    @media (max-width: 880px) { .sub { margin-left: auto; margin-right: auto; } }
+    .cta-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+    @media (max-width: 880px) { .cta-row { justify-content: center; } }
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 13px 26px; border-radius: 9px; font-weight: 600; text-decoration: none; font-size: 15.5px; }
+    @media (prefers-reduced-motion: no-preference) { .btn { transition: transform .15s ease, filter .15s ease, border-color .15s ease, color .15s ease; } }
+    .btn:active { transform: translateY(1px); }
+    .btn-primary { background: var(--accent); color: var(--accent-ink); }
+    .btn-primary:hover { filter: brightness(1.05); transform: translateY(-1px); }
+    .btn-ghost { border: 1px solid var(--border); color: var(--text2); background: var(--card); }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
+    .meta-line { font-size: 13px; color: var(--muted); }
+    .meta-line strong { color: var(--text2); font-weight: 600; }
+
+    /* ---- hero diorama (CSS built) ---- */
+    .diorama { position: relative; }
+    .stage { position: relative; background: linear-gradient(160deg, var(--bg2), var(--card)); border: 1px solid var(--border); border-radius: 18px; padding: 30px 26px 26px; box-shadow: var(--shadow); overflow: hidden; }
+    /* flat geometric grid texture with radial mask (from v1) */
+    .stage::before { content: ""; position: absolute; inset: 0;
+      background-image:
+        linear-gradient(var(--hairline) 1px, transparent 1px),
+        linear-gradient(90deg, var(--hairline) 1px, transparent 1px);
+      background-size: 24px 24px; opacity: .55; pointer-events: none;
+      mask-image: radial-gradient(ellipse 80% 80% at 60% 42%, #000 36%, transparent 88%);
+      -webkit-mask-image: radial-gradient(ellipse 80% 80% at 60% 42%, #000 36%, transparent 88%); }
+    /* the muted document card sitting behind */
+    .behind-doc { position: relative; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin: 6px 8px 0 28px; box-shadow: 0 4px 18px rgba(42,38,34,0.06); will-change: transform, opacity; }
+    .behind-doc .bar { background: var(--bg2); border: 1px solid var(--border); height: 9px; border-radius: 4px; margin: 7px 0; }
+    .behind-doc .bar.w90 { width: 90%; } .behind-doc .bar.w70 { width: 70%; } .behind-doc .bar.w80 { width: 80%; } .behind-doc .bar.w55 { width: 55%; }
+    .behind-label { font-size: 11px; color: var(--muted); font-weight: 600; letter-spacing: .4px; text-transform: uppercase; }
+
+    /* the mock pinned window */
+    .mockwin { position: relative; margin: -64px 0 0 0; background: var(--card); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 14px 40px rgba(42,38,34,0.16); overflow: visible; will-change: transform, opacity; }
+    .mockwin .frame { border-radius: 12px; overflow: hidden; }
+    @media (prefers-reduced-motion: no-preference) { .mockwin .frame { transition: opacity .08s linear; } }
+    .mockwin .titlebar { display: flex; align-items: center; gap: 9px; padding: 10px 13px; background: var(--bg2); border-bottom: 1px solid var(--border); }
+    .traffic { display: flex; gap: 6px; }
+    .traffic i { width: 10px; height: 10px; border-radius: 50%; display: block; background: var(--border); }
+    .wintitle { font-size: 13px; font-weight: 600; color: var(--text); }
+    .wintitle svg { vertical-align: -2px; margin-right: 4px; }
+    .mockwin .body { padding: 15px 16px 18px; }
+    .note-line { display: block; height: 9px; border-radius: 4px; background: var(--bg2); margin: 8px 0; }
+    .note-line.w95 { width: 95%; } .note-line.w85 { width: 85%; } .note-line.w60 { width: 60%; }
+    .note-accent { height: 9px; width: 40%; border-radius: 4px; background: var(--accent); opacity: .7; margin: 8px 0; }
+
+    /* the caramel pin */
+    .pin { position: absolute; top: -16px; right: -10px; width: 40px; height: 40px; transform-origin: 50% 100%; pointer-events: none; opacity: 1; transform: none; will-change: transform, opacity; }
+    @media (prefers-reduced-motion: no-preference) {
+      .pin { opacity: 0; transform: scale(.4) rotate(-18deg); }
+      .pin.planted { animation: pinDrop .7s cubic-bezier(.3,1.4,.5,1) forwards; }
+      .pin.pulled { animation: pinPull .3s ease forwards; }
+      @keyframes pinDrop { 0% { opacity:0; transform: translateY(-26px) scale(.5) rotate(-22deg);} 60% { opacity:1; transform: translateY(4px) scale(1.08) rotate(6deg);} 100% { opacity:1; transform: translateY(0) scale(1) rotate(0);} }
+      @keyframes pinPull { 0% { opacity:1; transform: scale(1);} 100% { opacity:0; transform: translateY(-18px) scale(.5) rotate(-16deg);} }
+    }
+
+    /* topmost ring */
+    .topmost-ring { position: absolute; inset: -5px; border: 2px solid var(--accent); border-radius: 15px; opacity: 0; pointer-events: none; box-shadow: 0 0 0 4px var(--accent-wash); }
+    @media (prefers-reduced-motion: no-preference) { .topmost-ring { transition: opacity .35s ease; } }
+    .mockwin.pinned .topmost-ring { opacity: 1; }
+
+    /* floating Win+Ctrl+T keyboard combo (self-presses once, v1) */
+    .kbd-float { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; z-index: 7; opacity: 1; }
+    @media (prefers-reduced-motion: no-preference) { .js .kbd-float { opacity: 0; } .js .kbd-float.shown { opacity: 1; transition: opacity .5s ease; } }
+    .kbd-float kbd { font-size: 12px; padding: 3px 8px; background: var(--card); box-shadow: 0 3px 8px rgba(42,38,34,0.18); }
+    @media (prefers-reduced-motion: no-preference) {
+      .kbd-float kbd { transition: transform .12s ease, box-shadow .12s ease, background .12s ease, color .12s ease; }
+      .kbd-float kbd.press { transform: translateY(2px); background: var(--accent); color: var(--accent-ink); box-shadow: 0 1px 2px rgba(42,38,34,0.18); }
+    }
+
+    /* control deck */
+    .deck { margin-top: 18px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; box-shadow: 0 6px 18px rgba(42,38,34,0.06); }
+    .deck-row { display: flex; align-items: center; gap: 12px; }
+    .deck-label { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; }
+    .opacity-badge { margin-left: auto; font-size: 12.5px; font-weight: 700; color: var(--accent); background: var(--accent-wash); border: 1px solid var(--accent-wash2); border-radius: 100px; padding: 3px 10px; min-width: 52px; text-align: center; font-variant-numeric: tabular-nums; }
+    input[type=range].opslider { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 100px; background: linear-gradient(90deg, var(--accent) 0%, var(--accent) 50%, var(--bg2) 50%, var(--bg2) 100%); outline: none; cursor: pointer; margin: 4px 0; }
+    input[type=range].opslider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--card); border: 3px solid var(--accent); box-shadow: 0 2px 6px rgba(42,38,34,0.2); cursor: pointer; }
+    @media (prefers-reduced-motion: no-preference) {
+      input[type=range].opslider::-webkit-slider-thumb { transition: transform .12s ease; }
+      input[type=range].opslider::-webkit-slider-thumb:hover { transform: scale(1.12); }
+    }
+    input[type=range].opslider::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: var(--card); border: 3px solid var(--accent); box-shadow: 0 2px 6px rgba(42,38,34,0.2); cursor: pointer; }
+    .deck-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--hairline); }
+    .pin-toggle { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--accent); background: var(--card); color: var(--accent); font-weight: 600; font-size: 13.5px; padding: 8px 16px; border-radius: 9px; cursor: pointer; font-family: inherit; }
+    @media (prefers-reduced-motion: no-preference) {
+      .pin-toggle { transition: background .15s ease, color .15s ease, transform .12s ease; }
+      .pin-toggle:hover { transform: translateY(-1px); }
+    }
+    .pin-toggle[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+    @media (prefers-reduced-motion: no-preference) { .pin-toggle svg { transition: transform .2s ease; } }
+    .pin-toggle[aria-pressed="true"] svg { transform: rotate(-35deg); }
+    .deck-hint { font-size: 12px; color: var(--muted); }
+    .deck-hint kbd { font-size: 11px; }
+
+    /* fallback screenshot (shown only when JS disabled) */
+    .shot { display: none; margin: 18px auto 0; max-width: 320px; width: 100%; border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow); }
+    .no-js .shot { display: block; }
+    .no-js .diorama .stage, .no-js .diorama .deck, .no-js .diorama .kbd-float { display: none; }
+
+    /* ---- sections (editorial: numbered, hairline-ruled) ---- */
+    section { padding: 56px 0; border-top: 1px solid var(--rule); }
+    .sec-head { max-width: 640px; margin-bottom: 30px; display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+    @media (max-width: 880px) { .sec-head { justify-content: center; text-align: center; margin-left: auto; margin-right: auto; } }
+    .sec-num { font-size: 13px; font-weight: 800; letter-spacing: 0.5px; color: var(--accent); font-variant-numeric: tabular-nums; flex: none; }
+    .sec-head .sec-text { min-width: 0; }
+    h2 { font-size: clamp(24px, 3vw, 32px); margin-bottom: 8px; letter-spacing: -0.6px; font-weight: 800; line-height: 1.12; }
+    .sec-sub { color: var(--text2); font-size: 16px; }
+    h3 { font-size: 17px; margin: 0 0 6px; color: var(--text); font-weight: 700; }
+    p, li { color: var(--text2); }
+
+    /* feature grid */
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 22px; }
+    @media (prefers-reduced-motion: no-preference) {
+      .card { transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+      .card:hover { transform: translateY(-3px); box-shadow: var(--shadow); border-color: var(--accent-wash2); }
+    }
+    .card .ico { width: 38px; height: 38px; border-radius: 10px; background: var(--accent-wash); display: flex; align-items: center; justify-content: center; color: var(--accent); margin-bottom: 14px; }
+    .card .ico svg { width: 20px; height: 20px; }
+    .card p { font-size: 14px; margin-top: 4px; }
+
+    /* how-to steps */
+    .steps { list-style: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; counter-reset: step; }
+    @media (max-width: 720px) { .steps { grid-template-columns: 1fr; } }
+    .steps li { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 22px; position: relative; }
+    .steps li::before { counter-increment: step; content: counter(step, decimal-leading-zero); display: flex; align-items: center; justify-content: center; min-width: 38px; height: 30px; padding: 0 8px; border-radius: 9px; background: var(--accent); color: var(--accent-ink); font-weight: 800; font-size: 15px; margin-bottom: 12px; width: max-content; font-variant-numeric: tabular-nums; }
+    .steps li .stxt { color: var(--text2); font-size: 15px; }
+    .steps li .stxt a { font-weight: 600; }
+    .note { font-size: 14px; color: var(--muted); margin-top: 16px; }
+
+    /* table */
+    .tablewrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 14px; background: var(--card); box-shadow: var(--shadow); }
+    table { width: 100%; border-collapse: collapse; font-size: 14.5px; min-width: 560px; }
+    th, td { padding: 13px 16px; text-align: left; border-bottom: 1px solid var(--hairline); }
+    tbody tr:last-child td { border-bottom: none; }
+    th { background: var(--bg2); color: var(--text); font-weight: 700; font-size: 13.5px; }
+    td:not(:first-child), th:not(:first-child) { text-align: center; }
+    /* highlight PinIt column (2nd) */
+    th:nth-child(2), td:nth-child(2) { background: var(--accent-wash); position: relative; }
+    th:nth-child(2) { color: var(--accent); font-weight: 800; box-shadow: inset 0 2px 0 var(--accent); }
+    .y { color: var(--green); font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
+    .y svg { width: 15px; height: 15px; flex: none; }
+    .n { color: var(--red); }
+    /* check animation (opt-in only) */
+    @media (prefers-reduced-motion: no-preference) {
+      .reveal-table .y svg .chk { stroke-dasharray: 18; stroke-dashoffset: 18; }
+      .reveal-table.in .y svg .chk { animation: drawChk .5s ease forwards; }
+      .reveal-table.in td:nth-child(2) .y svg .chk { animation-delay: .12s; }
+      @keyframes drawChk { to { stroke-dashoffset: 0; } }
+    }
+    .note em { font-style: italic; }
+
+    /* faq */
+    .faq-list { display: grid; gap: 10px; }
+    details { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 4px 18px; }
+    @media (prefers-reduced-motion: no-preference) { details { transition: border-color .15s ease; } }
+    details[open] { border-color: var(--accent-wash2); }
+    summary { cursor: pointer; font-weight: 700; color: var(--text); font-size: 15.5px; padding: 14px 0; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    summary::-webkit-details-marker { display: none; }
+    summary .caret { flex: none; width: 18px; height: 18px; color: var(--muted); }
+    @media (prefers-reduced-motion: no-preference) { summary .caret { transition: transform .2s ease; } }
+    details[open] summary .caret { transform: rotate(45deg); color: var(--accent); }
+    details p { padding: 0 0 16px; font-size: 14.5px; }
+
+    /* download CTA band */
+    .cta-band { background: var(--accent-wash); border: 1px solid var(--accent-wash2); border-radius: 18px; padding: 40px 32px; text-align: center; }
+    .cta-band h2 { margin-bottom: 8px; }
+    .cta-band p { max-width: 460px; margin: 0 auto 22px; color: var(--text2); }
+    .cta-band .cta-row { justify-content: center; }
+    .byte-cap { font-size: 13px; color: var(--muted); margin-top: 14px; }
+
+    footer { padding: 48px 0 60px; text-align: center; border-top: 1px solid var(--rule); }
+    footer .sig { font-size: clamp(22px, 4vw, 30px); font-weight: 800; letter-spacing: -0.6px; color: var(--text); margin-bottom: 16px; }
+    footer .sig .pin-ink { color: var(--accent); }
+    footer p.byline { font-size: 13.5px; color: var(--muted); max-width: 60ch; margin: 0 auto; }
+    footer a { color: var(--accent); }
+    footer .flinks { margin-top: 8px; font-size: 13.5px; color: var(--muted); }
+
+    /* scroll reveal (opt-in motion only) */
+    @media (prefers-reduced-motion: no-preference) {
+      .reveal { opacity: 0; transform: translateY(18px); transition: opacity .6s ease, transform .6s ease; }
+      .reveal.in { opacity: 1; transform: none; }
+      .reveal.d1 { transition-delay: .06s; } .reveal.d2 { transition-delay: .12s; } .reveal.d3 { transition-delay: .18s; }
+    }
   </style>
 </head>
-<body>
-  <div class="wrap">
+<body class="no-js">
+  <a class="skip" href="#features">Skip to content</a>
+
+  <nav aria-label="Primary">
+    <div class="nav-inner">
+      <a class="brand" href="#top"><img src="assets/logo.svg" alt="PinIt logo" width="26" height="26" />PinIt</a>
+      <div class="nav-links">
+        <a class="nav-hide-mobile" href="#features">Features</a>
+        <a class="nav-hide-mobile" href="#how-to">How&nbsp;to</a>
+        <a class="nav-hide-mobile" href="#compare">Compare</a>
+        <a class="nav-hide-mobile" href="#faq">FAQ</a>
+        <a class="nav-dl pulse-once" href="https://github.com/Razee4315/Pin-It/releases/latest">Download</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- single, deduped check-mark glyph referenced by every comparison cell -->
+  <svg style="display:none" aria-hidden="true"><symbol id="chk" viewBox="0 0 24 24"><path class="chk" d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol></svg>
+
+  <div class="wrap" id="top">
 
     <header class="hero">
-      <img class="logo" src="assets/logo.svg" alt="PinIt logo" width="72" height="72" />
-      <h1>Keep Any Window Always on Top<br/>— Free for Windows 10 &amp; 11</h1>
-      <p class="sub">PinIt pins any window so it stays on top with a single global hotkey — <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd>. Make it see-through. It re-pins itself after a reboot.</p>
-      <div class="cta-row">
-        <a class="btn btn-primary" href="https://github.com/Razee4315/Pin-It/releases/latest">Download for Windows (Free)</a>
-        <a class="btn btn-ghost" href="https://github.com/Razee4315/Pin-It">View on GitHub</a>
+      <div class="hero-copy">
+        <span class="eyebrow"><span class="dot"></span>Free &amp; open source · Windows 10 &amp; 11</span>
+        <h1>Keep Any Window Always on <span class="pinned-word">top<svg class="pin-glyph" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14.4 3.6 12 1.2l-1.6 5.6L4.8 9.4l5.6 1.6.4 8 1.4-7.8 6-1.4-5.6-1.6 1.8-4.2z"/></svg></span> — Free for Windows 10 &amp; 11</h1>
+        <p class="sub">PinIt pins any window so it stays on top with a single global hotkey — <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd>. Make it see-through. It re-pins itself after a reboot.</p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="https://github.com/Razee4315/Pin-It/releases/latest">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            Download for Windows (Free)
+          </a>
+          <a class="btn btn-ghost" href="https://github.com/Razee4315/Pin-It">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.6v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.4 1 .1-.8.4-1.3.8-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .4.2.7.8.6 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg>
+            View on GitHub
+          </a>
+        </div>
+        <p class="meta-line"><strong>~2.5 MB installer</strong> · Windows 10 &amp; 11 · Built with Rust + Tauri</p>
       </div>
-      <p class="meta-line">~2.5 MB installer · Windows 10 &amp; 11 · Built with Rust + Tauri</p>
-      <!-- TODO: replace with assets/demo.mp4 (autoplay muted loop) once recorded — a moving demo converts far better -->
-      <img class="shot" src="assets/screenshot.png" alt="PinIt interface pinning windows always on top in Windows 11 with per-window opacity sliders" loading="lazy" />
+
+      <!-- CSS-built interactive diorama -->
+      <div class="diorama" id="diorama">
+        <div class="stage" aria-hidden="false">
+          <!-- self-pressing Win+Ctrl+T combo -->
+          <div class="kbd-float" id="kbdfloat" aria-hidden="true">
+            <kbd data-k="0">Win</kbd><kbd data-k="1">Ctrl</kbd><kbd data-k="2">T</kbd>
+          </div>
+          <p class="behind-label" style="margin:0 8px 8px 28px;">Your work, behind</p>
+          <!-- the muted document card visible THROUGH the pinned window when faded -->
+          <div class="behind-doc">
+            <div class="bar w90"></div>
+            <div class="bar w70"></div>
+            <div class="bar w80"></div>
+            <div class="bar w55"></div>
+          </div>
+
+          <!-- the pinned mock window -->
+          <div class="mockwin" id="mockwin">
+            <span class="topmost-ring" aria-hidden="true"></span>
+            <span class="pin" id="pin" aria-hidden="true">
+              <svg viewBox="0 0 40 40" fill="none">
+                <circle cx="20" cy="13" r="11" fill="var(--accent)"/>
+                <circle cx="20" cy="13" r="4.5" fill="var(--card)" opacity="0.5"/>
+                <path d="M20 24 L20 38" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <div class="frame" id="mockframe">
+              <div class="titlebar">
+                <span class="traffic"><i></i><i></i><i></i></span>
+                <span class="wintitle">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h14a2 2 0 0 1 2 2v3H3V5a2 2 0 0 1 2-2z"/><path d="M3 8v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8"/></svg>
+                  Sticky Notes
+                </span>
+              </div>
+              <div class="body">
+                <span class="note-line w95"></span>
+                <span class="note-accent"></span>
+                <span class="note-line w85"></span>
+                <span class="note-line w60"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- live control deck -->
+        <div class="deck" role="group" aria-label="Live demo controls">
+          <div class="deck-row">
+            <span class="deck-label">Opacity</span>
+            <span class="opacity-badge" id="opval" aria-live="polite">100%</span>
+          </div>
+          <input type="range" class="opslider" id="opslider" min="20" max="100" value="100" step="1" aria-label="Mock window opacity" />
+          <div class="deck-actions">
+            <button type="button" class="pin-toggle" id="pinbtn" aria-pressed="true">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17v5"/><path d="M9 10.8V4h6v6.8l2 3.2H7l2-3.2z"/></svg>
+              <span id="pinlabel">Unpin window</span>
+            </button>
+            <span class="deck-hint">Try it — same controls as <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd></span>
+          </div>
+        </div>
+
+        <!-- TODO: replace with assets/demo.mp4 (autoplay muted loop) once recorded — a moving demo converts far better -->
+        <img class="shot" src="assets/screenshot.png" alt="PinIt interface pinning windows always on top in Windows 11 with per-window opacity sliders" loading="lazy" width="320" height="240" />
+      </div>
     </header>
 
-    <section id="features">
-      <h2>What PinIt Does</h2>
+    <main>
+    <section id="features" aria-labelledby="features-h">
+      <div class="sec-head reveal">
+        <span class="sec-num">01</span>
+        <div class="sec-text">
+          <h2 id="features-h">What PinIt Does</h2>
+          <p class="sec-sub">A single-purpose tool that does pinning properly — nothing more, nothing less.</p>
+        </div>
+      </div>
       <div class="grid">
-        <div class="card"><b>Global hotkey pinning</b><p><kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd> pins or unpins the focused window instantly. No menus, no clicking around.</p></div>
-        <div class="card"><b>Per-window transparency</b><p>Fade any pinned window with <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>-</kbd> or a slider — keep notes or a video visible over your work.</p></div>
-        <div class="card"><b>Pins survive restarts</b><p>PinIt remembers what you pinned and its opacity, and re-pins it when you log back in.</p></div>
-        <div class="card"><b>Windows 11 re-enforcement</b><p>Win11's compositor sometimes strips the topmost flag. PinIt watches window events and re-applies it automatically.</p></div>
-        <div class="card"><b>Tiny and fast</b><p>Rust talking directly to the Windows API. ~2.5 MB installer, runs quietly in the system tray.</p></div>
-        <div class="card"><b>Customizable shortcuts</b><p>Rebind every hotkey from inside the app. Optional start-with-Windows.</p></div>
+        <div class="card reveal">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 10.8V4h6v6.8l2 3.2H7l2-3.2z"/></svg></div>
+          <h3>Global hotkey pinning</h3>
+          <p><kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd> pins or unpins the focused window instantly. No menus, no clicking around.</p>
+        </div>
+        <div class="card reveal d1">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18"/></svg></div>
+          <h3>Per-window transparency</h3>
+          <p>Fade any pinned window with <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>-</kbd> or a slider — keep notes or a video visible over your work.</p>
+        </div>
+        <div class="card reveal d2">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg></div>
+          <h3>Pins survive restarts</h3>
+          <p>PinIt remembers what you pinned and its opacity, and re-pins it when you log back in.</p>
+        </div>
+        <div class="card reveal">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+          <h3>Windows 11 re-enforcement</h3>
+          <p>Win11's compositor sometimes strips the topmost flag. PinIt watches window events and re-applies it automatically.</p>
+        </div>
+        <div class="card reveal d1">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg></div>
+          <h3>Tiny and fast</h3>
+          <p>Rust talking directly to the Windows API. ~2.5 MB installer, runs quietly in the system tray.</p>
+        </div>
+        <div class="card reveal d2">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0-1.2-2.9H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 2.9-1.2V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0 1.2 2.9H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></div>
+          <h3>Customizable shortcuts</h3>
+          <p>Rebind every hotkey from inside the app. Optional start-with-Windows.</p>
+        </div>
       </div>
     </section>
 
-    <section id="how-to">
-      <h2>How to Keep a Window Always on Top with PinIt</h2>
+    <section id="how-to" aria-labelledby="howto-h">
+      <div class="sec-head reveal">
+        <span class="sec-num">02</span>
+        <div class="sec-text">
+          <h2 id="howto-h">How to Keep a Window Always on Top with PinIt</h2>
+          <p class="sec-sub">Three steps from download to pinned.</p>
+        </div>
+      </div>
       <ol class="steps">
-        <li><a href="https://github.com/Razee4315/Pin-It/releases/latest">Download and install PinIt</a> (free, ~2.5 MB).</li>
-        <li>Click the window you want to keep visible, then press <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd>.</li>
-        <li>Optional: press <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>-</kbd> to make it see-through, <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>=</kbd> to solidify.</li>
+        <li class="reveal"><span class="stxt"><a href="https://github.com/Razee4315/Pin-It/releases/latest">Download and install PinIt</a> (free, ~2.5 MB).</span></li>
+        <li class="reveal d1"><span class="stxt">Click the window you want to keep visible, then press <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd>.</span></li>
+        <li class="reveal d2"><span class="stxt">Optional: press <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>-</kbd> to make it see-through, <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>=</kbd> to solidify.</span></li>
       </ol>
       <p class="note">To keep a window always on top in Windows 11 or Windows 10, that's all there is — Windows itself has no built-in always-on-top button.</p>
     </section>
 
-    <section id="compare">
-      <h2>PinIt vs PowerToys vs DeskPins</h2>
-      <table>
-        <thead>
-          <tr><th>Feature</th><th>PinIt</th><th>PowerToys (Always On Top)</th><th>DeskPins</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>Price</td><td class="y">Free</td><td class="y">Free</td><td class="y">Free</td></tr>
-          <tr><td>Single-purpose / lightweight</td><td class="y">Yes — ~2.5 MB</td><td class="n">No — full utility suite</td><td class="y">Yes</td></tr>
-          <tr><td>Global hotkey to pin</td><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td></tr>
-          <tr><td>True per-window transparency</td><td class="y">Yes</td><td class="n">No¹</td><td class="n">No</td></tr>
-          <tr><td>Pins persist across restart</td><td class="y">Yes</td><td class="n">No</td><td class="n">No</td></tr>
-          <tr><td>Actively maintained</td><td class="y">Yes</td><td class="y">Yes</td><td class="n">Last release 2018</td></tr>
-        </tbody>
-      </table>
+    <section id="compare" aria-labelledby="compare-h">
+      <div class="sec-head reveal">
+        <span class="sec-num">03</span>
+        <div class="sec-text">
+          <h2 id="compare-h">PinIt vs PowerToys vs DeskPins</h2>
+          <p class="sec-sub">Where a focused tool pulls ahead of the alternatives.</p>
+        </div>
+      </div>
+      <div class="tablewrap reveal-table">
+        <table>
+          <thead>
+            <tr><th scope="col">Feature</th><th scope="col">PinIt</th><th scope="col">PowerToys (Always On Top)</th><th scope="col">DeskPins</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Price</td><td><span class="y"><svg aria-hidden="true"><use href="#chk"/></svg>Free</span></td><td><span class="y"><svg aria-hidden="true"><use href="#chk"/></svg>Free</span></td><td><span class="y"><svg aria-hidden="true"><use href="#chk"/></svg>Free</span></td></tr>
+            <tr><td>Single-purpose / lightweight</td><td><span class="y"><svg aria-hidden="true"><use href="#chk"/></svg>Yes — ~2.5 MB</span></td><td class="n">No — full utility suite</td><td><span class="y"><svg aria-hidden="true"><use href="#chk"/></svg>Yes</span></td></tr>
+            <tr><td>Global hotkey to pin</td><td><span class="y"><svg aria-hidden="true"><use href="#chk"/></svg>Yes</span></td><td><span class="y"><svg aria-hidden="true"><use href="#chk"/></svg>Yes</span></td><td><span class="y"><svg aria-hidden="true"><use href="#chk"/></svg>Yes</span></td></tr>
+            <tr><td>True per-window transparency</td><td><span class="y"><svg aria-hidden="true"><use href="#chk"/></svg>Yes</span></td><td class="n">No¹</td><td class="n">No</td></tr>
+            <tr><td>Pins persist across restart</td><td><span class="y"><svg aria-hidden="true"><use href="#chk"/></svg>Yes</span></td><td class="n">No</td><td class="n">No</td></tr>
+            <tr><td>Actively maintained</td><td><span class="y"><svg aria-hidden="true"><use href="#chk"/></svg>Yes</span></td><td><span class="y"><svg aria-hidden="true"><use href="#chk"/></svg>Yes</span></td><td class="n">Last release 2018</td></tr>
+          </tbody>
+        </table>
+      </div>
       <p class="note">¹ PowerToys' "Opacity" setting changes the highlight <em>border</em> around pinned windows, not the window content itself — true window transparency is a long-standing open <a href="https://github.com/microsoft/PowerToys/issues/26049">feature request</a>.</p>
     </section>
 
-    <section id="faq">
-      <h2>Frequently Asked Questions</h2>
-
-      <details open>
-        <summary>How do I keep a window always on top in Windows 11?</summary>
-        <p>To keep a window always on top in Windows 11, install PinIt, click the window you want to stay visible, and press <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd>. The window stays on top of every other window until you unpin it. Windows has no built-in always-on-top button.</p>
-      </details>
-      <details>
-        <summary>What is the keyboard shortcut to pin a window on top?</summary>
-        <p>PinIt's default shortcut is <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd> to toggle pinning the focused window. All shortcuts can be customized from within the app.</p>
-      </details>
-      <details>
-        <summary>Can I make a window transparent / see-through on Windows?</summary>
-        <p>Yes — pin a window with PinIt, then press <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>-</kbd> to fade it (down to 20% opacity) or <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>=</kbd> to make it solid again. Each pinned window keeps its own opacity level.</p>
-      </details>
-      <details>
-        <summary>Do my pinned windows stay on top after I restart?</summary>
-        <p>Yes. PinIt saves your pins (per app, with their opacity) and re-pins matching windows on the next launch — something neither PowerToys nor DeskPins does.</p>
-      </details>
-      <details>
-        <summary>PowerToys already has Always On Top — why PinIt?</summary>
-        <p>Two things PowerToys can't do: true per-window transparency and pins that survive a reboot. Plus, PinIt is a single ~2.5 MB tool rather than a large suite — if pinning is all you need, you don't have to install everything else.</p>
-      </details>
-      <details>
-        <summary>Does it work with apps running as administrator?</summary>
-        <p>Windows security (UIPI) prevents normal apps from modifying elevated windows. To pin a window that's running as administrator, run PinIt as administrator too.</p>
-      </details>
-      <details>
-        <summary>Is PinIt free and open source?</summary>
-        <p>Yes — PinIt is completely free and open source under the Apache 2.0 license. The full source code is on <a href="https://github.com/Razee4315/Pin-It">GitHub</a>; use it, modify it, and redistribute it, including commercially.</p>
-      </details>
+    <section id="faq" aria-labelledby="faq-h">
+      <div class="sec-head reveal">
+        <span class="sec-num">04</span>
+        <div class="sec-text">
+          <h2 id="faq-h">Frequently Asked Questions</h2>
+          <p class="sec-sub">Everything about pinning, transparency, and how PinIt compares.</p>
+        </div>
+      </div>
+      <div class="faq-list">
+        <details open class="reveal">
+          <summary>How do I keep a window always on top in Windows 11?<svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></summary>
+          <p>To keep a window always on top in Windows 11, install PinIt, click the window you want to stay visible, and press <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd>. The window stays on top of every other window until you unpin it. Windows has no built-in always-on-top button.</p>
+        </details>
+        <details class="reveal">
+          <summary>What is the keyboard shortcut to pin a window on top?<svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></summary>
+          <p>PinIt's default shortcut is <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd> to toggle pinning the focused window. All shortcuts can be customized from within the app.</p>
+        </details>
+        <details class="reveal">
+          <summary>Can I make a window transparent / see-through on Windows?<svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></summary>
+          <p>Yes — pin a window with PinIt, then press <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>-</kbd> to fade it (down to 20% opacity) or <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>=</kbd> to make it solid again. Each pinned window keeps its own opacity level.</p>
+        </details>
+        <details class="reveal">
+          <summary>Do my pinned windows stay on top after I restart?<svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></summary>
+          <p>Yes. PinIt saves your pins (per app, with their opacity) and re-pins matching windows on the next launch — something neither PowerToys nor DeskPins does.</p>
+        </details>
+        <details class="reveal">
+          <summary>PowerToys already has Always On Top — why PinIt?<svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></summary>
+          <p>Two things PowerToys can't do: true per-window transparency and pins that survive a reboot. Plus, PinIt is a single ~2.5 MB tool rather than a large suite — if pinning is all you need, you don't have to install everything else.</p>
+        </details>
+        <details class="reveal">
+          <summary>Does it work with apps running as administrator?<svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></summary>
+          <p>Windows security (UIPI) prevents normal apps from modifying elevated windows. To pin a window that's running as administrator, run PinIt as administrator too.</p>
+        </details>
+        <details class="reveal">
+          <summary>Is PinIt free and open source?<svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></summary>
+          <p>Yes — PinIt is completely free and open source under the Apache 2.0 license. The full source code is on <a href="https://github.com/Razee4315/Pin-It">GitHub</a>; use it, modify it, and redistribute it, including commercially.</p>
+        </details>
+      </div>
     </section>
 
+    <section id="download" aria-labelledby="download-h">
+      <div class="cta-band reveal">
+        <h2 id="download-h">Pin your first window in under a minute</h2>
+        <p>Free, open source under Apache 2.0, and just ~2.5 MB. No account, no telemetry, no nags.</p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="https://github.com/Razee4315/Pin-It/releases/latest">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            Download for Windows (Free)
+          </a>
+          <a class="btn btn-ghost" href="https://github.com/Razee4315/Pin-It">View on GitHub</a>
+        </div>
+        <p class="byte-cap">~2.5 MB installer · Windows 10 &amp; 11 · MSI &amp; NSIS builds on the GitHub releases page</p>
+      </div>
+    </section>
+    </main>
+
     <footer>
-      <p>PinIt — a free, open-source (Apache 2.0) Always on Top utility for Windows, by <a href="https://github.com/Razee4315">Saqlain Abbas</a>.<br/>
-      <a href="https://github.com/Razee4315/Pin-It">Source code</a> · <a href="https://github.com/Razee4315/Pin-It/releases/latest">Download</a> · <a href="https://github.com/Razee4315/Pin-It/issues">Report an issue</a></p>
+      <p class="sig">Pin it. <span class="pin-ink">Forget it.</span></p>
+      <p class="byline">PinIt — a free, open-source (Apache 2.0) Always on Top utility for Windows, by <a href="https://github.com/Razee4315">Saqlain Abbas</a>.</p>
+      <p class="flinks"><a href="https://github.com/Razee4315/Pin-It">Source code</a> · <a href="https://github.com/Razee4315/Pin-It/releases/latest">Download</a> · <a href="https://github.com/Razee4315/Pin-It/issues">Report an issue</a></p>
     </footer>
 
   </div>
+
+  <script>
+  (function () {
+    "use strict";
+    document.body.classList.remove('no-js');
+    document.documentElement.classList.add('js');
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    /* ---- live opacity slider ---- */
+    var slider = document.getElementById('opslider');
+    var opval = document.getElementById('opval');
+    var frame = document.getElementById('mockframe');
+    function paintSlider(pct) {
+      var p = ((pct - slider.min) / (slider.max - slider.min)) * 100;
+      slider.style.background =
+        'linear-gradient(90deg, var(--accent) 0%, var(--accent) ' + p + '%, var(--bg2) ' + p + '%, var(--bg2) 100%)';
+    }
+    function applyOpacity(v) {
+      var pct = Math.max(20, Math.min(100, v | 0));
+      frame.style.opacity = (pct / 100).toFixed(2);
+      opval.textContent = pct + '%';
+      slider.value = pct;
+      paintSlider(pct);
+    }
+    applyOpacity(+slider.value);
+
+    /* ---- pin / unpin toggle ---- */
+    var pinBtn = document.getElementById('pinbtn');
+    var pinLabel = document.getElementById('pinlabel');
+    var pinEl = document.getElementById('pin');
+    var mockwin = document.getElementById('mockwin');
+    var pinned = true;
+    mockwin.classList.add('pinned');
+    function setPinned(state) {
+      pinned = state;
+      pinBtn.setAttribute('aria-pressed', String(state));
+      pinLabel.textContent = state ? 'Unpin window' : 'Pin window';
+      if (state) {
+        mockwin.classList.add('pinned');
+        pinEl.classList.remove('pulled');
+        if (!reduce) { pinEl.classList.remove('planted'); void pinEl.offsetWidth; pinEl.classList.add('planted'); }
+      } else {
+        mockwin.classList.remove('pinned');
+        if (!reduce) { pinEl.classList.remove('planted'); void pinEl.offsetWidth; pinEl.classList.add('pulled'); }
+        else { pinEl.classList.remove('planted'); }
+      }
+    }
+
+    /* ---- self-playing hero choreography (v1) ---- */
+    var diorama = document.getElementById('diorama');
+    var kbdFloat = document.getElementById('kbdfloat');
+    var keys = kbdFloat ? kbdFloat.querySelectorAll('kbd') : [];
+    var rafId = null;          // opacity-breathe loop handle
+    var loopStarted = false;   // whether the breathe loop is currently scheduled
+    var userOwns = false;      // user has touched a real control → auto-loop dies forever
+    var choreoStarted = false; // entrance sequence has run once
+
+    function syncOpacityVisual(pct) {
+      // drives BOTH the mock window AND the slider fill/knob/percentage in sync
+      frame.style.opacity = (pct / 100).toFixed(2);
+      opval.textContent = pct + '%';
+      slider.value = pct;
+      paintSlider(pct);
+    }
+
+    function startBreatheLoop() {
+      if (reduce || userOwns) return;
+      if (rafId) return;
+      loopStarted = true;
+      var start = null, period = 5200; // 100 -> 60 -> 100
+      function frameStep(ts) {
+        if (userOwns) { rafId = null; return; }
+        if (start === null) start = ts;
+        var t = ((ts - start) % period) / period;     // 0..1
+        var tri = t < 0.5 ? (t * 2) : (2 - t * 2);     // 0..1..0
+        var eased = tri * tri * (3 - 2 * tri);         // smoothstep
+        var pct = Math.round(100 - eased * 40);        // 100 .. 60
+        syncOpacityVisual(pct);
+        rafId = requestAnimationFrame(frameStep);
+      }
+      rafId = requestAnimationFrame(frameStep);
+    }
+    function stopBreatheLoop() {
+      if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+      loopStarted = false;
+    }
+
+    function pressKeysOnce() {
+      if (reduce || userOwns) return;
+      if (kbdFloat) { kbdFloat.classList.add('shown'); }
+      keys.forEach(function (k, i) {
+        setTimeout(function () {
+          if (userOwns) return;
+          k.classList.add('press');
+          setTimeout(function () { k.classList.remove('press'); }, 300);
+        }, i * 220);
+      });
+    }
+
+    function runChoreography() {
+      if (choreoStarted) return;
+      choreoStarted = true;
+      // back cards fly in (CSS handles via reveal of stage children is implicit — here we drive the pin + ring + keys)
+      // 1. spring the pin down with overshoot
+      setTimeout(function () { if (!userOwns) { pinEl.classList.add('planted'); } }, 350);
+      // 2. light up the topmost ring
+      setTimeout(function () { if (!userOwns) { mockwin.classList.add('pinned'); } }, 850);
+      // 3. press the Win+Ctrl+T combo once
+      setTimeout(pressKeysOnce, 1250);
+      // 4. begin the gentle opacity breathe loop
+      setTimeout(startBreatheLoop, 2100);
+    }
+
+    // The moment the user touches a real control, the auto-loop stops permanently.
+    function claimDemo() {
+      if (userOwns) return;
+      userOwns = true;
+      stopBreatheLoop();
+      if (kbdFloat) { kbdFloat.classList.add('shown'); keys.forEach(function (k) { k.classList.remove('press'); }); }
+      // snap mock window back to a clean, solid, legible state owned by the slider value
+      applyOpacity(+slider.value);
+    }
+    slider.addEventListener('input', function () { claimDemo(); applyOpacity(+slider.value); });
+    pinBtn.addEventListener('click', function () { claimDemo(); setPinned(!pinned); });
+
+    // Gate the whole choreography behind reduced-motion + visibility.
+    if (reduce) {
+      // motion off by default for reduced-motion users: static, pinned, solid, legible
+      mockwin.classList.add('pinned');
+      pinEl.classList.add('planted');
+      if (kbdFloat) kbdFloat.classList.add('shown');
+      applyOpacity(100);
+    } else if ('IntersectionObserver' in window && diorama) {
+      var dObs = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) {
+            if (!choreoStarted) { runChoreography(); }
+            else if (!userOwns && loopStarted && !rafId) { startBreatheLoop(); }
+          } else {
+            // off-screen: cancelAnimationFrame, will restart on re-entry
+            if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+          }
+        });
+      }, { threshold: 0.35 });
+      dObs.observe(diorama);
+    } else {
+      // no IO support: run choreography immediately
+      runChoreography();
+    }
+
+    /* ---- IntersectionObserver scroll reveals (no scroll listeners) ---- */
+    if ('IntersectionObserver' in window && !reduce) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+        });
+      }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+      document.querySelectorAll('.reveal, .reveal-table').forEach(function (el) { io.observe(el); });
+    } else {
+      document.querySelectorAll('.reveal, .reveal-table').forEach(function (el) { el.classList.add('in'); });
+    }
+  })();
+  </script>
 </body>
 </html>
