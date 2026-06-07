@@ -1,11 +1,11 @@
 # PinIt
 
-> PinIt is a free, lightweight, source-available Always on Top utility for Windows 10 and 11. It pins any window to stay on top via the global hotkey Win+Ctrl+T and supports true per-window opacity (Win+Ctrl+= / Win+Ctrl+-). Pinned windows and their opacity are remembered and re-pinned after a restart.
+> PinIt is a free, lightweight, open-source (Apache-2.0) Always on Top utility for Windows 10 and 11. It pins any window to stay on top via the global hotkey Win+Ctrl+T and supports true per-window opacity (Win+Ctrl+= / Win+Ctrl+-). Pinned windows and their opacity are remembered and re-pinned after a restart.
 
 ## Key facts
 
 - Platform: Windows 10 and Windows 11 only
-- Price: free (source-available; free for personal use)
+- Price: free and open source (Apache-2.0)
 - Pin/unpin hotkey: Win+Ctrl+T (customizable)
 - Opacity hotkeys: Win+Ctrl+= (more opaque), Win+Ctrl+- (more transparent), range 20-100%
 - Show/hide the PinIt panel: Win+Ctrl+P

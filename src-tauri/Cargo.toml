@@ -3,6 +3,8 @@ name = "pin-it"
 version = "1.0.2"
 description = "Keep any window always on top on Windows — global hotkeys, per-window opacity, and pin persistence"
 authors = ["Saqlain Abbas <saqlainrazee@gmail.com>"]
+license = "Apache-2.0"
+repository = "https://github.com/Razee4315/Pin-It"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
