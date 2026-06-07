@@ -12,6 +12,7 @@
   <a href="https://github.com/Razee4315/Pin-It/releases"><img src="https://img.shields.io/github/downloads/Razee4315/Pin-It/total?style=flat-square" alt="Downloads"></a>
   <a href="https://github.com/Razee4315/Pin-It/releases/latest"><img src="https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D6?style=flat-square" alt="Platform"></a>
   <a href="https://tauri.app"><img src="https://img.shields.io/badge/built%20with-Tauri%20v2-24C8DB?style=flat-square" alt="Built with Tauri"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-green?style=flat-square" alt="License: Apache 2.0"></a>
 </p>
 
 Press `Win+Ctrl+T` and the focused window stays on top of everything else. Slide its opacity down to see through it. Restart your PC and PinIt re-pins it automatically. A single-purpose, ~2.5 MB alternative to installing a whole utility suite — built with Rust and Tauri for native performance.
@@ -32,7 +33,7 @@ Press `Win+Ctrl+T` and the focused window stays on top of everything else. Slide
 | `PinIt_x.y.z_x64-setup.exe` | NSIS installer (recommended, ~2.5 MB) |
 | `PinIt_x.y.z_x64_en-US.msi` | MSI installer (for enterprise / Group Policy deployment) |
 
-> **Note:** The installers are not yet code-signed, so Windows SmartScreen may show "Windows protected your PC". Click **More info → Run anyway**. The full source code is in this repository if you'd like to audit or build it yourself.
+> **Note:** The installers are not yet code-signed, so Windows SmartScreen may show "Windows protected your PC". Click **More info → Run anyway**. PinIt is fully open source (Apache 2.0) — audit the code or build it yourself from this repository.
 
 ## Features
 
@@ -94,9 +95,9 @@ Two things PowerToys can't do: true per-window transparency and pins that surviv
 
 Windows security (UIPI) prevents normal apps from modifying elevated windows. To pin a window that's running as administrator, run PinIt as administrator too.
 
-### Is PinIt free? Is the source code available?
+### Is PinIt free and open source?
 
-PinIt is free for personal use and the full source code is public in this repository (source-available license — commercial use requires permission, see [LICENSE](LICENSE)).
+Yes — PinIt is completely free and open source under the [Apache 2.0 license](LICENSE). Use it, modify it, and redistribute it, including commercially.
 
 ## Development
 
@@ -137,11 +138,7 @@ The most common solution, Microsoft PowerToys, comes bundled with dozens of othe
 
 ## License
 
-This project is **source available** with restricted commercial use:
-- **Personal use** — free to use, copy, and modify
-- **Commercial use** — requires written permission from the author
-
-See the [LICENSE](LICENSE) file for full details.
+PinIt is open source under the **[Apache License 2.0](LICENSE)** — free to use, modify, and redistribute, including for commercial purposes.
 
 ## Author
 
