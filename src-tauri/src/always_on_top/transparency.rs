@@ -7,8 +7,8 @@ use super::state::PinState;
 use windows::Win32::Foundation::{COLORREF, HWND};
 use windows::Win32::UI::WindowsAndMessaging::{
     GetLayeredWindowAttributes, GetWindowLongW, SetLayeredWindowAttributes, SetWindowLongW,
-    SetWindowPos, GWL_EXSTYLE, LWA_ALPHA, SWP_FRAMECHANGED, SWP_NOMOVE, SWP_NOSIZE,
-    SWP_NOZORDER, WS_EX_LAYERED,
+    SetWindowPos, GWL_EXSTYLE, LWA_ALPHA, SWP_FRAMECHANGED, SWP_NOMOVE, SWP_NOSIZE, SWP_NOZORDER,
+    WS_EX_LAYERED,
 };
 
 /// Minimum opacity percentage (20%)
@@ -27,29 +27,6 @@ pub fn percent_to_alpha(percent: u8) -> u8 {
 /// Convert an alpha value (0-255) to an opacity percentage (0-100), rounded
 pub fn alpha_to_percent(alpha: u8) -> u8 {
     ((alpha as u32 * 100 + 127) / 255) as u8
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{alpha_to_percent, percent_to_alpha};
-
-    #[test]
-    fn alpha_percent_round_trip_is_lossless() {
-        // The old truncating conversions drifted opacity ~1% lower on every
-        // save/restore cycle (50% -> 49% -> 48%...)
-        for percent in 20..=100u8 {
-            let alpha = percent_to_alpha(percent);
-            assert_eq!(alpha_to_percent(alpha), percent, "drift at {}%", percent);
-        }
-    }
-
-    #[test]
-    fn conversion_bounds() {
-        assert_eq!(percent_to_alpha(100), 255);
-        assert_eq!(alpha_to_percent(255), 100);
-        assert_eq!(percent_to_alpha(0), 0);
-        assert_eq!(alpha_to_percent(0), 0);
-    }
 }
 
 /// Set window opacity as percentage (0-100)
@@ -82,10 +59,8 @@ pub fn set_opacity(hwnd: HWND, percent: u8) -> Result<(), PinError> {
 /// Adjust opacity by delta percentage (can be negative)
 pub fn adjust_opacity(hwnd: HWND, delta: i32) -> Result<u8, PinError> {
     let current_percent = get_opacity_percent(hwnd);
-    let new_percent = (current_percent as i32 + delta).clamp(
-        MIN_OPACITY_PERCENT as i32,
-        MAX_OPACITY_PERCENT as i32,
-    ) as u8;
+    let new_percent = (current_percent as i32 + delta)
+        .clamp(MIN_OPACITY_PERCENT as i32, MAX_OPACITY_PERCENT as i32) as u8;
 
     set_opacity(hwnd, new_percent)?;
     Ok(new_percent)
@@ -140,4 +115,27 @@ pub fn restore_opacity(hwnd: HWND) -> Result<(), PinError> {
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{alpha_to_percent, percent_to_alpha};
+
+    #[test]
+    fn alpha_percent_round_trip_is_lossless() {
+        // The old truncating conversions drifted opacity ~1% lower on every
+        // save/restore cycle (50% -> 49% -> 48%...)
+        for percent in 20..=100u8 {
+            let alpha = percent_to_alpha(percent);
+            assert_eq!(alpha_to_percent(alpha), percent, "drift at {}%", percent);
+        }
+    }
+
+    #[test]
+    fn conversion_bounds() {
+        assert_eq!(percent_to_alpha(100), 255);
+        assert_eq!(alpha_to_percent(255), 100);
+        assert_eq!(percent_to_alpha(0), 0);
+        assert_eq!(alpha_to_percent(0), 0);
+    }
 }

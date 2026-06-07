@@ -50,10 +50,16 @@ pub fn run() {
 
             // Register global shortcuts with saved config
             let shortcut_config = persistence::get_shortcut_config();
-            if let Err(e) = always_on_top::hotkey::register_shortcuts(&app.handle(), &shortcut_config) {
-                log::error!("Failed to register custom shortcuts, trying defaults: {:?}", e);
+            if let Err(e) =
+                always_on_top::hotkey::register_shortcuts(app.handle(), &shortcut_config)
+            {
+                log::error!(
+                    "Failed to register custom shortcuts, trying defaults: {:?}",
+                    e
+                );
                 let defaults = persistence::ShortcutConfig::default();
-                if let Err(e2) = always_on_top::hotkey::register_shortcuts(&app.handle(), &defaults) {
+                if let Err(e2) = always_on_top::hotkey::register_shortcuts(app.handle(), &defaults)
+                {
                     log::error!("Failed to register default shortcuts: {:?}", e2);
                 }
             }

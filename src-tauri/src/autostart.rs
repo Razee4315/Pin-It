@@ -20,10 +20,7 @@ fn to_wide(s: &str) -> Vec<u16> {
 /// Open the HKCU Run key with the given access, run `f` against it, and
 /// always close the key afterwards. Deduplicates the open/close boilerplate
 /// shared by is_enabled/enable/disable.
-fn with_run_key<T>(
-    access: REG_SAM_FLAGS,
-    f: impl FnOnce(HKEY) -> T,
-) -> Result<T, String> {
+fn with_run_key<T>(access: REG_SAM_FLAGS, f: impl FnOnce(HKEY) -> T) -> Result<T, String> {
     unsafe {
         let key_path = to_wide(RUN_KEY);
         let mut hkey = HKEY::default();
@@ -50,8 +47,7 @@ fn with_run_key<T>(
 pub fn is_enabled() -> bool {
     with_run_key(KEY_READ, |hkey| unsafe {
         let value_name = to_wide(APP_NAME);
-        RegQueryValueExW(hkey, PCWSTR(value_name.as_ptr()), None, None, None, None)
-            == ERROR_SUCCESS
+        RegQueryValueExW(hkey, PCWSTR(value_name.as_ptr()), None, None, None, None) == ERROR_SUCCESS
     })
     .unwrap_or(false)
 }
@@ -73,7 +69,13 @@ pub fn enable() -> Result<(), String> {
         let exe_bytes: &[u8] =
             std::slice::from_raw_parts(exe_wide.as_ptr() as *const u8, exe_wide.len() * 2);
 
-        RegSetValueExW(hkey, PCWSTR(value_name.as_ptr()), 0, REG_SZ, Some(exe_bytes))
+        RegSetValueExW(
+            hkey,
+            PCWSTR(value_name.as_ptr()),
+            0,
+            REG_SZ,
+            Some(exe_bytes),
+        )
     })?;
 
     if result != ERROR_SUCCESS {

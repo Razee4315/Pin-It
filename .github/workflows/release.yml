@@ -9,6 +9,12 @@ on:
 permissions:
   contents: write
 
+# Two near-simultaneous pushes to main could both read the same version,
+# both bump, and race the push-back. Serialize release runs.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
   release:
     runs-on: windows-latest

@@ -7,7 +7,7 @@ use super::error::PinError;
 use super::state::PinState;
 use serde::Serialize;
 use windows::core::{PCWSTR, PWSTR};
-use windows::Win32::Foundation::{BOOL, CloseHandle, HWND, LPARAM, MAX_PATH};
+use windows::Win32::Foundation::{CloseHandle, BOOL, HWND, LPARAM, MAX_PATH};
 use windows::Win32::System::Threading::{
     OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32, PROCESS_QUERY_LIMITED_INFORMATION,
 };
@@ -28,9 +28,11 @@ pub fn pin_window(hwnd: HWND) -> Result<bool, PinError> {
         let title = get_window_title(hwnd);
         let process_name = get_process_name(hwnd);
 
-        // Set property to mark as pinned by us
+        // Set property to mark as pinned by us — the value is a non-null
+        // sentinel (1), only its presence matters
         let prop_name: Vec<u16> = WINDOW_PINNED_PROP.encode_utf16().collect();
-        SetPropW(hwnd, PCWSTR(prop_name.as_ptr()), windows::Win32::Foundation::HANDLE(1 as *mut std::ffi::c_void))
+        let marker = windows::Win32::Foundation::HANDLE(std::ptr::without_provenance_mut(1));
+        SetPropW(hwnd, PCWSTR(prop_name.as_ptr()), marker)
             .map_err(|e| PinError::SetPropertyFailed(e.to_string()))?;
 
         // Set HWND_TOPMOST
@@ -221,7 +223,11 @@ fn get_process_name(hwnd: HWND) -> String {
             return String::from("Unknown");
         }
 
-        let handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, BOOL::from(false), process_id);
+        let handle = OpenProcess(
+            PROCESS_QUERY_LIMITED_INFORMATION,
+            BOOL::from(false),
+            process_id,
+        );
         if handle.is_err() {
             return String::from("Unknown");
         }
@@ -230,7 +236,14 @@ fn get_process_name(hwnd: HWND) -> String {
         let mut buffer: Vec<u16> = vec![0; MAX_PATH as usize];
         let mut size = buffer.len() as u32;
 
-        let result = if QueryFullProcessImageNameW(handle, PROCESS_NAME_WIN32, PWSTR(buffer.as_mut_ptr()), &mut size).is_ok() {
+        let result = if QueryFullProcessImageNameW(
+            handle,
+            PROCESS_NAME_WIN32,
+            PWSTR(buffer.as_mut_ptr()),
+            &mut size,
+        )
+        .is_ok()
+        {
             let path = String::from_utf16_lossy(&buffer[..size as usize]);
             path.rsplit('\\').next().unwrap_or("Unknown").to_string()
         } else {

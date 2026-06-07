@@ -18,6 +18,8 @@ jobs:
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
@@ -32,9 +34,29 @@ jobs:
       - name: Install frontend dependencies
         run: bun install
 
+      - name: Versions in sync (package.json / Cargo.toml / tauri.conf.json)
+        shell: bash
+        run: |
+          PKG=$(jq -r '.version' package.json)
+          CONF=$(jq -r '.version' src-tauri/tauri.conf.json)
+          CARGO=$(grep -m1 '^version = ' src-tauri/Cargo.toml | sed 's/version = "\(.*\)"/\1/')
+          echo "package.json=$PKG tauri.conf.json=$CONF Cargo.toml=$CARGO"
+          if [ "$PKG" != "$CONF" ] || [ "$PKG" != "$CARGO" ]; then
+            echo "::error::Version mismatch between package.json ($PKG), tauri.conf.json ($CONF), and Cargo.toml ($CARGO)"
+            exit 1
+          fi
+
       - name: Type check frontend
         run: bun run build
 
-      - name: Check Rust
+      - name: Rust format
         working-directory: src-tauri
-        run: cargo check
+        run: cargo fmt -- --check
+
+      - name: Rust clippy
+        working-directory: src-tauri
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: Rust tests
+        working-directory: src-tauri
+        run: cargo test

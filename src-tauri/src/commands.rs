@@ -25,7 +25,11 @@ pub fn pin_window(app: tauri::AppHandle, hwnd: isize) -> Result<bool, PinError> 
     let result = pin_manager::pin_window(hwnd)?;
     let _ = app.emit(
         crate::events::PIN_TOGGLED,
-        PinToggledPayload { is_pinned: true, title, process_name },
+        PinToggledPayload {
+            is_pinned: true,
+            title,
+            process_name,
+        },
     );
     hotkey::update_tray_tooltip(&app);
     Ok(result)
@@ -40,7 +44,11 @@ pub fn unpin_window(app: tauri::AppHandle, hwnd: isize) -> Result<bool, PinError
     let result = pin_manager::unpin_window(hwnd)?;
     let _ = app.emit(
         crate::events::PIN_TOGGLED,
-        PinToggledPayload { is_pinned: false, title, process_name },
+        PinToggledPayload {
+            is_pinned: false,
+            title,
+            process_name,
+        },
     );
     // The tray tooltip previously went stale when unpinning via the UI
     // button (only the hotkey path updated it)
@@ -52,7 +60,11 @@ pub fn unpin_window(app: tauri::AppHandle, hwnd: isize) -> Result<bool, PinError
 #[tauri::command]
 pub fn list_pinnable_windows() -> Vec<pin_manager::PinnableWindow> {
     let mut windows = pin_manager::list_pinnable();
-    windows.sort_by(|a, b| a.process_name.to_lowercase().cmp(&b.process_name.to_lowercase()));
+    windows.sort_by(|a, b| {
+        a.process_name
+            .to_lowercase()
+            .cmp(&b.process_name.to_lowercase())
+    });
     windows
 }
 
@@ -60,7 +72,11 @@ pub fn list_pinnable_windows() -> Vec<pin_manager::PinnableWindow> {
 #[tauri::command]
 pub fn get_pinned_windows() -> Vec<PinnedWindow> {
     let mut windows = PinState::get_all();
-    windows.sort_by(|a, b| a.process_name.to_lowercase().cmp(&b.process_name.to_lowercase()));
+    windows.sort_by(|a, b| {
+        a.process_name
+            .to_lowercase()
+            .cmp(&b.process_name.to_lowercase())
+    });
     windows
 }
 
@@ -156,7 +172,9 @@ pub fn set_shortcut_config(
 
 /// Reset shortcuts to defaults
 #[tauri::command]
-pub fn reset_shortcut_config(app: tauri::AppHandle) -> Result<crate::persistence::ShortcutConfig, String> {
+pub fn reset_shortcut_config(
+    app: tauri::AppHandle,
+) -> Result<crate::persistence::ShortcutConfig, String> {
     let defaults = crate::persistence::ShortcutConfig::default();
     crate::always_on_top::hotkey::update_shortcuts(&app, &defaults)?;
     crate::persistence::update_shortcut_config(defaults.clone());
