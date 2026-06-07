@@ -240,6 +240,64 @@ pub fn update_shortcut_config(config: ShortcutConfig) {
     save(&state);
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn saved_state_round_trips() {
+        let mut state = SavedState::default();
+        state.pins.insert(
+            "notepad.exe:123".into(),
+            SavedPin {
+                process_name: "notepad.exe".into(),
+                title: "readme".into(),
+                opacity: 128,
+            },
+        );
+        state.settings.enable_sound = false;
+        state.settings.shortcuts.toggle_pin = "super+ctrl+KeyY".into();
+
+        let json = serde_json::to_string(&state).unwrap();
+        let back: SavedState = serde_json::from_str(&json).unwrap();
+        let pin = &back.pins["notepad.exe:123"];
+        assert_eq!(pin.process_name, "notepad.exe");
+        assert_eq!(pin.title, "readme");
+        assert_eq!(pin.opacity, 128);
+        assert!(!back.settings.enable_sound);
+        assert_eq!(back.settings.shortcuts.toggle_pin, "super+ctrl+KeyY");
+    }
+
+    #[test]
+    fn old_partial_json_backfills_defaults() {
+        // pinned.json written by an older version: no title on pins, no settings.
+        // This protects backward compatibility of the on-disk format across upgrades.
+        let json = r#"{"pins":{"chrome.exe":{"process_name":"chrome.exe","opacity":255}}}"#;
+        let state: SavedState = serde_json::from_str(json).unwrap();
+        assert_eq!(state.pins["chrome.exe"].title, "");
+        assert!(state.settings.enable_sound); // defaults to true
+        assert!(!state.settings.has_seen_tray_notice);
+        assert_eq!(state.settings.shortcuts.toggle_pin, "super+ctrl+KeyT");
+    }
+
+    #[test]
+    fn corrupted_json_fails_to_parse() {
+        // load() relies on this to fall back to the .bak file
+        assert!(serde_json::from_str::<SavedState>(r#"{"pins":{"a":"#).is_err());
+    }
+
+    #[test]
+    fn shortcut_entries_cover_all_fields_in_order() {
+        let config = ShortcutConfig::default();
+        let entries = config.entries();
+        assert_eq!(entries.len(), 4);
+        assert_eq!(entries[0], ("Pin/Unpin", "super+ctrl+KeyT"));
+        assert_eq!(entries[1], ("Opacity +", "super+ctrl+Equal"));
+        assert_eq!(entries[2], ("Opacity -", "super+ctrl+Minus"));
+        assert_eq!(entries[3], ("Show/Hide", "super+ctrl+KeyP"));
+    }
+}
+
 /// Restore pinned windows from saved state.
 /// Enumerates all top-level windows, matches by process name + title, and re-pins them.
 /// For each saved pin, only the best matching window is pinned (title match preferred).

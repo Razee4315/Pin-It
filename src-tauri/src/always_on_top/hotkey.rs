@@ -208,6 +208,40 @@ pub fn update_shortcuts(app: &AppHandle, new_config: &ShortcutConfig) -> Result<
     Ok(())
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn default_shortcuts_parse() {
+        for (label, s) in ShortcutConfig::default().entries() {
+            assert!(validate_shortcut(s).is_ok(), "default for {} ('{}') should parse", label, s);
+        }
+    }
+
+    #[test]
+    fn invalid_shortcuts_rejected() {
+        assert!(validate_shortcut("not a shortcut").is_err());
+        assert!(validate_shortcut("").is_err());
+    }
+
+    #[test]
+    fn duplicate_bindings_rejected() {
+        let mut config = ShortcutConfig::default();
+        config.opacity_up = config.toggle_pin.clone();
+        assert!(check_duplicates(&config).is_err());
+        assert!(check_duplicates(&ShortcutConfig::default()).is_ok());
+    }
+
+    #[test]
+    fn matches_config_compares_parsed_shortcuts() {
+        let shortcut = Shortcut::from_str("super+ctrl+KeyT").unwrap();
+        assert!(matches_config(&shortcut, "super+ctrl+KeyT"));
+        assert!(!matches_config(&shortcut, "super+ctrl+KeyP"));
+        assert!(!matches_config(&shortcut, "garbage"));
+    }
+}
+
 /// Handle toggle pin hotkey
 fn handle_toggle_pin(app: &AppHandle) {
     match pin_manager::get_foreground_window() {
