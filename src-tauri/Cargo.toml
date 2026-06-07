@@ -1,6 +1,6 @@
 [package]
 name = "pin-it"
-version = "1.0.4"
+version = "1.0.5"
 description = "Keep any window always on top on Windows — global hotkeys, per-window opacity, and pin persistence"
 authors = ["Saqlain Abbas <saqlainrazee@gmail.com>"]
 license = "Apache-2.0"
