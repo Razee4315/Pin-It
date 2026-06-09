@@ -59,10 +59,15 @@ jobs:
             # Cargo.toml — replace version line
             sed -i "s/^version = \"$CURRENT\"/version = \"$NEW\"/" src-tauri/Cargo.toml
 
+            # Cargo.lock — sync the pin-it entry (version is on the line
+            # after `name = "pin-it"`), otherwise the lockfile drifts and
+            # every local build dirties the working tree
+            sed -i "/^name = \"pin-it\"$/{n;s/^version = \".*\"/version = \"$NEW\"/}" src-tauri/Cargo.lock
+
             # Commit the version bump
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml
+            git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock
             git commit -m "chore: bump version to $NEW [skip ci]"
             git push
           fi

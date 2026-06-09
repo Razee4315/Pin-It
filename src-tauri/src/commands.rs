@@ -89,8 +89,10 @@ pub fn set_window_opacity(hwnd: isize, percent: u8) -> Result<(), PinError> {
 /// Bring a pinned window to focus
 #[tauri::command]
 pub fn focus_window(hwnd: isize) -> Result<(), PinError> {
+    use windows::Win32::System::Threading::{AttachThreadInput, GetCurrentThreadId};
     use windows::Win32::UI::WindowsAndMessaging::{
-        IsIconic, SetForegroundWindow, ShowWindow, SW_RESTORE,
+        GetForegroundWindow, GetWindowThreadProcessId, IsIconic, SetForegroundWindow, ShowWindow,
+        SW_RESTORE,
     };
     let hwnd = to_hwnd(hwnd);
 
@@ -103,7 +105,24 @@ pub fn focus_window(hwnd: isize) -> Result<(), PinError> {
         if IsIconic(hwnd).as_bool() {
             let _ = ShowWindow(hwnd, SW_RESTORE);
         }
-        let _ = SetForegroundWindow(hwnd);
+        if SetForegroundWindow(hwnd).as_bool() {
+            return Ok(());
+        }
+
+        // Windows' foreground lock rejects the request when another process
+        // owns the foreground (it returns FALSE and silently does nothing).
+        // Attaching our input queue to the foreground thread grants us
+        // permission to change the foreground window; detach right after.
+        let fg = GetForegroundWindow();
+        if !fg.0.is_null() {
+            let fg_thread = GetWindowThreadProcessId(fg, None);
+            let our_thread = GetCurrentThreadId();
+            if fg_thread != 0 && fg_thread != our_thread {
+                let _ = AttachThreadInput(our_thread, fg_thread, true);
+                let _ = SetForegroundWindow(hwnd);
+                let _ = AttachThreadInput(our_thread, fg_thread, false);
+            }
+        }
     }
 
     Ok(())

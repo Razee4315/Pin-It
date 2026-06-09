@@ -12,7 +12,7 @@ use windows::Win32::Foundation::HWND;
 use windows::Win32::UI::Accessibility::{SetWinEventHook, UnhookWinEvent, HWINEVENTHOOK};
 use windows::Win32::UI::WindowsAndMessaging::{
     EVENT_OBJECT_DESTROY, EVENT_OBJECT_FOCUS, EVENT_OBJECT_LOCATIONCHANGE, EVENT_SYSTEM_FOREGROUND,
-    EVENT_SYSTEM_MINIMIZEEND, EVENT_SYSTEM_MINIMIZESTART, EVENT_SYSTEM_MOVESIZEEND,
+    EVENT_SYSTEM_MINIMIZEEND, EVENT_SYSTEM_MOVESIZEEND,
 };
 
 /// WINEVENT flags - not exported by windows crate
@@ -54,7 +54,6 @@ pub fn init_event_hooks() -> Result<(), String> {
     unsafe {
         let events = [
             EVENT_OBJECT_LOCATIONCHANGE,
-            EVENT_SYSTEM_MINIMIZESTART,
             EVENT_SYSTEM_MINIMIZEEND,
             EVENT_SYSTEM_MOVESIZEEND,
             EVENT_SYSTEM_FOREGROUND,
@@ -119,10 +118,9 @@ unsafe extern "system" fn win_event_callback(
 
     match event {
         EVENT_OBJECT_LOCATIONCHANGE => {
-            // Window moved or resized - no action needed currently
-        }
-        EVENT_SYSTEM_MINIMIZESTART => {
-            // Window minimized - no action needed currently
+            // Window moved or resized - Win11's DWM/Snap Layouts can strip
+            // TOPMOST mid-interaction; re-apply it (cheap no-op when intact)
+            re_enforce_topmost(hwnd);
         }
         EVENT_SYSTEM_MINIMIZEEND => {
             // Window restored from minimize - re-enforce topmost
