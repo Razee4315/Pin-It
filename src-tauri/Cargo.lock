@@ -2643,7 +2643,7 @@ dependencies = [
 
 [[package]]
 name = "pin-it"
-version = "1.0.1"
+version = "1.0.9"
 dependencies = [
  "dirs",
  "env_logger",
