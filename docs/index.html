@@ -158,6 +158,12 @@
     .sec-head { max-width: 600px; margin: 0 auto 40px; text-align: center; }
     h2 { font-size: clamp(27px, 3.6vw, 38px); margin: 0; letter-spacing: -1.2px; font-weight: 800; line-height: 1.1; color: var(--ink); }
 
+    /* ---- demo video ---- */
+    .demo-stage { max-width: 860px; margin: 0 auto; }
+    .demo-frame { border-radius: 16px; border: 1px solid var(--border); background: #1c1814; box-shadow: var(--shadow-lg); overflow: hidden; }
+    .demo-frame video { display: block; width: 100%; height: auto; }
+    .demo-cap { text-align: center; font-size: 14px; color: var(--muted); margin: 16px 0 0; }
+
     /* ---- three points ---- */
     .points { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
     @media (max-width: 720px) { .points { grid-template-columns: 1fr; } }
@@ -277,6 +283,24 @@
     </header>
 
     <main id="main">
+    <section id="demo" aria-label="PinIt in action">
+      <div class="sec-head reveal">
+        <h2>See it in action</h2>
+      </div>
+      <div class="demo-stage reveal">
+        <div class="demo-frame">
+          <video autoplay loop muted playsinline preload="metadata"
+                 poster="assets/pin-it-poster.jpg"
+                 width="1280" height="718"
+                 aria-label="Screen recording of PinIt pinning a Notepad window on top and fading its opacity to see through it">
+            <source src="assets/pin-it-demo.webm" type="video/webm">
+            <source src="assets/pin-it-demo.mp4" type="video/mp4">
+          </video>
+        </div>
+        <p class="demo-cap">Pin a window, fade it, and keep working — all from one hotkey.</p>
+      </div>
+    </section>
+
     <section id="features" aria-label="What PinIt does">
       <div class="sec-head reveal">
         <h2>Small app. One job.</h2>

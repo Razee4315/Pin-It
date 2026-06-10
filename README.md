@@ -19,11 +19,10 @@
 
 Press `Win+Ctrl+T` and the focused window stays on top of everything else. Slide its opacity down to see through it. Restart your PC and PinIt re-pins it automatically. A single-purpose, ~2.5 MB alternative to installing a whole utility suite — built with Rust and Tauri for native performance.
 
-<!-- TODO: replace with Screenshot/demo.gif — a 5-10s recording of pinning a window + adjusting opacity converts far better than a static image -->
 <p align="center">
-  <img src="Screenshot/UI.png" width="300" alt="PinIt interface showing pinned windows with opacity sliders">
+  <img src="docs/assets/pin-it-demo.gif" width="720" alt="PinIt in action: pinning a Notepad window always on top with Win+Ctrl+T, then fading its opacity to see through it">
   <br>
-  <em>Pin, fade, and manage windows from one tiny panel</em>
+  <em>Pin a window, fade it, and keep working — all from one hotkey</em>
 </p>
 
 ## Download
