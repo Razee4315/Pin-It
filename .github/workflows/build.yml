@@ -19,10 +19,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Qt (6.11.1, MinGW)
+      - name: Install Qt (6.8 LTS, MinGW)
         uses: jurplel/install-qt-action@v4
         with:
-          version: '6.11.1'
+          # 6.8 LTS — the CI Qt mirror (aqtinstall) doesn't carry 6.11 yet.
+          # The app uses only standard Qt 6 Widgets APIs, so it builds the same.
+          version: '6.8.1'
           host: windows
           target: desktop
           arch: win64_mingw
