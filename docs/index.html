@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PinIt — Keep Any Window on Top (Free for Windows)</title>
+  <meta name="description" content="PinIt is a free, tiny app that keeps any window on top in Windows 10 and 11. Pin with one shortcut, fade windows, and pins come back after a restart." />
+  <link rel="canonical" href="https://razee4315.github.io/Pin-It/" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="theme-color" content="#e9e2d6" />
+  <meta name="color-scheme" content="light" />
+  <link rel="icon" type="image/png" href="assets/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="PinIt" />
+  <meta property="og:title" content="PinIt — Keep any window on top, free for Windows" />
+  <meta property="og:description" content="Pin any window so it stays on top. One shortcut. Free and tiny. Works on Windows 10 and 11." />
+  <meta property="og:url" content="https://razee4315.github.io/Pin-It/" />
+  <meta property="og:image" content="https://razee4315.github.io/Pin-It/assets/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="PinIt — Keep any window on top, free for Windows" />
+  <meta name="twitter:description" content="Pin any window so it stays on top. One shortcut. Free and tiny. Works on Windows 10 and 11." />
+  <meta name="twitter:image" content="https://razee4315.github.io/Pin-It/assets/og-image.png" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "PinIt",
+    "alternateName": "PinIt Always on Top",
+    "operatingSystem": "Windows 10, Windows 11",
+    "applicationCategory": "UtilitiesApplication",
+    "description": "PinIt is a free, lightweight app that keeps any window on top in Windows. Pin with one shortcut and control per-window opacity.",
+    "url": "https://razee4315.github.io/Pin-It/",
+    "downloadUrl": "https://github.com/Razee4315/Pin-It/releases/latest",
+    "softwareVersion": "1.0.5",
+    "screenshot": "https://razee4315.github.io/Pin-It/assets/screenshot.png",
+    "image": "https://razee4315.github.io/Pin-It/assets/og-image.png",
+    "license": "https://github.com/Razee4315/Pin-It/blob/main/LICENSE",
+    "author": { "@type": "Person", "name": "Saqlain Abbas", "url": "https://github.com/Razee4315" },
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How do I keep a window on top in Windows 11?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Install PinIt, click the window you want to keep visible, and press Win+Ctrl+T. The window stays on top until you unpin it." }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the shortcut to pin a window on top?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Press Win+Ctrl+T to pin or unpin the window you are using. You can change the shortcut inside the app." }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I make a window transparent?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. Pin a window, then press Win+Ctrl+minus to fade it and Win+Ctrl+equals to make it solid again. Each window keeps its own level." }
+      },
+      {
+        "@type": "Question",
+        "name": "Is PinIt free?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. PinIt is free and open source under the Apache 2.0 license. No account and no ads." }
+      }
+    ]
+  }
+  </script>
+
+  <style>
+    :root {
+      --bg: #e9e2d6; --bg2: #f0ebe2; --card: #f7f3ec; --ink: #2b251e;
+      --accent: #c07c38; --accent-deep: #a5652a; --accent-ink: #fbf6ee;
+      --text: #2b251e; --text2: #6a6055; --muted: #948b7e; --border: rgba(43,37,30,0.12);
+      --accent-wash: rgba(192,124,56,0.12); --accent-wash2: rgba(192,124,56,0.24);
+      --hairline: rgba(43,37,30,0.09);
+      --ring: rgba(192,124,56,0.45); --shadow: 0 14px 40px rgba(60,45,25,0.12);
+      --shadow-lg: 0 30px 64px rgba(60,45,25,0.18);
+      --key: #efe9df; --key-edge: rgba(43,37,30,0.18);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-padding-top: 88px; scroll-behavior: smooth; color-scheme: light; }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+    body { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+    .wrap { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
+    a { color: var(--accent-deep); }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 8px; }
+
+    .skip { position: absolute; left: -999px; top: 0; background: var(--ink); color: var(--accent-ink); padding: 9px 16px; border-radius: 0 0 8px 0; z-index: 100; font-weight: 600; text-decoration: none; }
+    .skip:focus { left: 0; }
+
+    kbd { background: var(--key); border: 1px solid var(--key-edge); border-bottom-width: 2px; border-radius: 6px; padding: 2px 7px; font-family: inherit; font-size: 0.8em; font-weight: 600; color: var(--text); line-height: 1; display: inline-block; }
+    @media (prefers-reduced-motion: no-preference) {
+      kbd { transition: transform .12s ease, border-color .12s ease, color .12s ease; }
+      kbd:hover { transform: translateY(-1px); border-color: var(--accent); color: var(--accent-deep); }
+    }
+
+    /* ---- nav ---- */
+    nav { position: sticky; top: 0; z-index: 50; padding: 14px 0; }
+    .nav-inner { max-width: 1000px; margin: 0 auto; padding: 8px 10px 8px 16px; display: flex; align-items: center; gap: 14px;
+      background: color-mix(in srgb, var(--card) 75%, transparent); backdrop-filter: saturate(180%) blur(14px);
+      border: 1px solid var(--hairline); border-radius: 16px; box-shadow: var(--shadow); }
+    @media (max-width: 600px) { nav { padding: 10px 0; } .nav-inner { margin: 0 16px; } }
+    .brand { display: flex; align-items: center; gap: 9px; font-weight: 700; color: var(--text); text-decoration: none; letter-spacing: -0.3px; font-size: 17px; }
+    .brand img { width: 26px; height: 26px; }
+    .nav-links { display: flex; gap: 2px; margin-left: auto; align-items: center; }
+    .nav-links a { color: var(--text2); text-decoration: none; font-size: 14px; font-weight: 500; padding: 8px 13px; border-radius: 10px; }
+    @media (prefers-reduced-motion: no-preference) { .nav-links a { transition: color .15s ease, background .15s ease; } }
+    .nav-links a:not(.nav-dl):hover { color: var(--text); background: var(--bg2); }
+    .nav-dl { background: var(--ink); color: var(--accent-ink) !important; font-weight: 600; padding: 9px 17px !important; box-shadow: 0 2px 10px rgba(43,37,30,0.22); }
+    @media (prefers-reduced-motion: no-preference) { .nav-dl { transition: filter .15s ease, transform .15s ease, box-shadow .15s ease; } }
+    .nav-dl:hover { filter: brightness(1.18); transform: translateY(-1px); box-shadow: 0 6px 18px rgba(43,37,30,0.3); }
+    @media (max-width: 600px) { .nav-hide-mobile { display: none; } }
+
+    /* ---- buttons ---- */
+    .btn { display: inline-flex; align-items: center; gap: 9px; padding: 13px 26px; border-radius: 12px; font-weight: 600; text-decoration: none; font-size: 15px; }
+    @media (prefers-reduced-motion: no-preference) { .btn { transition: transform .15s ease, filter .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease; } }
+    .btn:active { transform: translateY(1px); }
+    .btn-primary { background: var(--ink); color: var(--accent-ink); box-shadow: 0 6px 18px rgba(43,37,30,0.22); }
+    .btn-primary:hover { filter: brightness(1.18); transform: translateY(-2px); box-shadow: 0 12px 26px rgba(43,37,30,0.28); }
+    .btn-ghost { border: 1px solid var(--border); color: var(--text); background: var(--card); }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent-deep); transform: translateY(-2px); }
+
+    /* ---- hero (two column) ---- */
+    header.hero { position: relative; padding: 64px 0 56px; overflow: hidden; }
+    header.hero::before { content: ""; position: absolute; inset: -20% -10% auto 30%; height: 560px; pointer-events: none; z-index: -1;
+      background: radial-gradient(ellipse 50% 50% at 60% 18%, var(--accent-wash) 0%, transparent 70%); }
+    .hero-grid { display: grid; grid-template-columns: 1.08fr 0.92fr; gap: 52px; align-items: center; }
+    @media (max-width: 840px) { .hero-grid { grid-template-columns: 1fr; gap: 40px; text-align: center; justify-items: center; } }
+    .hero-copy { max-width: 520px; }
+    h1 { font-size: clamp(40px, 5.6vw, 62px); line-height: 1.04; margin: 0 0 20px; letter-spacing: -2px; font-weight: 800; color: var(--ink); }
+    .sub { font-size: clamp(16.5px, 2vw, 19px); color: var(--text2); max-width: 440px; margin: 0 0 32px; line-height: 1.55; }
+    @media (max-width: 840px) { .sub { margin-left: auto; margin-right: auto; } }
+    .cta-row { display: flex; gap: 12px; flex-wrap: wrap; }
+    @media (max-width: 840px) { .cta-row { justify-content: center; } }
+    .meta-line { font-size: 13px; color: var(--muted); margin-top: 18px; }
+    .meta-line strong { color: var(--text2); font-weight: 600; }
+
+    /* ---- app shots ---- */
+    .shot-stage { position: relative; width: 100%; max-width: 312px; justify-self: end; }
+    @media (max-width: 840px) { .shot-stage { justify-self: center; max-width: 290px; } }
+    .shot-stage::before { content: ""; position: absolute; inset: 12% -8% -10% -8%; border-radius: 30px; z-index: -1;
+      background: linear-gradient(160deg, var(--accent-wash2), transparent 64%); filter: blur(38px); opacity: .9; }
+    .shot-frame { border-radius: 16px; border: 1px solid var(--border); background: #1c1814; box-shadow: var(--shadow-lg); overflow: hidden; }
+    .shot-frame img { display: block; width: 100%; height: auto; }
+
+    /* ---- sections ---- */
+    section { padding: 60px 0; }
+    .sec-head { max-width: 600px; margin: 0 auto 40px; text-align: center; }
+    h2 { font-size: clamp(27px, 3.6vw, 38px); margin: 0; letter-spacing: -1.2px; font-weight: 800; line-height: 1.1; color: var(--ink); }
+
+    /* ---- demo video ---- */
+    .demo-stage { max-width: 860px; margin: 0 auto; }
+    .demo-frame { border-radius: 16px; border: 1px solid var(--border); background: #1c1814; box-shadow: var(--shadow-lg); overflow: hidden; }
+    .demo-frame video { display: block; width: 100%; height: auto; }
+    .demo-cap { text-align: center; font-size: 14px; color: var(--muted); margin: 16px 0 0; }
+
+    /* ---- three points ---- */
+    .points { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    @media (max-width: 720px) { .points { grid-template-columns: 1fr; } }
+    .point { background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 28px 24px; text-align: center; }
+    @media (prefers-reduced-motion: no-preference) {
+      .point { transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+      .point:hover { transform: translateY(-4px); box-shadow: var(--shadow); border-color: var(--accent-wash2); }
+    }
+    .point .ico { width: 48px; height: 48px; border-radius: 14px; background: var(--accent-wash); display: flex; align-items: center; justify-content: center; color: var(--accent-deep); margin: 0 auto 18px; }
+    .point .ico svg { width: 23px; height: 23px; }
+    .point h3 { font-size: 18px; margin: 0 0 7px; color: var(--text); font-weight: 700; letter-spacing: -0.3px; }
+    .point p { color: var(--text2); font-size: 14.5px; line-height: 1.5; margin: 0; }
+
+    /* ---- showcase (make it yours) ---- */
+    .showcase { display: grid; grid-template-columns: 0.92fr 1.08fr; gap: 52px; align-items: center; }
+    @media (max-width: 840px) { .showcase { grid-template-columns: 1fr; gap: 36px; text-align: center; justify-items: center; } }
+    .showcase .shot-stage { justify-self: start; }
+    @media (max-width: 840px) { .showcase .shot-stage { justify-self: center; } }
+    .showcase-copy { max-width: 460px; }
+    .showcase-copy h2 { text-align: left; }
+    @media (max-width: 840px) { .showcase-copy h2 { text-align: center; } }
+    .showcase-copy p { color: var(--text2); font-size: 16px; margin: 14px 0 0; line-height: 1.6; }
+    .showcase-list { list-style: none; margin: 22px 0 0; display: grid; gap: 12px; }
+    .showcase-list li { display: flex; align-items: flex-start; gap: 11px; color: var(--text); font-size: 15px; }
+    @media (max-width: 840px) { .showcase-list { text-align: left; max-width: 320px; margin-left: auto; margin-right: auto; } }
+    .showcase-list svg { flex: none; width: 20px; height: 20px; color: var(--accent-deep); margin-top: 1px; }
+
+    /* ---- faq ---- */
+    .faq-list { display: grid; gap: 10px; max-width: 680px; margin: 0 auto; }
+    details { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 2px 20px; }
+    @media (prefers-reduced-motion: no-preference) { details { transition: border-color .15s ease; } }
+    details[open] { border-color: var(--accent-wash2); }
+    summary { cursor: pointer; font-weight: 700; color: var(--text); font-size: 15.5px; padding: 17px 0; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; letter-spacing: -0.2px; }
+    summary::-webkit-details-marker { display: none; }
+    summary .caret { flex: none; width: 18px; height: 18px; color: var(--muted); }
+    @media (prefers-reduced-motion: no-preference) { summary .caret { transition: transform .2s ease; } }
+    details[open] summary .caret { transform: rotate(45deg); color: var(--accent-deep); }
+    details p { padding: 0 0 18px; font-size: 14.5px; color: var(--text2); }
+
+    /* ---- download band ---- */
+    .cta-band { position: relative; overflow: hidden; background: linear-gradient(150deg, #c98a4a, var(--accent-deep)); border-radius: 26px; padding: 60px 32px; text-align: center; box-shadow: 0 28px 64px rgba(120,75,25,0.32); }
+    .cta-band::after { content: ""; position: absolute; right: -50px; bottom: -64px; width: 260px; height: 260px; pointer-events: none; opacity: .18;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 17v5'/%3E%3Cpath d='M9 10.8V4h6v6.8l2 3.2H7l2-3.2z'/%3E%3C/svg%3E") center / contain no-repeat;
+      transform: rotate(16deg); }
+    .cta-band h2 { color: #fff; margin-bottom: 10px; }
+    .cta-band p { max-width: 420px; margin: 0 auto 26px; color: #fff; opacity: .92; }
+    .cta-band .cta-row { position: relative; z-index: 1; justify-content: center; }
+    .cta-band .btn-primary { background: #fff; color: var(--accent-deep); box-shadow: 0 6px 18px rgba(0,0,0,0.16); }
+    .cta-band .btn-primary:hover { background: #fff; filter: brightness(1); transform: translateY(-2px); }
+    .cta-band .btn-ghost { border-color: rgba(255,255,255,0.55); color: #fff; background: transparent; }
+    .cta-band .btn-ghost:hover { border-color: #fff; color: #fff; }
+    .cta-band .byte-cap { font-size: 13px; color: #fff; opacity: .85; margin: 30px auto 0; position: relative; z-index: 1; }
+
+    footer { padding: 56px 0 64px; text-align: center; }
+    footer .sig { font-size: clamp(22px, 4vw, 30px); font-weight: 800; letter-spacing: -1px; color: var(--ink); margin-bottom: 14px; }
+    footer .sig .pin-ink { color: var(--accent-deep); }
+    footer p.byline { font-size: 13.5px; color: var(--muted); margin: 0 auto; }
+    footer a { color: var(--accent-deep); }
+    footer .flinks { margin-top: 8px; font-size: 13.5px; color: var(--muted); }
+
+    /* ---- scroll reveal ---- */
+    @media (prefers-reduced-motion: no-preference) {
+      .reveal { opacity: 0; transform: translateY(20px); transition: opacity .65s cubic-bezier(.2,.7,.2,1), transform .65s cubic-bezier(.2,.7,.2,1); }
+      .reveal.in { opacity: 1; transform: none; }
+      .reveal.d1 { transition-delay: .08s; } .reveal.d2 { transition-delay: .16s; }
+      .js .hero-copy > * { opacity: 0; transform: translateY(16px); animation: rise .8s cubic-bezier(.2,.7,.2,1) forwards; }
+      .js .hero-copy > :nth-child(1) { animation-delay: .05s; }
+      .js .hero-copy > :nth-child(2) { animation-delay: .15s; }
+      .js .hero-copy > :nth-child(3) { animation-delay: .27s; }
+      .js .hero-copy > :nth-child(4) { animation-delay: .38s; }
+      .js .shot-stage { opacity: 0; transform: translateY(24px) scale(.97); animation: rise .9s cubic-bezier(.2,.7,.2,1) .4s forwards; }
+      @keyframes rise { to { opacity: 1; transform: none; } }
+    }
+  </style>
+</head>
+<body class="no-js">
+  <a class="skip" href="#main">Skip to content</a>
+
+  <nav aria-label="Primary">
+    <div class="nav-inner">
+      <a class="brand" href="#top"><img src="assets/logo.png" alt="PinIt logo" width="26" height="26" />PinIt</a>
+      <div class="nav-links">
+        <a class="nav-hide-mobile" href="#features">Features</a>
+        <a class="nav-hide-mobile" href="#faq">FAQ</a>
+        <a class="nav-hide-mobile" href="https://github.com/Razee4315/Pin-It">GitHub</a>
+        <a class="nav-dl" href="https://github.com/Razee4315/Pin-It/releases/latest">Download</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="wrap" id="top">
+
+    <header class="hero">
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <h1>Keep any window on top.</h1>
+          <p class="sub">Pin a window so it stays in front of the rest. Press <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd> and you are done.</p>
+          <div class="cta-row">
+            <a class="btn btn-primary" href="https://github.com/Razee4315/Pin-It/releases/latest">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+              Download for Windows
+            </a>
+            <a class="btn btn-ghost" href="https://github.com/Razee4315/Pin-It">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.6v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.4 1 .1-.8.4-1.3.8-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .4.2.7.8.6 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg>
+              GitHub
+            </a>
+          </div>
+          <p class="meta-line"><strong>Free</strong> · 2.5 MB · No sign up · No ads</p>
+        </div>
+
+        <div class="shot-stage">
+          <div class="shot-frame">
+            <img src="assets/screenshot.png" alt="PinIt app keeping a Notepad window on top in Windows with an opacity slider and shortcut list" width="427" height="574" />
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main id="main">
+    <section id="demo" aria-label="PinIt in action">
+      <div class="sec-head reveal">
+        <h2>See it in action</h2>
+      </div>
+      <div class="demo-stage reveal">
+        <div class="demo-frame">
+          <video autoplay loop muted playsinline preload="metadata"
+                 poster="assets/pin-it-poster.jpg"
+                 width="1280" height="718"
+                 aria-label="Screen recording of PinIt pinning a Notepad window on top and fading its opacity to see through it">
+            <source src="assets/pin-it-demo.webm" type="video/webm">
+            <source src="assets/pin-it-demo.mp4" type="video/mp4">
+          </video>
+        </div>
+        <p class="demo-cap">Pin a window, fade it, and keep working — all from one hotkey.</p>
+      </div>
+    </section>
+
+    <section id="features" aria-label="What PinIt does">
+      <div class="sec-head reveal">
+        <h2>Small app. One job.</h2>
+      </div>
+      <div class="points">
+        <div class="point reveal">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 10.8V4h6v6.8l2 3.2H7l2-3.2z"/></svg></div>
+          <h3>Pin with one key</h3>
+          <p>Press <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd> to pin or unpin the window you are using.</p>
+        </div>
+        <div class="point reveal d1">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18"/></svg></div>
+          <h3>See through it</h3>
+          <p>Fade a pinned window so you can still watch your work behind it.</p>
+        </div>
+        <div class="point reveal d2">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg></div>
+          <h3>It remembers</h3>
+          <p>Your pins come back on their own the next time you turn on your PC.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="customize" aria-label="Make it yours">
+      <div class="showcase">
+        <div class="shot-stage reveal">
+          <div class="shot-frame">
+            <img src="assets/shortcuts.png" alt="PinIt edit shortcuts panel where you can set your own keys for pin, opacity and show or hide" width="427" height="573" loading="lazy" />
+          </div>
+        </div>
+        <div class="showcase-copy reveal d1">
+          <h2>Make it yours.</h2>
+          <p>Do not like the default keys? Set your own in a click. Open the shortcuts panel and pick the keys that feel right.</p>
+          <ul class="showcase-list">
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>Pick your own keys for every action</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>Turn sound on or off</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>Start with Windows, or not</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="faq" aria-label="Questions">
+      <div class="sec-head reveal">
+        <h2>Quick answers</h2>
+      </div>
+      <div class="faq-list">
+        <details open class="reveal">
+          <summary>How do I keep a window on top in Windows 11?<svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></summary>
+          <p>Install PinIt, click the window you want to keep visible, and press <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd>. It stays on top until you unpin it.</p>
+        </details>
+        <details class="reveal">
+          <summary>What is the shortcut to pin a window?<svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></summary>
+          <p>Press <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>T</kbd>. You can pick your own shortcut inside the app.</p>
+        </details>
+        <details class="reveal">
+          <summary>Can I make a window transparent?<svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></summary>
+          <p>Yes. Pin a window, then press <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>-</kbd> to fade it and <kbd>Win</kbd>+<kbd>Ctrl</kbd>+<kbd>=</kbd> to make it solid again.</p>
+        </details>
+        <details class="reveal">
+          <summary>Is PinIt free?<svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></summary>
+          <p>Yes. PinIt is free and open source under the Apache 2.0 license. The code is on <a href="https://github.com/Razee4315/Pin-It">GitHub</a>.</p>
+        </details>
+      </div>
+    </section>
+
+    <section id="download" aria-label="Download">
+      <div class="cta-band reveal">
+        <h2>Get PinIt</h2>
+        <p>Free, tiny, and ready in under a minute.</p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="https://github.com/Razee4315/Pin-It/releases/latest">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            Download for Windows
+          </a>
+          <a class="btn btn-ghost" href="https://github.com/Razee4315/Pin-It">GitHub</a>
+        </div>
+        <p class="byte-cap">2.5 MB · Windows 10 and 11</p>
+      </div>
+    </section>
+    </main>
+
+    <footer>
+      <p class="sig">Pin it. <span class="pin-ink">Forget it.</span></p>
+      <p class="byline">A free Windows app by <a href="https://github.com/Razee4315">Saqlain Abbas</a>.</p>
+      <p class="flinks"><a href="https://github.com/Razee4315/Pin-It">Code</a> · <a href="https://github.com/Razee4315/Pin-It/releases/latest">Download</a> · <a href="https://github.com/Razee4315/Pin-It/issues">Report a bug</a></p>
+    </footer>
+
+  </div>
+
+  <script>
+  (function () {
+    "use strict";
+    document.body.classList.remove('no-js');
+    document.documentElement.classList.add('js');
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if ('IntersectionObserver' in window && !reduce) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+        });
+      }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+      document.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
+    } else {
+      document.querySelectorAll('.reveal').forEach(function (el) { el.classList.add('in'); });
+    }
+  })();
+  </script>
+</body>
+</html>
