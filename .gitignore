@@ -18,3 +18,8 @@ CMakeLists.txt.user*
 *.obj
 *.exe
 Thumbs.db
+
+# Leftover Tauri / tooling dirs (not part of the C++ project)
+node_modules/
+src-tauri/
+.gstack/

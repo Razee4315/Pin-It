@@ -3,7 +3,7 @@
 ; shortcut, optional desktop icon and run-at-startup, and an uninstaller.
 
 #define MyAppName "PinIt"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "2.0.0"
 #define MyAppPublisher "Saqlain Abbas"
 #define MyAppURL "https://github.com/Razee4315/Pin-It"
 #define MyAppExeName "PinIt.exe"

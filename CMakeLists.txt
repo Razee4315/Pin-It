@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 # RC enables compiling the Windows .rc (executable icon) via windres.
-project(PinIt VERSION 1.0.0 LANGUAGES CXX RC)
+project(PinIt VERSION 2.0.0 LANGUAGES CXX RC)
 
 # --- C++ / Qt setup -------------------------------------------------------
 set(CMAKE_CXX_STANDARD 17)
