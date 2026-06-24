@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://razee4315.github.io/Pin-It/sitemap.xml

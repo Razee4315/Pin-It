@@ -1,0 +1,85 @@
+name: Build PinIt
+
+# Builds the C++/Qt app, bundles the Qt runtime, and produces the Windows
+# installer on every push/PR. Tagging a version (e.g. v1.0.0) also publishes
+# the installer to a GitHub Release.
+on:
+  push:
+    branches: [main, master]
+    tags: ['v*']
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:        # lets you run it manually from the Actions tab
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Qt (6.11.1, MinGW)
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.11.1'
+          host: windows
+          target: desktop
+          arch: win64_mingw
+          tools: 'tools_mingw1310'
+          cache: true
+
+      - name: Add MinGW to PATH
+        shell: pwsh
+        run: |
+          "$env:IQTA_TOOLS\mingw1310_64\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+
+      - name: Configure (CMake)
+        shell: pwsh
+        run: >
+          cmake -S . -B build -G "MinGW Makefiles"
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_PREFIX_PATH="$env:QT_ROOT_DIR"
+
+      - name: Build
+        shell: pwsh
+        run: cmake --build build
+
+      - name: Bundle Qt runtime (windeployqt)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist\PinIt | Out-Null
+          Copy-Item build\PinIt.exe dist\PinIt\
+          windeployqt --release --no-translations --no-system-d3d-compiler --no-opengl-sw dist\PinIt\PinIt.exe
+          # Drop the Direct3D shader compiler — a Widgets app doesn't need it (~27 MB).
+          Remove-Item dist\PinIt\dxcompiler.dll,dist\PinIt\dxil.dll -ErrorAction SilentlyContinue
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup -y --no-progress
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\PinIt.iss
+
+      - name: Make portable ZIP
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+          Compress-Archive -Path dist\PinIt\* -DestinationPath release\PinIt-portable-x64.zip -Force
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: PinIt-windows
+          path: release\*
+          if-no-files-found: error
+
+      - name: Publish to Release (on tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/*.exe
+            release/*.zip

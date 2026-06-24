@@ -1,0 +1,3 @@
+// Windows executable icon — shows in Explorer, the taskbar, and Alt-Tab.
+// Uses the same icon.ico shipped with the original PinIt app.
+IDI_ICON1 ICON "icon.ico"
