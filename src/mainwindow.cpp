@@ -456,7 +456,10 @@ void MainWindow::applyAutostart(bool enabled)
     if (enabled) {
         const QString exe = QDir::toNativeSeparators(
             QCoreApplication::applicationFilePath());
-        run.setValue(QStringLiteral("PinIt"), QStringLiteral("\"%1\"").arg(exe));
+        // --minimized: when launched at login, start silently in the tray
+        // instead of popping the window every boot.
+        run.setValue(QStringLiteral("PinIt"),
+                     QStringLiteral("\"%1\" --minimized").arg(exe));
     } else {
         run.remove(QStringLiteral("PinIt"));
     }

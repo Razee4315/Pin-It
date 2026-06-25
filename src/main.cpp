@@ -10,6 +10,7 @@
 #include <QSharedMemory>
 #include <QMessageBox>
 #include <QIcon>
+#include <QSystemTrayIcon>
 
 #include "pinmanager.h"
 #include "globalhotkey.h"
@@ -108,6 +109,12 @@ int main(int argc, char *argv[])
     // Re-pin whatever was pinned last session.
     manager.restoreSaved();
 
-    window.show();
+    // When launched at login with --minimized, start silently in the tray
+    // instead of popping the window. Fall back to showing it if there's no tray.
+    const bool startMinimized =
+        QCoreApplication::arguments().contains(QStringLiteral("--minimized"));
+    if (!startMinimized || !QSystemTrayIcon::isSystemTrayAvailable())
+        window.show();
+
     return app.exec();
 }
