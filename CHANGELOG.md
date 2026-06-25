@@ -4,6 +4,18 @@ All notable changes to PinIt are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.1.0]
+
+### Added
+- **Edit Shortcuts dialog** — rebind all global hotkeys from the UI (modifier
+  checkboxes + key), with conflict and duplicate validation. No more hand-editing
+  `pinned.json`.
+
+### Fixed
+- Pinned windows are now **restored on exit** — quitting PinIt no longer leaves
+  other apps' windows stuck always-on-top or translucent. (Saved pins are kept,
+  so they're re-pinned on the next launch.)
+
 ## [2.0.0]
 
 Complete rewrite of PinIt as a native **C++ / Qt 6** application (the previous
@@ -30,4 +42,5 @@ Rust + Tauri implementation is archived on the `legacy-tauri` branch).
 - Version is single-sourced from CMake into the app, the installer, and the exe
   metadata.
 
+[2.1.0]: https://github.com/Razee4315/Pin-It/releases/tag/v2.1.0
 [2.0.0]: https://github.com/Razee4315/Pin-It/releases/tag/v2.0.0
