@@ -19,6 +19,16 @@ qt_standard_project_setup()
 # correct flag (-I for windres/MinGW, /I for rc.exe/MSVC) — portable across CI.
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/resources")
 
+# --- Version: single source of truth is project(VERSION) above ------------
+# Generate version.h (used by the About dialog and the .rc VERSIONINFO) and
+# version.iss (consumed by the Inno Setup installer) so the version is defined
+# in exactly one place.
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/version.h.in"
+               "${CMAKE_CURRENT_BINARY_DIR}/generated/version.h" @ONLY)
+include_directories("${CMAKE_CURRENT_BINARY_DIR}/generated")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/installer/version.iss.in"
+               "${CMAKE_CURRENT_SOURCE_DIR}/installer/version.iss" @ONLY)
+
 # --- Executable -----------------------------------------------------------
 # The WIN32 flag makes this a GUI app (no console window pops up on launch).
 qt_add_executable(PinIt WIN32

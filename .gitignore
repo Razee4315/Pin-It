@@ -23,3 +23,6 @@ Thumbs.db
 node_modules/
 src-tauri/
 .gstack/
+
+# Generated from *.in by CMake (single-sourced version)
+installer/version.iss
