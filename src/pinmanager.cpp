@@ -4,6 +4,7 @@
 
 #include <QTimer>
 #include <QSet>
+#include <QtGlobal>
 
 namespace {
 inline void *H(intptr_t h) { return reinterpret_cast<void *>(h); }
@@ -51,6 +52,7 @@ bool PinManager::pin(intptr_t hwnd)
     if (!winpin::applyTopmost(H(hwnd)) || !winpin::isTopmost(H(hwnd))) {
         // UIPI silently blocks SetWindowPos on elevated windows; verifying the
         // style actually took is how we detect that (same as the Rust port).
+        qWarning("Pin failed for %s (likely elevated/UIPI)", qUtf8Printable(proc));
         emit errorOccurred(tr("Can't pin %1 — it may be running as administrator.")
                                .arg(proc));
         return false;
@@ -65,6 +67,7 @@ bool PinManager::pin(intptr_t hwnd)
 
     persist();
     updateTimer();
+    qInfo("Pinned %s (%s)", qUtf8Printable(title), qUtf8Printable(proc));
     emit pinToggled(true, title, proc);
     emit pinsChanged();
     return true;

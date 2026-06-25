@@ -16,6 +16,8 @@
 #include "globalhotkey.h"
 #include "mainwindow.h"
 #include "persistence.h"
+#include "logging.h"
+#include "version.h"
 
 // Warm "paper" theme — ported from the original PinIt CSS variables.
 static const char *kStyleSheet = R"qss(
@@ -69,8 +71,12 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     QCoreApplication::setApplicationName(QStringLiteral("PinIt"));
     QCoreApplication::setOrganizationName(QStringLiteral("PinIt"));
+    QApplication::setApplicationVersion(QStringLiteral(PINIT_VERSION_STR));
     QApplication::setWindowIcon(QIcon(QStringLiteral(":/icon.png")));
     app.setStyleSheet(QString::fromUtf8(kStyleSheet));
+
+    logging::init();
+    qInfo("PinIt %s starting", PINIT_VERSION_STR);
 
     // Single-instance guard: if PinIt is already running, just exit.
     QSharedMemory guard(QStringLiteral("PinIt_SingleInstance_v1"));
@@ -99,9 +105,12 @@ int main(int argc, char *argv[])
                      &window, &MainWindow::toggleVisibility);
 
     if (!hotkeys.registerAll(settings.shortcuts)) {
+        qWarning("No global hotkeys could be registered");
         window.notify(QObject::tr(
             "Could not register global hotkeys — another app may be using them."));
     } else if (!hotkeys.failedActions().isEmpty()) {
+        qWarning("Some hotkeys unavailable: %s",
+                 qUtf8Printable(hotkeys.failedActions().join(QStringLiteral(", "))));
         window.notify(QObject::tr("Some hotkeys are unavailable: %1")
                           .arg(hotkeys.failedActions().join(QStringLiteral(", "))));
     }
