@@ -31,6 +31,11 @@ include_directories("${CMAKE_CURRENT_BINARY_DIR}/generated")
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/installer/version.iss.in"
                "${CMAKE_CURRENT_SOURCE_DIR}/installer/version.iss" @ONLY)
 
+# windres doesn't scan #includes, so tell CMake the .rc depends on the generated
+# version.h — otherwise a version bump wouldn't rebuild the VERSIONINFO.
+set_property(SOURCE resources/app.rc APPEND PROPERTY
+            OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/generated/version.h")
+
 # --- Executable -----------------------------------------------------------
 # The WIN32 flag makes this a GUI app (no console window pops up on launch).
 qt_add_executable(PinIt WIN32
