@@ -179,9 +179,15 @@ void PinManager::restoreAllWindows()
             ++restored;
         }
     }
-    // Intentionally keep m_pinned / pinned.json intact so the next launch
-    // re-pins these windows.
-    qInfo("Restored %d window(s) on exit", restored);
+
+    // Forget the pins entirely so the next launch starts clean: drop them from
+    // memory, stop the re-enforce timer, and clear pinned.json (settings are
+    // preserved because persist() only rewrites the pin list). Closing to the
+    // tray never reaches here — this runs only on a real quit (aboutToQuit).
+    m_pinned.clear();
+    persist();
+    updateTimer();
+    qInfo("Restored and cleared %d pinned window(s) on exit", restored);
 }
 
 void PinManager::persist() const
