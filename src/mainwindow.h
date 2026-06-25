@@ -33,6 +33,7 @@ protected:
 private slots:
     void rebuildList();
     void addWindowDialog();
+    void showAbout();
 
 private:
     void buildUi();

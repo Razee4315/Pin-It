@@ -22,6 +22,9 @@
 #include <QSettings>
 #include <QCoreApplication>
 #include <QDir>
+#include <QMessageBox>
+
+#include "version.h"
 
 namespace {
 
@@ -395,6 +398,29 @@ void MainWindow::addWindowDialog()
     }
 }
 
+void MainWindow::showAbout()
+{
+    QMessageBox box(this);
+    box.setWindowTitle(tr("About PinIt"));
+    box.setIconPixmap(appIcon().pixmap(64, 64));
+    box.setTextFormat(Qt::RichText);
+    box.setTextInteractionFlags(Qt::TextBrowserInteraction);   // clickable links
+    box.setText(QStringLiteral(
+        "<h3>%1 %2</h3>"
+        "<p>%3</p>"
+        "<p>Built with C++ &amp; Qt %4.</p>"
+        "<p>By %5<br><a href=\"%6\">%6</a></p>"
+        "<p style='color:gray'>%7</p>")
+        .arg(QStringLiteral(PINIT_PRODUCT),
+             QStringLiteral(PINIT_VERSION_STR),
+             tr("Keep any window always on top — with a global hotkey."),
+             QStringLiteral(QT_VERSION_STR),
+             QStringLiteral(PINIT_COMPANY),
+             QStringLiteral(PINIT_URL),
+             QStringLiteral(PINIT_COPYRIGHT)));
+    box.exec();
+}
+
 void MainWindow::buildTray()
 {
     if (!QSystemTrayIcon::isSystemTrayAvailable())
@@ -405,6 +431,8 @@ void MainWindow::buildTray()
     auto *menu = new QMenu(this);
     QAction *showAct = menu->addAction(tr("Show PinIt"));
     connect(showAct, &QAction::triggered, this, &MainWindow::showFromTray);
+    QAction *aboutAct = menu->addAction(tr("About PinIt"));
+    connect(aboutAct, &QAction::triggered, this, &MainWindow::showAbout);
     menu->addSeparator();
     QAction *quitAct = menu->addAction(tr("Quit"));
     connect(quitAct, &QAction::triggered, qApp, &QApplication::quit);
