@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "pinmanager.h"
 #include "winpin.h"
+#include "shortcutsdialog.h"
 
 #include <QApplication>
 #include <QVBoxLayout>
@@ -171,10 +172,101 @@ void MainWindow::buildUi()
     auto *scv = new QVBoxLayout(scCard);
     scv->setContentsMargins(12, 10, 12, 10);
     scv->setSpacing(9);
+    m_shortcutsLayout = scv;
+    fillShortcutRows(scv);
+    root->addWidget(scCard);
+
+    auto *editShortcuts = new QPushButton(tr("Edit shortcuts…"));
+    connect(editShortcuts, &QPushButton::clicked, this, &MainWindow::openShortcutsDialog);
+    root->addWidget(editShortcuts, 0, Qt::AlignLeft);
+
+    // --- PINNED (n) ----------------------------------------------------------
+    m_pinnedHeader = new QLabel(tr("PINNED (0)"));
+    m_pinnedHeader->setProperty("role", "section");
+    root->addWidget(m_pinnedHeader);
+
+    auto *scroll = new QScrollArea(central);
+    scroll->setWidgetResizable(true);
+    scroll->setFrameShape(QFrame::NoFrame);
+    scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    auto *listContainer = new QWidget(scroll);
+    m_listLayout = new QVBoxLayout(listContainer);
+    m_listLayout->setContentsMargins(0, 0, 0, 0);
+    m_listLayout->setSpacing(8);
+    m_listLayout->addStretch();
+    scroll->setWidget(listContainer);
+    root->addWidget(scroll, 1);
+
+    // Empty-state card (shown when nothing is pinned).
+    m_emptyCard = makeCard();
+    auto *ec = new QVBoxLayout(m_emptyCard);
+    ec->setContentsMargins(14, 16, 14, 16);
+    ec->setSpacing(8);
+    auto *emptyText = new QLabel(tr("No windows pinned"));
+    emptyText->setProperty("role", "muted");
+    emptyText->setAlignment(Qt::AlignCenter);
+    ec->addWidget(emptyText);
+    auto *hintRow = new QHBoxLayout;
+    hintRow->addStretch();
+    auto *use = new QLabel(tr("Use"));
+    use->setProperty("role", "muted");
+    hintRow->addWidget(use);
+    const QStringList toggleKeys = shortcutTokens(m_settings.shortcuts.togglePin);
+    for (int i = 0; i < toggleKeys.size(); ++i) {
+        if (i > 0)
+            hintRow->addWidget(plusLabel());
+        hintRow->addWidget(keyChip(toggleKeys[i]));
+    }
+    hintRow->addStretch();
+    ec->addLayout(hintRow);
+    m_listLayout->insertWidget(0, m_emptyCard);   // lives in the list region
+
+    // --- Settings (compact, at the bottom) -----------------------------------
+    m_soundBox = new QCheckBox(tr("Play a sound when pinning"));
+    m_soundBox->setChecked(m_settings.enableSound);
+    connect(m_soundBox, &QCheckBox::toggled, this, [this](bool on) {
+        m_settings.enableSound = on;
+        persistence::saveSettings(m_settings);
+    });
+    root->addWidget(m_soundBox);
+
+    m_autostartBox = new QCheckBox(tr("Start PinIt with Windows"));
+    m_autostartBox->setChecked(m_settings.startWithWindows);
+    connect(m_autostartBox, &QCheckBox::toggled, this, [this](bool on) {
+        m_settings.startWithWindows = on;
+        applyAutostart(on);
+        persistence::saveSettings(m_settings);
+    });
+    root->addWidget(m_autostartBox);
+
+    setCentralWidget(central);
+}
+
+void MainWindow::setShortcutConfig(const persistence::ShortcutConfig &cfg)
+{
+    m_settings.shortcuts = cfg;
+    if (m_shortcutsLayout)
+        fillShortcutRows(m_shortcutsLayout);
+}
+
+void MainWindow::fillShortcutRows(QVBoxLayout *scv)
+{
+    // Clear any existing rows (each row is a nested QHBoxLayout of chips).
+    while (QLayoutItem *item = scv->takeAt(0)) {
+        if (QLayout *child = item->layout()) {
+            while (QLayoutItem *ci = child->takeAt(0)) {
+                if (ci->widget())
+                    ci->widget()->deleteLater();
+                delete ci;
+            }
+        }
+        if (item->widget())
+            item->widget()->deleteLater();
+        delete item;
+    }
 
     const persistence::ShortcutConfig &sc = m_settings.shortcuts;
 
-    // Row: a key sequence on the left, description on the right.
     auto addRow = [&](const QStringList &keys, const QString &desc) {
         auto *row = new QHBoxLayout;
         row->setSpacing(6);
@@ -217,73 +309,19 @@ void MainWindow::buildUi()
     }
 
     addRow(shortcutTokens(sc.toggleWindow), tr("Show / hide PinIt"));
-    root->addWidget(scCard);
-
-    // --- PINNED (n) ----------------------------------------------------------
-    m_pinnedHeader = new QLabel(tr("PINNED (0)"));
-    m_pinnedHeader->setProperty("role", "section");
-    root->addWidget(m_pinnedHeader);
-
-    auto *scroll = new QScrollArea(central);
-    scroll->setWidgetResizable(true);
-    scroll->setFrameShape(QFrame::NoFrame);
-    scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    auto *listContainer = new QWidget(scroll);
-    m_listLayout = new QVBoxLayout(listContainer);
-    m_listLayout->setContentsMargins(0, 0, 0, 0);
-    m_listLayout->setSpacing(8);
-    m_listLayout->addStretch();
-    scroll->setWidget(listContainer);
-    root->addWidget(scroll, 1);
-
-    // Empty-state card (shown when nothing is pinned).
-    m_emptyCard = makeCard();
-    auto *ec = new QVBoxLayout(m_emptyCard);
-    ec->setContentsMargins(14, 16, 14, 16);
-    ec->setSpacing(8);
-    auto *emptyText = new QLabel(tr("No windows pinned"));
-    emptyText->setProperty("role", "muted");
-    emptyText->setAlignment(Qt::AlignCenter);
-    ec->addWidget(emptyText);
-    auto *hintRow = new QHBoxLayout;
-    hintRow->addStretch();
-    auto *use = new QLabel(tr("Use"));
-    use->setProperty("role", "muted");
-    hintRow->addWidget(use);
-    const QStringList toggleKeys = shortcutTokens(sc.togglePin);
-    for (int i = 0; i < toggleKeys.size(); ++i) {
-        if (i > 0)
-            hintRow->addWidget(plusLabel());
-        hintRow->addWidget(keyChip(toggleKeys[i]));
-    }
-    hintRow->addStretch();
-    ec->addLayout(hintRow);
-    m_listLayout->insertWidget(0, m_emptyCard);   // lives in the list region
-
-    // --- Settings (compact, at the bottom) -----------------------------------
-    m_soundBox = new QCheckBox(tr("Play a sound when pinning"));
-    m_soundBox->setChecked(m_settings.enableSound);
-    connect(m_soundBox, &QCheckBox::toggled, this, [this](bool on) {
-        m_settings.enableSound = on;
-        persistence::saveSettings(m_settings);
-    });
-    root->addWidget(m_soundBox);
-
-    m_autostartBox = new QCheckBox(tr("Start PinIt with Windows"));
-    m_autostartBox->setChecked(m_settings.startWithWindows);
-    connect(m_autostartBox, &QCheckBox::toggled, this, [this](bool on) {
-        m_settings.startWithWindows = on;
-        applyAutostart(on);
-        persistence::saveSettings(m_settings);
-    });
-    root->addWidget(m_autostartBox);
-
-    setCentralWidget(central);
 }
 
-void MainWindow::setShortcutConfig(const persistence::ShortcutConfig &cfg)
+void MainWindow::openShortcutsDialog()
 {
-    m_settings.shortcuts = cfg;   // chips are rebuilt from m_settings on next buildUi
+    ShortcutsDialog dlg(m_settings.shortcuts, this);
+    if (dlg.exec() != QDialog::Accepted)
+        return;
+
+    m_settings.shortcuts = dlg.config();
+    persistence::saveSettings(m_settings);
+    if (m_shortcutsLayout)
+        fillShortcutRows(m_shortcutsLayout);
+    emit shortcutsChanged(m_settings.shortcuts);
 }
 
 void MainWindow::rebuildList()

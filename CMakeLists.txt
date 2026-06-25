@@ -42,6 +42,7 @@ qt_add_executable(PinIt WIN32
     src/mainwindow.h        src/mainwindow.cpp
     src/logging.h           src/logging.cpp
     src/shortcuts.h         src/shortcuts.cpp
+    src/shortcutsdialog.h   src/shortcutsdialog.cpp
     resources/resources.qrc
     resources/app.rc
 )

@@ -22,6 +22,9 @@ public:
 
     void setShortcutConfig(const persistence::ShortcutConfig &cfg);
 
+signals:
+    void shortcutsChanged(const persistence::ShortcutConfig &cfg);
+
 public slots:
     void toggleVisibility();      // bound to the Show/Hide hotkey
     void showFromTray();
@@ -34,11 +37,13 @@ private slots:
     void rebuildList();
     void addWindowDialog();
     void showAbout();
+    void openShortcutsDialog();
 
 private:
     void buildUi();
     void buildTray();
     void applyAutostart(bool enabled);
+    void fillShortcutRows(QVBoxLayout *scv);   // (re)builds the SHORTCUTS chips
 
     PinManager      *m_manager = nullptr;
     QSystemTrayIcon *m_tray = nullptr;
@@ -46,6 +51,7 @@ private:
     QLabel          *m_emptyLabel = nullptr;
     QLabel          *m_pinnedHeader = nullptr;
     QWidget         *m_emptyCard = nullptr;
+    QVBoxLayout     *m_shortcutsLayout = nullptr;
     QCheckBox       *m_soundBox = nullptr;
     QCheckBox       *m_autostartBox = nullptr;
     QLabel          *m_shortcutsLabel = nullptr;

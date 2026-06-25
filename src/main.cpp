@@ -129,6 +129,19 @@ int main(int argc, char *argv[])
     QObject::connect(&hotkeys, &GlobalHotkeyManager::toggleWindow,
                      &window, &MainWindow::toggleVisibility);
 
+    // Re-register hotkeys when the user edits them in the Shortcuts dialog.
+    QObject::connect(&window, &MainWindow::shortcutsChanged, &window,
+                     [&](const persistence::ShortcutConfig &c) {
+                         if (!hotkeys.registerAll(c))
+                             window.notify(QObject::tr(
+                                 "Could not register the new hotkeys — another app may be using them."));
+                         else if (!hotkeys.failedActions().isEmpty())
+                             window.notify(QObject::tr("Some hotkeys are unavailable: %1")
+                                               .arg(hotkeys.failedActions().join(QStringLiteral(", "))));
+                         else
+                             window.notify(QObject::tr("Shortcuts updated."));
+                     });
+
     if (!hotkeys.registerAll(settings.shortcuts)) {
         qWarning("No global hotkeys could be registered");
         window.notify(QObject::tr(
