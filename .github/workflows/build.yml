@@ -15,6 +15,11 @@ on:
 permissions:
   contents: write
 
+# Cancel an in-progress run when a newer commit is pushed to the same ref.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: windows-latest
@@ -50,6 +55,10 @@ jobs:
       - name: Build
         shell: pwsh
         run: cmake --build build
+
+      - name: Test
+        shell: pwsh
+        run: ctest --test-dir build --output-on-failure
 
       - name: Bundle Qt runtime (windeployqt)
         shell: pwsh
