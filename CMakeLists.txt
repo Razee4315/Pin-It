@@ -39,6 +39,7 @@ qt_add_executable(PinIt WIN32
     src/globalhotkey.h      src/globalhotkey.cpp
     src/mainwindow.h        src/mainwindow.cpp
     src/logging.h           src/logging.cpp
+    src/shortcuts.h         src/shortcuts.cpp
     resources/resources.qrc
     resources/app.rc
 )
@@ -49,3 +50,25 @@ target_link_libraries(PinIt PRIVATE Qt6::Widgets)
 if(WIN32)
     target_link_libraries(PinIt PRIVATE user32 dwmapi advapi32)
 endif()
+
+# Treat the compiler as a code reviewer: build with broad warnings on.
+if(MSVC)
+    target_compile_options(PinIt PRIVATE /W4)
+else()
+    target_compile_options(PinIt PRIVATE -Wall -Wextra)
+endif()
+
+# --- Tests ----------------------------------------------------------------
+enable_testing()
+find_package(Qt6 REQUIRED COMPONENTS Test)
+
+qt_add_executable(pinit_tests
+    tests/test_pinit.cpp
+    src/winpin.h     src/winpin.cpp
+    src/shortcuts.h  src/shortcuts.cpp
+)
+target_link_libraries(pinit_tests PRIVATE Qt6::Test Qt6::Core)
+if(WIN32)
+    target_link_libraries(pinit_tests PRIVATE user32)
+endif()
+add_test(NAME pinit_tests COMMAND pinit_tests)
