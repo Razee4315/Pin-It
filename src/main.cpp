@@ -7,7 +7,8 @@
 //   MainWindow           -> UI + system tray
 //
 #include <QApplication>
-#include <QSharedMemory>
+#include <QLocalServer>
+#include <QLocalSocket>
 #include <QMessageBox>
 #include <QIcon>
 #include <QSystemTrayIcon>
@@ -78,10 +79,19 @@ int main(int argc, char *argv[])
     logging::init();
     qInfo("PinIt %s starting", PINIT_VERSION_STR);
 
-    // Single-instance guard: if PinIt is already running, just exit.
-    QSharedMemory guard(QStringLiteral("PinIt_SingleInstance_v1"));
-    if (!guard.create(1)) {
-        return 0;
+    // Single instance: if PinIt is already running, ask it to show its window
+    // (via a local socket) and exit — instead of dying silently.
+    const QString kInstanceServer = QStringLiteral("PinIt_SingleInstance_v2");
+    {
+        QLocalSocket probe;
+        probe.connectToServer(kInstanceServer);
+        if (probe.waitForConnected(200)) {
+            probe.write("show");
+            probe.flush();
+            probe.waitForBytesWritten(200);
+            qInfo("Another instance is running; asked it to show");
+            return 0;
+        }
     }
 
     // Keep running when the window closes to the tray.
@@ -91,6 +101,16 @@ int main(int argc, char *argv[])
 
     PinManager manager;
     MainWindow window(&manager);
+
+    // Listen for later launches; each connection means "show the window".
+    QLocalServer::removeServer(kInstanceServer);   // clear a stale socket from a crash
+    QLocalServer instanceServer;
+    instanceServer.listen(kInstanceServer);
+    QObject::connect(&instanceServer, &QLocalServer::newConnection, &window, [&]() {
+        while (QLocalSocket *c = instanceServer.nextPendingConnection())
+            c->deleteLater();
+        window.showFromTray();
+    });
 
     GlobalHotkeyManager hotkeys;
     app.installNativeEventFilter(&hotkeys);
