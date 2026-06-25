@@ -15,10 +15,19 @@ PinManager::PinManager(QObject *parent)
     // Windows 11's compositor occasionally strips the topmost flag. Rather
     // than wiring a SetWinEventHook callback, we re-assert it on a timer and
     // sweep out windows that have since closed. Cheap and robust.
+    // The timer only runs while at least one window is pinned (see updateTimer)
+    // so an idle PinIt uses zero CPU.
     m_timer = new QTimer(this);
     m_timer->setInterval(2000);
     connect(m_timer, &QTimer::timeout, this, &PinManager::reenforce);
-    m_timer->start();
+}
+
+void PinManager::updateTimer()
+{
+    if (m_pinned.isEmpty())
+        m_timer->stop();
+    else if (!m_timer->isActive())
+        m_timer->start();
 }
 
 bool PinManager::isPinned(intptr_t hwnd) const
@@ -55,6 +64,7 @@ bool PinManager::pin(intptr_t hwnd)
     m_pinned.insert(hwnd, w);
 
     persist();
+    updateTimer();
     emit pinToggled(true, title, proc);
     emit pinsChanged();
     return true;
@@ -76,6 +86,7 @@ bool PinManager::unpin(intptr_t hwnd)
 
     m_pinned.remove(hwnd);
     persist();
+    updateTimer();
     emit pinToggled(false, title, proc);
     emit pinsChanged();
     return true;
@@ -150,6 +161,7 @@ void PinManager::reenforce()
         for (intptr_t h : stale)
             m_pinned.remove(h);
         persist();
+        updateTimer();
         emit pinsChanged();
     }
 }

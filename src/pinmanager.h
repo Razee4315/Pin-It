@@ -55,6 +55,7 @@ private slots:
 
 private:
     void persist() const;
+    void updateTimer();        // run the re-enforce timer only while pins exist
 
     QHash<intptr_t, PinnedWindow> m_pinned;
     QTimer *m_timer = nullptr;
