@@ -154,4 +154,10 @@ QVector<PinnableWindow> enumerateWindows()
     return result;
 }
 
+void beep()
+{
+    // System default sound — no extra audio dependency, respects user volume.
+    MessageBeep(MB_OK);
+}
+
 } // namespace winpin

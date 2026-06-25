@@ -122,6 +122,8 @@ MainWindow::MainWindow(PinManager *manager, QWidget *parent)
     connect(m_manager, &PinManager::errorOccurred, this, &MainWindow::notify);
     connect(m_manager, &PinManager::pinToggled, this,
             [this](bool pinned, const QString &title, const QString &) {
+                if (pinned && m_settings.enableSound)
+                    winpin::beep();
                 notify(pinned ? tr("Pinned: %1").arg(title)
                               : tr("Unpinned: %1").arg(title));
             });

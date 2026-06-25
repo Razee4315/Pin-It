@@ -52,4 +52,8 @@ int alphaToPercent(int alpha);
 // Every visible, non-tool top-level window.
 QVector<PinnableWindow> enumerateWindows();
 
+// --- Misc -----------------------------------------------------------------
+// Play the system default notification sound (used for the pin chime).
+void beep();
+
 } // namespace winpin
