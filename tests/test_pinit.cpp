@@ -6,7 +6,6 @@
 //
 #include <QtTest>
 
-#define NOMINMAX
 #include <windows.h>          // MOD_*/VK_* constants for assertions
 
 #include "winpin.h"

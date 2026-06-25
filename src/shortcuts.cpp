@@ -1,5 +1,7 @@
 #include "shortcuts.h"
 
+#include <QStringList>
+
 #include <windows.h>
 
 namespace shortcuts {

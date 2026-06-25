@@ -11,7 +11,9 @@ set(CMAKE_AUTOMOC ON)   # process Q_OBJECT classes
 set(CMAKE_AUTORCC ON)   # compile .qrc resources
 set(CMAKE_AUTOUIC ON)   # compile .ui files (none yet, harmless)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets)
+# Network is used only for QLocalServer/QLocalSocket (single-instance IPC);
+# windeployqt already bundles Qt6Network.dll transitively, so it adds no weight.
+find_package(Qt6 REQUIRED COMPONENTS Widgets Network)
 qt_standard_project_setup()
 
 # Let the resource compiler find icon.ico (referenced relatively from app.rc).
@@ -44,7 +46,7 @@ qt_add_executable(PinIt WIN32
     resources/app.rc
 )
 
-target_link_libraries(PinIt PRIVATE Qt6::Widgets)
+target_link_libraries(PinIt PRIVATE Qt6::Widgets Qt6::Network)
 
 # Win32 APIs we call directly: window mgmt, DWM, registry (autostart).
 if(WIN32)
@@ -67,6 +69,7 @@ qt_add_executable(pinit_tests
     src/winpin.h     src/winpin.cpp
     src/shortcuts.h  src/shortcuts.cpp
 )
+target_include_directories(pinit_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_link_libraries(pinit_tests PRIVATE Qt6::Test Qt6::Core)
 if(WIN32)
     target_link_libraries(pinit_tests PRIVATE user32)
