@@ -102,6 +102,11 @@ int main(int argc, char *argv[])
     PinManager manager;
     MainWindow window(&manager);
 
+    // On quit, un-pin/un-fade any windows we touched so nothing is left stuck
+    // always-on-top or translucent (the saved pins persist for next launch).
+    QObject::connect(&app, &QApplication::aboutToQuit, &manager,
+                     &PinManager::restoreAllWindows);
+
     // Listen for later launches; each connection means "show the window".
     QLocalServer::removeServer(kInstanceServer);   // clear a stale socket from a crash
     QLocalServer instanceServer;

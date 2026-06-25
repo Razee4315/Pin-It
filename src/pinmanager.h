@@ -44,6 +44,11 @@ public:
     // Restore pins saved from a previous session (called once at startup).
     void restoreSaved();
 
+    // On exit: undo always-on-top + opacity on every pinned foreign window so
+    // they aren't left stuck topmost/translucent. Does NOT clear the saved
+    // pins, so they are re-pinned on the next launch.
+    void restoreAllWindows();
+
 signals:
     void pinsChanged();
     void pinToggled(bool isPinned, const QString &title, const QString &process);

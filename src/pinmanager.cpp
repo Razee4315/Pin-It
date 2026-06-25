@@ -169,6 +169,21 @@ void PinManager::reenforce()
     }
 }
 
+void PinManager::restoreAllWindows()
+{
+    int restored = 0;
+    for (auto it = m_pinned.begin(); it != m_pinned.end(); ++it) {
+        if (winpin::isValidWindow(H(it.key()))) {
+            winpin::restoreOpacity(H(it.key()));
+            winpin::removeTopmost(H(it.key()));
+            ++restored;
+        }
+    }
+    // Intentionally keep m_pinned / pinned.json intact so the next launch
+    // re-pins these windows.
+    qInfo("Restored %d window(s) on exit", restored);
+}
+
 void PinManager::persist() const
 {
     QVector<persistence::SavedPin> pins;
