@@ -45,8 +45,8 @@ public:
     void restoreSaved();
 
     // On exit: undo always-on-top + opacity on every pinned foreign window so
-    // they aren't left stuck topmost/translucent. Does NOT clear the saved
-    // pins, so they are re-pinned on the next launch.
+    // they aren't left stuck topmost/translucent, then forget the pins (clear
+    // memory + pinned.json) so the next launch starts with nothing pinned.
     void restoreAllWindows();
 
 signals:
