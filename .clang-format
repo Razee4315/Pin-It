@@ -1,0 +1,20 @@
+# Code style for PinIt (C++17 / Qt). Run: clang-format -i src/*.cpp src/*.h
+BasedOnStyle: LLVM
+Language: Cpp
+Standard: c++17
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 100
+PointerAlignment: Right
+AlignAfterOpenBracket: Align
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: Never
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterFunction: true
+  AfterClass: false
+  AfterControlStatement: false
+  AfterNamespace: false
+SpaceBeforeParens: ControlStatements
+SortIncludes: false
