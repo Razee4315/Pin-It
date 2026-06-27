@@ -25,6 +25,8 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QMessageBox>
+#include <QColor>
+#include <QCursor>
 
 #include "version.h"
 
@@ -67,6 +69,31 @@ QString displayTitle(const QString &title)
     if (slash >= 0 && slash < title.size() - 1)
         return title.mid(slash + 1);
     return title;
+}
+
+// Deterministic avatar colour for a process name (ported from the original
+// PinIt frontend) so each pinned app gets a stable little badge.
+QColor avatarColor(const QString &name)
+{
+    static const char *kColors[] = {
+        "#e57373", "#f06292", "#ba68c8", "#9575cd", "#7986cb",
+        "#64b5f6", "#4fc3f7", "#4dd0e1", "#4db6ac", "#81c784",
+        "#aed581", "#ffd54f", "#ffb74d", "#ff8a65", "#a1887f",
+    };
+    constexpr int count = int(sizeof(kColors) / sizeof(kColors[0]));
+    quint32 hash = 0;
+    for (const QChar ch : name)
+        hash = ch.unicode() + (hash << 5) - hash;   // wraps mod 2^32 (well-defined)
+    return QColor(QString::fromLatin1(kColors[hash % count]));
+}
+
+// First letter of the process name (sans .exe) for the avatar badge.
+QString avatarInitial(const QString &name)
+{
+    QString n = name;
+    if (n.endsWith(QStringLiteral(".exe"), Qt::CaseInsensitive))
+        n.chop(4);
+    return n.isEmpty() ? QStringLiteral("?") : QString(n.at(0).toUpper());
 }
 
 } // namespace
@@ -313,49 +340,68 @@ void MainWindow::rebuildList()
         m_pinnedHeader->setText(tr("PINNED (%1)").arg(pinned.size()));
 
     for (const PinnedWindow &w : pinned) {
-        auto *card = makeCard();
-        auto *cl = new QVBoxLayout(card);
-        cl->setContentsMargins(12, 10, 12, 10);
-        cl->setSpacing(6);
+        const intptr_t hwnd = w.hwnd;
 
-        auto *titleRow = new QHBoxLayout;
+        // One compact row per pin: [avatar] [title / process] [slider] [%] [x]
+        auto *card = makeCard();
+        auto *row = new QHBoxLayout(card);
+        row->setContentsMargins(10, 6, 8, 6);
+        row->setSpacing(8);
+
+        // Coloured badge with the process initial.
+        auto *avatar = new QLabel(avatarInitial(w.processName));
+        avatar->setFixedSize(28, 28);
+        avatar->setAlignment(Qt::AlignCenter);
+        avatar->setStyleSheet(QStringLiteral(
+            "background:%1; border-radius:6px; color:white;"
+            "font-weight:700; font-size:12px;").arg(avatarColor(w.processName).name()));
+        row->addWidget(avatar);
+
+        // Title + process name stacked tightly; takes the leftover width.
+        auto *info = new QVBoxLayout;
+        info->setSpacing(0);
         auto *name = new QLabel;
         name->setStyleSheet(QStringLiteral("font-weight: 600;"));
         // Elide so a long title never widens the card or forces a scrollbar.
-        const QString shown = displayTitle(w.title);
-        name->setText(name->fontMetrics().elidedText(shown, Qt::ElideRight, 200));
+        name->setText(name->fontMetrics().elidedText(
+            displayTitle(w.title), Qt::ElideRight, 150));
         name->setToolTip(w.title);   // full title on hover
-        titleRow->addWidget(name, 1);
-
-        auto *unpinBtn = new QPushButton(tr("Unpin"));
-        const intptr_t hwnd = w.hwnd;
-        connect(unpinBtn, &QPushButton::clicked, this,
-                [this, hwnd]() { m_manager->unpin(hwnd); });
-        titleRow->addWidget(unpinBtn);
-        cl->addLayout(titleRow);
-
         auto *proc = new QLabel(w.processName);
         proc->setProperty("role", "muted");
-        cl->addWidget(proc);
+        info->addWidget(name);
+        info->addWidget(proc);
+        row->addLayout(info, 1);
 
-        auto *opacityRow = new QHBoxLayout;
-        auto *opLabel = new QLabel(tr("Opacity"));
-        opLabel->setProperty("role", "muted");
-        opacityRow->addWidget(opLabel);
+        // Opacity slider + percentage.
         auto *slider = new QSlider(Qt::Horizontal);
         slider->setRange(winpin::kMinOpacity, winpin::kMaxOpacity);
         slider->setValue(w.opacity);
+        slider->setFixedWidth(76);
+        // The round handle is pulled out over the thin groove (margin:-6px in
+        // the QSS); without enough vertical room it gets clipped at the top.
+        slider->setMinimumHeight(20);
+        row->addWidget(slider);
+
         auto *pct = new QLabel(QStringLiteral("%1%").arg(w.opacity));
         pct->setProperty("role", "muted");
-        pct->setMinimumWidth(34);
+        pct->setMinimumWidth(30);
         pct->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+        row->addWidget(pct);
+
         connect(slider, &QSlider::valueChanged, this, [this, hwnd, pct](int v) {
             pct->setText(QStringLiteral("%1%").arg(v));
             m_manager->setOpacity(hwnd, v);
         });
-        opacityRow->addWidget(slider, 1);
-        opacityRow->addWidget(pct);
-        cl->addLayout(opacityRow);
+
+        // Compact unpin button (full label still available as a tooltip).
+        auto *unpinBtn = new QPushButton(QString::fromUtf8("\xE2\x9C\x95"));   // ✕
+        unpinBtn->setObjectName(QStringLiteral("unpin"));
+        unpinBtn->setFixedSize(24, 24);
+        unpinBtn->setToolTip(tr("Unpin this window"));
+        unpinBtn->setCursor(Qt::PointingHandCursor);
+        connect(unpinBtn, &QPushButton::clicked, this,
+                [this, hwnd]() { m_manager->unpin(hwnd); });
+        row->addWidget(unpinBtn);
 
         m_listLayout->insertWidget(m_listLayout->count() - 1, card);
     }
