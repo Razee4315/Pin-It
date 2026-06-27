@@ -57,6 +57,13 @@ QPushButton#primary {
 }
 QPushButton#primary:hover { background: #b6855a; }
 
+QPushButton#unpin {
+    background: transparent; border: 1px solid rgba(0,0,0,0.12);
+    border-radius: 5px; color: #9a948a; font-weight: 700; font-size: 12px;
+    padding: 0;
+}
+QPushButton#unpin:hover { background: #f6e3da; color: #b6855a; border-color: #c49464; }
+
 QCheckBox { color: #5a564e; font-size: 12px; spacing: 7px; }
 
 QSlider::groove:horizontal { height: 4px; background: #e6e2da; border-radius: 2px; }

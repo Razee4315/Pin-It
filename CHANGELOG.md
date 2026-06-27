@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   being silently overwritten with defaults on the next save.
 
 ### Changed
+- Each pinned window is now a single compact row — a coloured app badge, the
+  title and process, an opacity slider and an unpin button on one line — so far
+  more pins fit without scrolling (the list previously used a tall three-row
+  card per pin).
 - The pin confirmation sound is now a soft "tick" (a small bundled WAV) instead
   of the harsh Windows system beep.
 - Opacity changes are now written to disk once a slider drag settles, instead
