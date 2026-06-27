@@ -27,7 +27,10 @@ public:
     explicit PinManager(QObject *parent = nullptr);
 
     // High-level actions (hwnd as intptr_t for Qt-friendliness).
-    bool pin(intptr_t hwnd);
+    // announce=false suppresses the pin chime + tray balloon (used when
+    // re-pinning a batch of saved windows at startup, which would otherwise
+    // fire one sound and one notification per window).
+    bool pin(intptr_t hwnd, bool announce = true);
     bool unpin(intptr_t hwnd);
     bool toggle(intptr_t hwnd);
     bool isPinned(intptr_t hwnd) const;

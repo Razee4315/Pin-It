@@ -49,7 +49,7 @@ bool PinManager::isPinned(intptr_t hwnd) const
     return m_pinned.contains(hwnd);
 }
 
-bool PinManager::pin(intptr_t hwnd)
+bool PinManager::pin(intptr_t hwnd, bool announce)
 {
     if (m_pinned.contains(hwnd))
         return true;
@@ -81,7 +81,8 @@ bool PinManager::pin(intptr_t hwnd)
     persist();
     updateTimer();
     qInfo("Pinned %s (%s)", qUtf8Printable(title), qUtf8Printable(proc));
-    emit pinToggled(true, title, proc);
+    if (announce)
+        emit pinToggled(true, title, proc);
     emit pinsChanged();
     return true;
 }
@@ -256,7 +257,7 @@ void PinManager::restoreSaved()
                 match = w.hwnd;   // fallback candidate, keep scanning for exact
         }
 
-        if (match != 0 && pin(match)) {
+        if (match != 0 && pin(match, /*announce=*/false)) {
             used.insert(match);
             const int percent = winpin::alphaToPercent(saved.opacity);
             if (percent < 100)
