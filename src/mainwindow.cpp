@@ -541,6 +541,10 @@ void MainWindow::closeEvent(QCloseEvent *event)
                 QSystemTrayIcon::Information, 3000);
         }
     } else {
+        // No system tray to live in — closing the window must actually quit,
+        // otherwise PinIt would keep running with no window and no tray icon
+        // (quitOnLastWindowClosed is off), leaving Task Manager the only way out.
         event->accept();
+        QCoreApplication::quit();
     }
 }
