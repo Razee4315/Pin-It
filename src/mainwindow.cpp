@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "pinmanager.h"
 #include "winpin.h"
+#include "shortcuts.h"
 #include "shortcutsdialog.h"
 
 #include <QApplication>
@@ -49,36 +50,6 @@ QLabel *plusLabel(const QString &text = QStringLiteral("+"))
     auto *l = new QLabel(text);
     l->setProperty("role", "plus");
     return l;
-}
-
-// Turn a Tauri-style shortcut ("super+ctrl+KeyT") into display tokens
-// like ["Win", "Ctrl", "T"].
-QStringList shortcutTokens(const QString &s)
-{
-    QStringList out;
-    for (const QString &raw : s.split(QLatin1Char('+'), Qt::SkipEmptyParts)) {
-        const QString t = raw.trimmed();
-        const QString lo = t.toLower();
-        if (lo == "super" || lo == "meta" || lo == "win" || lo == "cmd")
-            out << QStringLiteral("Win");
-        else if (lo == "ctrl" || lo == "control")
-            out << QStringLiteral("Ctrl");
-        else if (lo == "alt")
-            out << QStringLiteral("Alt");
-        else if (lo == "shift")
-            out << QStringLiteral("Shift");
-        else if (t.startsWith("Key") && t.size() == 4)
-            out << t.mid(3).toUpper();
-        else if (t.startsWith("Digit") && t.size() == 6)
-            out << t.mid(5);
-        else if (lo == "equal")
-            out << QStringLiteral("=");
-        else if (lo == "minus")
-            out << QStringLiteral("-");
-        else
-            out << t;
-    }
-    return out;
 }
 
 QFrame *makeCard()
@@ -211,7 +182,7 @@ void MainWindow::buildUi()
     auto *use = new QLabel(tr("Use"));
     use->setProperty("role", "muted");
     hintRow->addWidget(use);
-    const QStringList toggleKeys = shortcutTokens(m_settings.shortcuts.togglePin);
+    const QStringList toggleKeys = shortcuts::displayTokens(m_settings.shortcuts.togglePin);
     for (int i = 0; i < toggleKeys.size(); ++i) {
         if (i > 0)
             hintRow->addWidget(plusLabel());
@@ -282,11 +253,11 @@ void MainWindow::fillShortcutRows(QVBoxLayout *scv)
         scv->addLayout(row);
     };
 
-    addRow(shortcutTokens(sc.togglePin), tr("Pin / unpin window"));
+    addRow(shortcuts::displayTokens(sc.togglePin), tr("Pin / unpin window"));
 
     {   // Opacity row shows both +/- keys sharing the same modifiers.
-        const QStringList up = shortcutTokens(sc.opacityUp);
-        const QStringList down = shortcutTokens(sc.opacityDown);
+        const QStringList up = shortcuts::displayTokens(sc.opacityUp);
+        const QStringList down = shortcuts::displayTokens(sc.opacityDown);
         auto *row = new QHBoxLayout;
         row->setSpacing(6);
         for (int i = 0; i < up.size(); ++i) {
@@ -308,7 +279,7 @@ void MainWindow::fillShortcutRows(QVBoxLayout *scv)
         scv->addLayout(row);
     }
 
-    addRow(shortcutTokens(sc.toggleWindow), tr("Show / hide PinIt"));
+    addRow(shortcuts::displayTokens(sc.toggleWindow), tr("Show / hide PinIt"));
 }
 
 void MainWindow::openShortcutsDialog()

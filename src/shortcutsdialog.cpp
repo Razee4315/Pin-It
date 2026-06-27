@@ -1,4 +1,5 @@
 #include "shortcutsdialog.h"
+#include "shortcuts.h"
 
 #include <QCheckBox>
 #include <QComboBox>
@@ -11,61 +12,6 @@
 #include <QSet>
 
 namespace {
-
-// Display tokens for a Tauri-style shortcut, e.g. "super+ctrl+KeyT"
-// -> ["Win", "Ctrl", "T"].
-QStringList tokenize(const QString &s)
-{
-    QStringList out;
-    for (const QString &raw : s.split(QLatin1Char('+'), Qt::SkipEmptyParts)) {
-        const QString t = raw.trimmed();
-        const QString lo = t.toLower();
-        if (lo == "super" || lo == "meta" || lo == "win" || lo == "cmd")
-            out << QStringLiteral("Win");
-        else if (lo == "ctrl" || lo == "control")
-            out << QStringLiteral("Ctrl");
-        else if (lo == "alt")
-            out << QStringLiteral("Alt");
-        else if (lo == "shift")
-            out << QStringLiteral("Shift");
-        else if (t.startsWith("Key") && t.size() == 4)
-            out << t.mid(3).toUpper();
-        else if (t.startsWith("Digit") && t.size() == 6)
-            out << t.mid(5);
-        else if (lo == "equal")
-            out << QStringLiteral("=");
-        else if (lo == "minus")
-            out << QStringLiteral("-");
-        else
-            out << t;
-    }
-    return out;
-}
-
-// Build a Tauri-style shortcut string from a row's controls.
-QString buildShortcut(bool win, bool ctrl, bool alt, bool shift, const QString &key)
-{
-    QStringList parts;
-    if (win)   parts << QStringLiteral("super");
-    if (ctrl)  parts << QStringLiteral("ctrl");
-    if (alt)   parts << QStringLiteral("alt");
-    if (shift) parts << QStringLiteral("shift");
-
-    QString tok;
-    if (key.size() == 1 && key.at(0).isLetter())
-        tok = QStringLiteral("Key") + key.toUpper();
-    else if (key.size() == 1 && key.at(0).isDigit())
-        tok = QStringLiteral("Digit") + key;
-    else if (key == QLatin1String("="))
-        tok = QStringLiteral("Equal");
-    else if (key == QLatin1String("-"))
-        tok = QStringLiteral("Minus");
-    else
-        tok = key;
-
-    parts << tok;
-    return parts.join(QLatin1Char('+'));
-}
 
 QStringList keyChoices()
 {
@@ -113,7 +59,7 @@ ShortcutsDialog::ShortcutsDialog(const persistence::ShortcutConfig &cfg, QWidget
 ShortcutsDialog::Row ShortcutsDialog::addRow(QGridLayout *grid, int r,
                                              const QString &label, const QString &shortcut)
 {
-    const QStringList tokens = tokenize(shortcut);
+    const QStringList tokens = shortcuts::displayTokens(shortcut);
 
     Row row;
     grid->addWidget(new QLabel(label, this), r, 0);
@@ -145,9 +91,9 @@ ShortcutsDialog::Row ShortcutsDialog::addRow(QGridLayout *grid, int r,
 void ShortcutsDialog::accept()
 {
     auto build = [](const Row &row) {
-        return buildShortcut(row.win->isChecked(), row.ctrl->isChecked(),
-                             row.alt->isChecked(), row.shift->isChecked(),
-                             row.key->currentText());
+        return shortcuts::build(row.win->isChecked(), row.ctrl->isChecked(),
+                                row.alt->isChecked(), row.shift->isChecked(),
+                                row.key->currentText());
     };
     auto hasModifier = [](const Row &row) {
         return row.win->isChecked() || row.ctrl->isChecked()
