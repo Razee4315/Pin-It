@@ -98,8 +98,6 @@ int main(int argc, char *argv[])
     // Keep running when the window closes to the tray.
     app.setQuitOnLastWindowClosed(false);
 
-    const persistence::UserSettings settings = persistence::loadSettings();
-
     PinManager manager;
     MainWindow window(&manager);
 
@@ -149,7 +147,7 @@ int main(int argc, char *argv[])
                              window.notify(QObject::tr("Shortcuts updated."));
                      });
 
-    if (!hotkeys.registerAll(settings.shortcuts)) {
+    if (!hotkeys.registerAll(window.shortcutConfig())) {
         qWarning("No global hotkeys could be registered");
         window.notify(QObject::tr(
             "Could not register global hotkeys — another app may be using them."));
