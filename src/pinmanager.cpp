@@ -21,6 +21,19 @@ PinManager::PinManager(QObject *parent)
     m_timer = new QTimer(this);
     m_timer->setInterval(2000);
     connect(m_timer, &QTimer::timeout, this, &PinManager::reenforce);
+
+    // Opacity changes arrive in bursts while a slider is dragged. Rather than
+    // rewriting pinned.json on every step, coalesce them: the actual write
+    // happens 600 ms after the last change.
+    m_persistTimer = new QTimer(this);
+    m_persistTimer->setSingleShot(true);
+    m_persistTimer->setInterval(600);
+    connect(m_persistTimer, &QTimer::timeout, this, [this]() { persist(); });
+}
+
+void PinManager::schedulePersist()
+{
+    m_persistTimer->start();   // (re)start; a write fires once the burst settles
 }
 
 void PinManager::updateTimer()
@@ -134,7 +147,7 @@ bool PinManager::setOpacity(intptr_t hwnd, int percent)
         return false;
 
     it->opacity = percent;
-    persist();
+    schedulePersist();   // debounced — slider drags fire this dozens of times
     emit opacityChanged(hwnd, percent);
     return true;
 }
@@ -185,6 +198,7 @@ void PinManager::restoreAllWindows()
         // pin list intact so the windows are re-pinned on the next login — the
         // behaviour the website and README advertise. (We still un-topmost the
         // live windows above, harmlessly, in case the session end is aborted.)
+        persist();   // flush any debounced opacity change so it survives the reboot
         qInfo("Session ending: restored %d window(s), keeping pins for next login",
               restored);
         return;
@@ -202,6 +216,10 @@ void PinManager::restoreAllWindows()
 
 void PinManager::persist() const
 {
+    // Cancel any debounced write — this immediate persist supersedes it.
+    if (m_persistTimer)
+        m_persistTimer->stop();
+
     QVector<persistence::SavedPin> pins;
     pins.reserve(m_pinned.size());
     for (const auto &w : m_pinned) {

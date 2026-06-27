@@ -67,9 +67,11 @@ private slots:
 
 private:
     void persist() const;
+    void schedulePersist();    // coalesce rapid writes (opacity slider drags)
     void updateTimer();        // run the re-enforce timer only while pins exist
 
     QHash<intptr_t, PinnedWindow> m_pinned;
     QTimer *m_timer = nullptr;
+    QTimer *m_persistTimer = nullptr;  // single-shot debounce for persist()
     bool    m_sessionEnding = false;   // true once Windows is logging off/shutting down
 };
