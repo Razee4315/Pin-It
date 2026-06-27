@@ -3,5 +3,6 @@
     <qresource prefix="/">
         <file alias="icon.png">icon.png</file>
         <file alias="icon-128.png">icon-128.png</file>
+        <file alias="tick.wav">tick.wav</file>
     </qresource>
 </RCC>

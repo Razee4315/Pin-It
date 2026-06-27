@@ -2,6 +2,9 @@
 
 #include <windows.h>
 #include <psapi.h>
+#include <mmsystem.h>
+
+#include <QFile>
 
 #include <algorithm>
 
@@ -167,8 +170,20 @@ QVector<PinnableWindow> enumerateWindows()
 
 void beep()
 {
-    // System default sound — no extra audio dependency, respects user volume.
-    MessageBeep(MB_OK);
+    // Play a soft bundled "tick" instead of the harsh system ding. PlaySound
+    // with SND_MEMORY plays a WAV image straight from memory, so we avoid Qt
+    // Multimedia entirely (just winmm). The buffer is loaded once and kept for
+    // the process lifetime because SND_ASYNC reads it after this returns.
+    static const QByteArray wav = [] {
+        QFile f(QStringLiteral(":/tick.wav"));
+        return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray();
+    }();
+
+    if (!wav.isEmpty())
+        PlaySoundW(reinterpret_cast<const wchar_t *>(wav.constData()), nullptr,
+                   SND_MEMORY | SND_ASYNC | SND_NODEFAULT);
+    else
+        MessageBeep(MB_OK);   // fallback if the resource is somehow missing
 }
 
 } // namespace winpin

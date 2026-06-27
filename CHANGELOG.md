@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   being silently overwritten with defaults on the next save.
 
 ### Changed
+- The pin confirmation sound is now a soft "tick" (a small bundled WAV) instead
+  of the harsh Windows system beep.
 - Opacity changes are now written to disk once a slider drag settles, instead
   of rewriting the whole save file on every step.
 - Internal: shortcut token/build helpers de-duplicated into one place with
