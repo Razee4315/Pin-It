@@ -9,8 +9,8 @@
 - Pin/unpin hotkey: Win+Ctrl+T (customizable)
 - Opacity hotkeys: Win+Ctrl+= (more opaque), Win+Ctrl+- (more transparent), range 20-100%
 - Show/hide the PinIt panel: Win+Ctrl+P
-- Installer size: about 2.5 MB (NSIS) / 3.8 MB (MSI)
-- Tech: Rust backend using the Win32 API directly, Tauri v2, React frontend
+- Installer size: about 13 MB (Inno Setup); a portable ZIP is also available
+- Tech: native C++17 with Qt 6 (Widgets), talking directly to the Win32 API
 - Pins persist across restarts (saved to %LOCALAPPDATA%/PinIt)
 - Re-enforces the topmost flag on Windows 11, where the DWM compositor can strip it
 
