@@ -17,7 +17,9 @@ struct PinnedWindow {
     intptr_t hwnd = 0;
     QString  title;
     QString  processName;
-    int      opacity = 100;   // percent
+    int      opacity = 100;        // percent
+    bool     wasLayered = false;   // window had WS_EX_LAYERED before we pinned it
+    bool     opacityChanged = false;  // we changed its opacity, so undo it on unpin
 };
 
 class PinManager : public QObject

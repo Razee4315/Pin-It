@@ -76,6 +76,12 @@ bool isTopmost(void *hwnd)
     return (static_cast<DWORD>(ex) & WS_EX_TOPMOST) != 0;
 }
 
+bool isLayered(void *hwnd)
+{
+    const LONG ex = GetWindowLongW(H(hwnd), GWL_EXSTYLE);
+    return (static_cast<DWORD>(ex) & WS_EX_LAYERED) != 0;
+}
+
 bool applyTopmost(void *hwnd)
 {
     return SetWindowPos(H(hwnd), HWND_TOPMOST, 0, 0, 0, 0,
@@ -114,9 +120,14 @@ int opacityPercent(void *hwnd)
     return 100;
 }
 
-bool restoreOpacity(void *hwnd)
+bool restoreOpacity(void *hwnd, bool keepLayered)
 {
     SetLayeredWindowAttributes(H(hwnd), RGB(0, 0, 0), 255, LWA_ALPHA);
+
+    // The window had WS_EX_LAYERED before we ever touched it (it manages its
+    // own transparency) — leave its style alone, just reset our alpha above.
+    if (keepLayered)
+        return true;
 
     const LONG ex = GetWindowLongW(H(hwnd), GWL_EXSTYLE);
     if ((static_cast<DWORD>(ex) & WS_EX_LAYERED) != 0) {

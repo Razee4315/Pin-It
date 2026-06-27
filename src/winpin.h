@@ -33,6 +33,7 @@ QString processName(void *hwnd);
 void   *foregroundWindow();          // nullptr if none
 bool    isValidWindow(void *hwnd);
 bool    isTopmost(void *hwnd);
+bool    isLayered(void *hwnd);        // window already has WS_EX_LAYERED
 
 // --- Always-on-top --------------------------------------------------------
 bool applyTopmost(void *hwnd);       // HWND_TOPMOST
@@ -42,7 +43,10 @@ bool removeTopmost(void *hwnd);      // HWND_NOTOPMOST
 // percent is clamped to [kMinOpacity, kMaxOpacity].
 bool setOpacityPercent(void *hwnd, int percent);
 int  opacityPercent(void *hwnd);     // 100 if the window isn't layered
-bool restoreOpacity(void *hwnd);     // back to fully opaque, drop WS_EX_LAYERED
+// Back to fully opaque. Only removes WS_EX_LAYERED when keepLayered is false;
+// pass true when the window had the style before PinIt touched it, so we don't
+// strip a style the app relies on for its own transparency.
+bool restoreOpacity(void *hwnd, bool keepLayered = false);
 
 // Percent <-> 8-bit alpha, rounded so the round-trip is lossless (no drift).
 int percentToAlpha(int percent);

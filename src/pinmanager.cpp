@@ -76,6 +76,7 @@ bool PinManager::pin(intptr_t hwnd, bool announce)
     w.title = title;
     w.processName = proc;
     w.opacity = 100;
+    w.wasLayered = winpin::isLayered(H(hwnd));   // remember its original style
     m_pinned.insert(hwnd, w);
 
     persist();
@@ -91,13 +92,19 @@ bool PinManager::unpin(intptr_t hwnd)
 {
     auto it = m_pinned.find(hwnd);
     QString title, proc;
+    bool opacityChanged = false, wasLayered = false;
     if (it != m_pinned.end()) {
         title = it->title;
         proc  = it->processName;
+        opacityChanged = it->opacityChanged;
+        wasLayered = it->wasLayered;
     }
 
     if (winpin::isValidWindow(H(hwnd))) {
-        winpin::restoreOpacity(H(hwnd));
+        // Only undo opacity if we actually changed it — otherwise we'd reset an
+        // app that manages its own transparency. keepLayered preserves its style.
+        if (opacityChanged)
+            winpin::restoreOpacity(H(hwnd), wasLayered);
         winpin::removeTopmost(H(hwnd));
     }
 
@@ -148,6 +155,7 @@ bool PinManager::setOpacity(intptr_t hwnd, int percent)
         return false;
 
     it->opacity = percent;
+    it->opacityChanged = true;   // remember so unpin/exit undoes it
     schedulePersist();   // debounced — slider drags fire this dozens of times
     emit opacityChanged(hwnd, percent);
     return true;
@@ -188,7 +196,8 @@ void PinManager::restoreAllWindows()
     int restored = 0;
     for (auto it = m_pinned.begin(); it != m_pinned.end(); ++it) {
         if (winpin::isValidWindow(H(it.key()))) {
-            winpin::restoreOpacity(H(it.key()));
+            if (it->opacityChanged)
+                winpin::restoreOpacity(H(it.key()), it->wasLayered);
             winpin::removeTopmost(H(it.key()));
             ++restored;
         }
