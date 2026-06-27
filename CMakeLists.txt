@@ -54,9 +54,10 @@ qt_add_executable(PinIt WIN32
 
 target_link_libraries(PinIt PRIVATE Qt6::Widgets Qt6::Network)
 
-# Win32 APIs we call directly: window mgmt, DWM, registry (autostart).
+# Win32 APIs we call directly: window mgmt, DWM, registry (autostart),
+# winmm for PlaySound (the pin tick).
 if(WIN32)
-    target_link_libraries(PinIt PRIVATE user32 dwmapi advapi32)
+    target_link_libraries(PinIt PRIVATE user32 dwmapi advapi32 winmm)
 endif()
 
 # Treat the compiler as a code reviewer: build with broad warnings on.
@@ -78,6 +79,6 @@ qt_add_executable(pinit_tests
 target_include_directories(pinit_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_link_libraries(pinit_tests PRIVATE Qt6::Test Qt6::Core)
 if(WIN32)
-    target_link_libraries(pinit_tests PRIVATE user32)
+    target_link_libraries(pinit_tests PRIVATE user32 winmm)
 endif()
 add_test(NAME pinit_tests COMMAND pinit_tests)
