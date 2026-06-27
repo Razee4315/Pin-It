@@ -21,6 +21,19 @@ PinManager::PinManager(QObject *parent)
     m_timer = new QTimer(this);
     m_timer->setInterval(2000);
     connect(m_timer, &QTimer::timeout, this, &PinManager::reenforce);
+
+    // Opacity changes arrive in bursts while a slider is dragged. Rather than
+    // rewriting pinned.json on every step, coalesce them: the actual write
+    // happens 600 ms after the last change.
+    m_persistTimer = new QTimer(this);
+    m_persistTimer->setSingleShot(true);
+    m_persistTimer->setInterval(600);
+    connect(m_persistTimer, &QTimer::timeout, this, [this]() { persist(); });
+}
+
+void PinManager::schedulePersist()
+{
+    m_persistTimer->start();   // (re)start; a write fires once the burst settles
 }
 
 void PinManager::updateTimer()
@@ -36,7 +49,7 @@ bool PinManager::isPinned(intptr_t hwnd) const
     return m_pinned.contains(hwnd);
 }
 
-bool PinManager::pin(intptr_t hwnd)
+bool PinManager::pin(intptr_t hwnd, bool announce)
 {
     if (m_pinned.contains(hwnd))
         return true;
@@ -63,12 +76,14 @@ bool PinManager::pin(intptr_t hwnd)
     w.title = title;
     w.processName = proc;
     w.opacity = 100;
+    w.wasLayered = winpin::isLayered(H(hwnd));   // remember its original style
     m_pinned.insert(hwnd, w);
 
     persist();
     updateTimer();
     qInfo("Pinned %s (%s)", qUtf8Printable(title), qUtf8Printable(proc));
-    emit pinToggled(true, title, proc);
+    if (announce)
+        emit pinToggled(true, title, proc);
     emit pinsChanged();
     return true;
 }
@@ -77,13 +92,19 @@ bool PinManager::unpin(intptr_t hwnd)
 {
     auto it = m_pinned.find(hwnd);
     QString title, proc;
+    bool opacityChanged = false, wasLayered = false;
     if (it != m_pinned.end()) {
         title = it->title;
         proc  = it->processName;
+        opacityChanged = it->opacityChanged;
+        wasLayered = it->wasLayered;
     }
 
     if (winpin::isValidWindow(H(hwnd))) {
-        winpin::restoreOpacity(H(hwnd));
+        // Only undo opacity if we actually changed it — otherwise we'd reset an
+        // app that manages its own transparency. keepLayered preserves its style.
+        if (opacityChanged)
+            winpin::restoreOpacity(H(hwnd), wasLayered);
         winpin::removeTopmost(H(hwnd));
     }
 
@@ -134,7 +155,8 @@ bool PinManager::setOpacity(intptr_t hwnd, int percent)
         return false;
 
     it->opacity = percent;
-    persist();
+    it->opacityChanged = true;   // remember so unpin/exit undoes it
+    schedulePersist();   // debounced — slider drags fire this dozens of times
     emit opacityChanged(hwnd, percent);
     return true;
 }
@@ -174,24 +196,40 @@ void PinManager::restoreAllWindows()
     int restored = 0;
     for (auto it = m_pinned.begin(); it != m_pinned.end(); ++it) {
         if (winpin::isValidWindow(H(it.key()))) {
-            winpin::restoreOpacity(H(it.key()));
+            if (it->opacityChanged)
+                winpin::restoreOpacity(H(it.key()), it->wasLayered);
             winpin::removeTopmost(H(it.key()));
             ++restored;
         }
     }
 
-    // Forget the pins entirely so the next launch starts clean: drop them from
-    // memory, stop the re-enforce timer, and clear pinned.json (settings are
-    // preserved because persist() only rewrites the pin list). Closing to the
-    // tray never reaches here — this runs only on a real quit (aboutToQuit).
+    if (m_sessionEnding) {
+        // Windows is logging off / shutting down / restarting. Leave the saved
+        // pin list intact so the windows are re-pinned on the next login — the
+        // behaviour the website and README advertise. (We still un-topmost the
+        // live windows above, harmlessly, in case the session end is aborted.)
+        persist();   // flush any debounced opacity change so it survives the reboot
+        qInfo("Session ending: restored %d window(s), keeping pins for next login",
+              restored);
+        return;
+    }
+
+    // Manual quit: forget the pins so a manual relaunch starts clean. Drop them
+    // from memory, stop the re-enforce timer, and clear pinned.json (settings
+    // are preserved because persist() only rewrites the pin list). Closing to
+    // the tray never reaches here — this runs only on a real quit (aboutToQuit).
     m_pinned.clear();
     persist();
     updateTimer();
-    qInfo("Restored and cleared %d pinned window(s) on exit", restored);
+    qInfo("Restored and cleared %d pinned window(s) on manual quit", restored);
 }
 
 void PinManager::persist() const
 {
+    // Cancel any debounced write — this immediate persist supersedes it.
+    if (m_persistTimer)
+        m_persistTimer->stop();
+
     QVector<persistence::SavedPin> pins;
     pins.reserve(m_pinned.size());
     for (const auto &w : m_pinned) {
@@ -228,7 +266,7 @@ void PinManager::restoreSaved()
                 match = w.hwnd;   // fallback candidate, keep scanning for exact
         }
 
-        if (match != 0 && pin(match)) {
+        if (match != 0 && pin(match, /*announce=*/false)) {
             used.insert(match);
             const int percent = winpin::alphaToPercent(saved.opacity);
             if (percent < 100)

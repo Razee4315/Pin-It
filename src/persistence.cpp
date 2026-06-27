@@ -66,14 +66,29 @@ SavedState load()
 {
     SavedState state;
 
-    QFile f(savePath());
+    const QString path = savePath();
+    QFile f(path);
     if (!f.open(QIODevice::ReadOnly))
-        return state;   // defaults
+        return state;   // missing file — defaults
+
+    const QByteArray data = f.readAll();
+    f.close();
+    if (data.trimmed().isEmpty())
+        return state;   // empty file — defaults
 
     QJsonParseError err;
-    const QJsonDocument doc = QJsonDocument::fromJson(f.readAll(), &err);
-    if (err.error != QJsonParseError::NoError || !doc.isObject())
+    const QJsonDocument doc = QJsonDocument::fromJson(data, &err);
+    if (err.error != QJsonParseError::NoError || !doc.isObject()) {
+        // The file exists but is unreadable. Back it up before any later save
+        // overwrites it with defaults, so the user's data isn't silently lost
+        // (and is available for manual recovery).
+        qWarning("pinned.json is corrupt (%s); backing it up to pinned.json.corrupt",
+                 qUtf8Printable(err.errorString()));
+        const QString backup = path + QStringLiteral(".corrupt");
+        QFile::remove(backup);
+        QFile::copy(path, backup);
         return state;
+    }
 
     const QJsonObject root = doc.object();
 

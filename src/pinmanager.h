@@ -17,7 +17,9 @@ struct PinnedWindow {
     intptr_t hwnd = 0;
     QString  title;
     QString  processName;
-    int      opacity = 100;   // percent
+    int      opacity = 100;        // percent
+    bool     wasLayered = false;   // window had WS_EX_LAYERED before we pinned it
+    bool     opacityChanged = false;  // we changed its opacity, so undo it on unpin
 };
 
 class PinManager : public QObject
@@ -27,7 +29,10 @@ public:
     explicit PinManager(QObject *parent = nullptr);
 
     // High-level actions (hwnd as intptr_t for Qt-friendliness).
-    bool pin(intptr_t hwnd);
+    // announce=false suppresses the pin chime + tray balloon (used when
+    // re-pinning a batch of saved windows at startup, which would otherwise
+    // fire one sound and one notification per window).
+    bool pin(intptr_t hwnd, bool announce = true);
     bool unpin(intptr_t hwnd);
     bool toggle(intptr_t hwnd);
     bool isPinned(intptr_t hwnd) const;
@@ -45,9 +50,16 @@ public:
     void restoreSaved();
 
     // On exit: undo always-on-top + opacity on every pinned foreign window so
-    // they aren't left stuck topmost/translucent, then forget the pins (clear
-    // memory + pinned.json) so the next launch starts with nothing pinned.
+    // they aren't left stuck topmost/translucent. After a manual quit the pins
+    // are then forgotten (clear memory + pinned.json) so a manual relaunch
+    // starts clean; after a session end (logoff/shutdown/restart) the saved
+    // pins are kept so they're re-pinned on the next login.
     void restoreAllWindows();
+
+    // Called when Windows signals a logoff/shutdown/restart (see commitDataRequest
+    // in main). Makes the next restoreAllWindows() keep the saved pins so the
+    // advertised "pins come back after a restart" behaviour works.
+    void markSessionEnding() { m_sessionEnding = true; }
 
 signals:
     void pinsChanged();
@@ -60,8 +72,11 @@ private slots:
 
 private:
     void persist() const;
+    void schedulePersist();    // coalesce rapid writes (opacity slider drags)
     void updateTimer();        // run the re-enforce timer only while pins exist
 
     QHash<intptr_t, PinnedWindow> m_pinned;
     QTimer *m_timer = nullptr;
+    QTimer *m_persistTimer = nullptr;  // single-shot debounce for persist()
+    bool    m_sessionEnding = false;   // true once Windows is logging off/shutting down
 };
