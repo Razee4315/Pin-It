@@ -4,6 +4,30 @@ All notable changes to PinIt are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+- **Pins survive a Windows restart again.** 2.1.1 cleared the saved pins on
+  every exit, which also wiped them on shutdown/restart — disabling the
+  advertised "pins come back after a restart" feature. PinIt now keeps pins
+  when Windows is logging off/restarting and only forgets them on a deliberate
+  quit.
+- Closing the window when no system tray is available now quits PinIt instead
+  of leaving it running invisibly with no way to exit.
+- Unpinning no longer resets the transparency of apps that manage their own
+  (PinIt only undoes opacity it actually changed, and keeps a window's own
+  layered style).
+- Restoring saved pins at startup is now silent (no burst of pin sounds and
+  notifications).
+- A corrupt `pinned.json` is backed up to `pinned.json.corrupt` instead of
+  being silently overwritten with defaults on the next save.
+
+### Changed
+- Opacity changes are now written to disk once a slider drag settles, instead
+  of rewriting the whole save file on every step.
+- Internal: shortcut token/build helpers de-duplicated into one place with
+  added round-trip test coverage; settings are read once at startup.
+
 ## [2.1.1]
 
 ### Changed
