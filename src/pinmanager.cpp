@@ -180,14 +180,24 @@ void PinManager::restoreAllWindows()
         }
     }
 
-    // Forget the pins entirely so the next launch starts clean: drop them from
-    // memory, stop the re-enforce timer, and clear pinned.json (settings are
-    // preserved because persist() only rewrites the pin list). Closing to the
-    // tray never reaches here — this runs only on a real quit (aboutToQuit).
+    if (m_sessionEnding) {
+        // Windows is logging off / shutting down / restarting. Leave the saved
+        // pin list intact so the windows are re-pinned on the next login — the
+        // behaviour the website and README advertise. (We still un-topmost the
+        // live windows above, harmlessly, in case the session end is aborted.)
+        qInfo("Session ending: restored %d window(s), keeping pins for next login",
+              restored);
+        return;
+    }
+
+    // Manual quit: forget the pins so a manual relaunch starts clean. Drop them
+    // from memory, stop the re-enforce timer, and clear pinned.json (settings
+    // are preserved because persist() only rewrites the pin list). Closing to
+    // the tray never reaches here — this runs only on a real quit (aboutToQuit).
     m_pinned.clear();
     persist();
     updateTimer();
-    qInfo("Restored and cleared %d pinned window(s) on exit", restored);
+    qInfo("Restored and cleared %d pinned window(s) on manual quit", restored);
 }
 
 void PinManager::persist() const

@@ -45,9 +45,16 @@ public:
     void restoreSaved();
 
     // On exit: undo always-on-top + opacity on every pinned foreign window so
-    // they aren't left stuck topmost/translucent, then forget the pins (clear
-    // memory + pinned.json) so the next launch starts with nothing pinned.
+    // they aren't left stuck topmost/translucent. After a manual quit the pins
+    // are then forgotten (clear memory + pinned.json) so a manual relaunch
+    // starts clean; after a session end (logoff/shutdown/restart) the saved
+    // pins are kept so they're re-pinned on the next login.
     void restoreAllWindows();
+
+    // Called when Windows signals a logoff/shutdown/restart (see commitDataRequest
+    // in main). Makes the next restoreAllWindows() keep the saved pins so the
+    // advertised "pins come back after a restart" behaviour works.
+    void markSessionEnding() { m_sessionEnding = true; }
 
 signals:
     void pinsChanged();
@@ -64,4 +71,5 @@ private:
 
     QHash<intptr_t, PinnedWindow> m_pinned;
     QTimer *m_timer = nullptr;
+    bool    m_sessionEnding = false;   // true once Windows is logging off/shutting down
 };

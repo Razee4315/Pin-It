@@ -12,6 +12,7 @@
 #include <QMessageBox>
 #include <QIcon>
 #include <QSystemTrayIcon>
+#include <QSessionManager>
 
 #include "pinmanager.h"
 #include "globalhotkey.h"
@@ -103,9 +104,15 @@ int main(int argc, char *argv[])
     MainWindow window(&manager);
 
     // On quit, un-pin/un-fade any windows we touched so nothing is left stuck
-    // always-on-top or translucent (the saved pins persist for next launch).
+    // always-on-top or translucent.
     QObject::connect(&app, &QApplication::aboutToQuit, &manager,
                      &PinManager::restoreAllWindows);
+
+    // Distinguish a manual quit from Windows logging off / shutting down. On a
+    // session end we keep the saved pins so they're re-pinned next login; on a
+    // manual quit we forget them. commitDataRequest fires before aboutToQuit.
+    QObject::connect(&app, &QGuiApplication::commitDataRequest, &manager,
+                     [&manager](QSessionManager &) { manager.markSessionEnding(); });
 
     // Listen for later launches; each connection means "show the window".
     QLocalServer::removeServer(kInstanceServer);   // clear a stale socket from a crash
