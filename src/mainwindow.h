@@ -19,6 +19,7 @@ class QVBoxLayout;
 class QHBoxLayout;
 class QWidget;
 class QSystemTrayIcon;
+class QMenu;
 class QCheckBox;
 class QLabel;
 class QScrollArea;
@@ -72,10 +73,12 @@ private:
     void showStatus(const QString &message);   // in-window message, fades by itself
     void placeStatus();
     void updateTrayToolTip();
+    void fillTrayMenu();
     void updateTabOrder();     // top to bottom, including the list rows
 
     PinManager      *m_manager = nullptr;
     QSystemTrayIcon *m_tray = nullptr;
+    QMenu           *m_trayMenu = nullptr;
     QScrollArea     *m_scroll = nullptr;
     QLabel          *m_status = nullptr;        // floats over the bottom of the list
     QTimer          *m_statusTimer = nullptr;

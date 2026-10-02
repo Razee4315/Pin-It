@@ -301,7 +301,8 @@ void MainWindow::updateTrayToolTip()
         return;
     const int n = m_manager->pinnedCount();
     QString tip = n == 0 ? tr("PinIt — no windows pinned")
-                         : tr("PinIt — %n window(s) pinned", "", n);
+                : n == 1 ? tr("PinIt — 1 window pinned")
+                         : tr("PinIt — %1 windows pinned").arg(n);
     if (!m_hotkeyProblems.isEmpty())
         tip += QLatin1Char('\n') + tr("Shortcut not working: %1")
                                        .arg(m_hotkeyProblems.join(QStringLiteral(", ")));
@@ -556,16 +557,12 @@ void MainWindow::buildTray()
 
     m_tray = new QSystemTrayIcon(appIcon(), this);
 
-    auto *menu = new QMenu(this);
-    QAction *showAct = menu->addAction(tr("Show PinIt"));
-    connect(showAct, &QAction::triggered, this, &MainWindow::showFromTray);
-    QAction *aboutAct = menu->addAction(tr("About PinIt"));
-    connect(aboutAct, &QAction::triggered, this, &MainWindow::showAbout);
-    menu->addSeparator();
-    QAction *quitAct = menu->addAction(tr("Quit"));
-    connect(quitAct, &QAction::triggered, qApp, &QApplication::quit);
+    // Filled each time it opens, so it always reflects the current pins.
+    m_trayMenu = new QMenu(this);
+    connect(m_trayMenu, &QMenu::aboutToShow, this, &MainWindow::fillTrayMenu);
+    fillTrayMenu();
 
-    m_tray->setContextMenu(menu);
+    m_tray->setContextMenu(m_trayMenu);
     m_tray->setToolTip(QStringLiteral("PinIt"));
     connect(m_tray, &QSystemTrayIcon::activated, this,
             [this](QSystemTrayIcon::ActivationReason reason) {
@@ -575,6 +572,23 @@ void MainWindow::buildTray()
                     toggleVisibility();
             });
     m_tray->show();
+}
+
+void MainWindow::fillTrayMenu()
+{
+    m_trayMenu->clear();
+    const int pinned = m_manager->pinnedCount();
+
+    m_trayMenu->addAction(tr("Show PinIt"), this, &MainWindow::showFromTray);
+    m_trayMenu->addAction(tr("About PinIt"), this, &MainWindow::showAbout);
+    m_trayMenu->addSeparator();
+
+    // Quitting un-pins everything and forgets the pins; say so up front
+    // rather than surprising the user afterwards.
+    const QString quitText = pinned == 0 ? tr("Quit")
+                           : pinned == 1 ? tr("Quit and unpin 1 window")
+                                         : tr("Quit and unpin %1 windows").arg(pinned);
+    m_trayMenu->addAction(quitText, qApp, &QApplication::quit);
 }
 
 void MainWindow::toggleVisibility()

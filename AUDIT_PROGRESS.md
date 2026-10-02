@@ -40,10 +40,10 @@ and the affected flow has been exercised (the "How verified" column says how).
 | F-29 | 3 | P3 | Opacity cheat-sheet row assumes shared modifiers | verified | Harness: opacity shortcuts with different modifiers render as Increase/Decrease rows; same modifiers keep the combined row; long shortcuts elide the description |
 | F-30 | 3 | P3 | Unsupported keys shown as "A" | verified | Unit tests (named/function keys, every offered key round-trips, unknown key preserved) + harness: F13–F17 register and display; NumpadAdd is shown as written, reported unavailable, not rewritten |
 | F-31 | 3 | P3 | Shortcuts dialog accessibility | verified | Harness: all 16 checkboxes and 4 key lists carry '<action>: <part>' accessible names; errors are an inline label with an accessibility alert, no message boxes |
-| F-32 | 3 | P3 | Quit forgets pins with no hint | todo | |
+| F-32 | 3 | P3 | Quit forgets pins with no hint | done |  |
 | F-33 | 3 | P3 | Uninstaller leaves Run key; no AppMutex | blocked | Implemented (AppMutex + unconditional uninsdeletevalue; app holds the mutex — harness-checked). Inno Setup is not installed here, so the script could not be compiled or an uninstall run; CI compiles it on push. Needs one manual install/uninstall |
 | F-34 | 3 | P3 | Second launch only flashes the taskbar | verified | Harness: after a second launch the PinIt window was the foreground window (AllowSetForegroundWindow from the second process) |
-| F-35 | 3 | P3 | "window(s)" tooltip | todo | |
+| F-35 | 3 | P3 | "window(s)" tooltip | done |  |
 | F-36 | 3 | P3 | About only in tray; CONTRIBUTING wrong | todo | |
 | F-37 | 4 | P2 | Window titles written to the log | verified | Harness: pinit.log has 'Pinned a window of dummywin.exe' and not the window title |
 | F-38 | 4 | P2 | Site invisible without JavaScript | verified | Browser: with the js class removed every .reveal computes to opacity 1; class is now set in head before first paint |
