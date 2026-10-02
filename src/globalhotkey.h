@@ -35,7 +35,7 @@ signals:
     void toggleWindow();
 
 private:
-    bool registerOne(int id, const QString &shortcut);
+    bool registerOne(int id, const QString &shortcut, bool autoRepeat);
 
     QStringList m_failed;
     bool        m_anyRegistered = false;
