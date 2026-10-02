@@ -67,7 +67,9 @@ int percentToAlpha(int percent);
 int alphaToPercent(int alpha);
 
 // --- Enumeration ----------------------------------------------------------
-// Every visible, non-tool top-level window.
+// Every window the user could meaningfully pin: visible, titled, pinnable (see
+// isPinnable), not a tool window and not "cloaked" (Windows keeps suspended
+// Store apps and windows on other virtual desktops around as visible-but-hidden).
 QVector<PinnableWindow> enumerateWindows();
 
 // --- Foreground changes ---------------------------------------------------

@@ -209,11 +209,17 @@ QVector<PinnableWindow> enumerateWindows()
 
     auto cb = [](HWND hwnd, LPARAM lparam) -> BOOL {
         auto *out = reinterpret_cast<QVector<HWND> *>(lparam);
-        if (IsWindowVisible(hwnd)) {
-            const LONG ex = GetWindowLongW(hwnd, GWL_EXSTYLE);
-            if ((static_cast<DWORD>(ex) & WS_EX_TOOLWINDOW) == 0)
-                out->push_back(hwnd);
-        }
+        if (!IsWindowVisible(hwnd))
+            return TRUE;
+        const LONG ex = GetWindowLongW(hwnd, GWL_EXSTYLE);
+        if ((static_cast<DWORD>(ex) & WS_EX_TOOLWINDOW) != 0)
+            return TRUE;
+        BOOL cloaked = FALSE;
+        if (SUCCEEDED(DwmGetWindowAttribute(hwnd, DWMWA_CLOAKED, &cloaked, sizeof(cloaked)))
+            && cloaked)
+            return TRUE;
+        if (isPinnable(hwnd))
+            out->push_back(hwnd);
         return TRUE;
     };
     EnumWindows(cb, reinterpret_cast<LPARAM>(&handles));
@@ -224,6 +230,8 @@ QVector<PinnableWindow> enumerateWindows()
         PinnableWindow w;
         w.hwnd = reinterpret_cast<intptr_t>(h);
         w.title = windowTitle(h);
+        if (w.title.isEmpty())
+            continue;
         w.processName = processName(h);
         result.push_back(w);
     }

@@ -474,12 +474,7 @@ void MainWindow::addWindowDialog()
     l->addWidget(prompt);
 
     auto *list = new QListWidget(&dlg);
-    const QString self = windowTitle();
     for (const winpin::PinnableWindow &w : winpin::enumerateWindows()) {
-        if (w.title.isEmpty())
-            continue;
-        if (w.title == self)
-            continue;
         if (m_manager->isPinned(w.hwnd))
             continue;
         auto *item = new QListWidgetItem(
