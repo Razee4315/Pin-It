@@ -28,6 +28,11 @@
   <meta name="twitter:description" content="Pin any window so it stays on top. One shortcut. Free and tiny. Works on Windows 10 and 11." />
   <meta name="twitter:image" content="https://razee4315.github.io/Pin-It/assets/og-image.png" />
 
+  <!-- Mark the page as scripted before first paint. The entrance animations
+       below only hide content under .js, so without JavaScript everything
+       stays visible. -->
+  <script>document.documentElement.classList.add('js');</script>
+
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -226,8 +231,8 @@
 
     /* ---- scroll reveal ---- */
     @media (prefers-reduced-motion: no-preference) {
-      .reveal { opacity: 0; transform: translateY(20px); transition: opacity .65s cubic-bezier(.2,.7,.2,1), transform .65s cubic-bezier(.2,.7,.2,1); }
-      .reveal.in { opacity: 1; transform: none; }
+      .js .reveal { opacity: 0; transform: translateY(20px); transition: opacity .65s cubic-bezier(.2,.7,.2,1), transform .65s cubic-bezier(.2,.7,.2,1); }
+      .js .reveal.in { opacity: 1; transform: none; }
       .reveal.d1 { transition-delay: .08s; } .reveal.d2 { transition-delay: .16s; }
       .js .hero-copy > * { opacity: 0; transform: translateY(16px); animation: rise .8s cubic-bezier(.2,.7,.2,1) forwards; }
       .js .hero-copy > :nth-child(1) { animation-delay: .05s; }
@@ -396,7 +401,6 @@
   (function () {
     "use strict";
     document.body.classList.remove('no-js');
-    document.documentElement.classList.add('js');
     var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if ('IntersectionObserver' in window && !reduce) {
       var io = new IntersectionObserver(function (entries) {
