@@ -374,10 +374,19 @@ void MainWindow::fillShortcutRows(QVBoxLayout *scv)
 
     addRow(shortcuts::displayTokens(sc.togglePin), tr("Pin / unpin window"));
 
-    // Opacity row shows both +/- keys sharing the same modifiers.
+    // The two opacity shortcuts share one row ("Win + Ctrl + = / -") only when
+    // they really differ in nothing but the key; otherwise each gets its own
+    // row so the modifiers shown are the ones that work.
     const QStringList up = shortcuts::displayTokens(sc.opacityUp);
     const QStringList down = shortcuts::displayTokens(sc.opacityDown);
-    addRow(up, tr("Adjust opacity"), down.isEmpty() ? QStringLiteral("-") : down.last());
+    const bool sameModifiers = !up.isEmpty() && !down.isEmpty()
+        && up.mid(0, up.size() - 1) == down.mid(0, down.size() - 1);
+    if (sameModifiers) {
+        addRow(up, tr("Adjust opacity"), down.last());
+    } else {
+        addRow(up, tr("Increase opacity"));
+        addRow(down, tr("Decrease opacity"));
+    }
 
     addRow(shortcuts::displayTokens(sc.toggleWindow), tr("Show / hide PinIt"));
 }

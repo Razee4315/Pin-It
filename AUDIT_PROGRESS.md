@@ -37,7 +37,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | F-26 | 3 | P2 | Shortcuts saved before registration is tested | done |  |
 | F-27 | 3 | P2 | Autostart checkbox ignores the registry | todo | |
 | F-28 | 3 | P3 | Empty-state hint chips go stale | todo | |
-| F-29 | 3 | P3 | Opacity cheat-sheet row assumes shared modifiers | todo | |
+| F-29 | 3 | P3 | Opacity cheat-sheet row assumes shared modifiers | done |  |
 | F-30 | 3 | P3 | Unsupported keys shown as "A" | done |  |
 | F-31 | 3 | P3 | Shortcuts dialog accessibility | done |  |
 | F-32 | 3 | P3 | Quit forgets pins with no hint | todo | |
