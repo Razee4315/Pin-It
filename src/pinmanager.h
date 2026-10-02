@@ -71,6 +71,8 @@ private slots:
     void reenforce();          // periodic: re-apply topmost, drop dead windows
 
 private:
+    // Give a window back the way we found it. Returns false if it is gone.
+    static bool release(const PinnedWindow &window);
     void persist() const;
     void schedulePersist();    // coalesce rapid writes (opacity slider drags)
     void updateTimer();        // run the re-enforce timer only while pins exist

@@ -115,29 +115,32 @@ bool PinManager::pin(intptr_t hwnd, bool announce)
     return true;
 }
 
+bool PinManager::release(const PinnedWindow &window)
+{
+    if (!winpin::isValidWindow(H(window.hwnd)))
+        return false;
+
+    // Only undo opacity if we actually changed it — otherwise we'd reset an
+    // app that manages its own transparency. keepLayered preserves its style.
+    if (window.opacityChanged)
+        winpin::restoreOpacity(H(window.hwnd), window.wasLayered);
+    winpin::removeTopmost(H(window.hwnd));
+    return true;
+}
+
 bool PinManager::unpin(intptr_t hwnd)
 {
-    QString title, proc;
-    bool opacityChanged = false, wasLayered = false;
-    if (const PinnedWindow *w = find(hwnd)) {
-        title = w->title;
-        proc  = w->processName;
-        opacityChanged = w->opacityChanged;
-        wasLayered = w->wasLayered;
-    }
+    const PinnedWindow *found = find(hwnd);
+    if (!found)
+        return false;
 
-    if (winpin::isValidWindow(H(hwnd))) {
-        // Only undo opacity if we actually changed it — otherwise we'd reset an
-        // app that manages its own transparency. keepLayered preserves its style.
-        if (opacityChanged)
-            winpin::restoreOpacity(H(hwnd), wasLayered);
-        winpin::removeTopmost(H(hwnd));
-    }
+    const PinnedWindow window = *found;   // copy: the entry is removed below
+    release(window);
 
     m_pinned.removeIf([hwnd](const PinnedWindow &w) { return w.hwnd == hwnd; });
     persist();
     updateTimer();
-    emit pinToggled(false, title, proc);
+    emit pinToggled(false, window.title, window.processName);
     emit pinsChanged();
     return true;
 }
@@ -212,12 +215,8 @@ void PinManager::restoreAllWindows()
 {
     int restored = 0;
     for (const PinnedWindow &w : m_pinned) {
-        if (winpin::isValidWindow(H(w.hwnd))) {
-            if (w.opacityChanged)
-                winpin::restoreOpacity(H(w.hwnd), w.wasLayered);
-            winpin::removeTopmost(H(w.hwnd));
+        if (release(w))
             ++restored;
-        }
     }
 
     if (m_sessionEnding) {

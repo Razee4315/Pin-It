@@ -87,7 +87,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | C-12 | Shared app-data directory helper | todo | |
 | C-13 | Chip-row builder duplicated three times | todo | |
 | C-14 | Hotkey-result messages duplicated | todo | |
-| C-15 | Un-pin sequence duplicated | todo | |
+| C-15 | Un-pin sequence duplicated | done |  |
 | C-16 | `"Unknown"` sentinel strings | todo | |
 | C-17 | Inline row colours outside the stylesheet | todo | |
 | C-18 | Tests for persistence and restore matching | todo | |
