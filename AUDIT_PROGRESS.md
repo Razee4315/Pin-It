@@ -40,11 +40,11 @@ and the affected flow has been exercised (the "How verified" column says how).
 | F-29 | 3 | P3 | Opacity cheat-sheet row assumes shared modifiers | verified | Harness: opacity shortcuts with different modifiers render as Increase/Decrease rows; same modifiers keep the combined row; long shortcuts elide the description |
 | F-30 | 3 | P3 | Unsupported keys shown as "A" | verified | Unit tests (named/function keys, every offered key round-trips, unknown key preserved) + harness: F13–F17 register and display; NumpadAdd is shown as written, reported unavailable, not rewritten |
 | F-31 | 3 | P3 | Shortcuts dialog accessibility | verified | Harness: all 16 checkboxes and 4 key lists carry '<action>: <part>' accessible names; errors are an inline label with an accessibility alert, no message boxes |
-| F-32 | 3 | P3 | Quit forgets pins with no hint | done |  |
+| F-32 | 3 | P3 | Quit forgets pins with no hint | verified | Harness: tray Quit reads 'Quit' / 'Quit and unpin 1 window' / 'Quit and unpin 2 windows' |
 | F-33 | 3 | P3 | Uninstaller leaves Run key; no AppMutex | blocked | Implemented (AppMutex + unconditional uninsdeletevalue; app holds the mutex — harness-checked). Inno Setup is not installed here, so the script could not be compiled or an uninstall run; CI compiles it on push. Needs one manual install/uninstall |
 | F-34 | 3 | P3 | Second launch only flashes the taskbar | verified | Harness: after a second launch the PinIt window was the foreground window (AllowSetForegroundWindow from the second process) |
-| F-35 | 3 | P3 | "window(s)" tooltip | done |  |
-| F-36 | 3 | P3 | About only in tray; CONTRIBUTING wrong | done |  |
+| F-35 | 3 | P3 | "window(s)" tooltip | verified | Harness: tooltip reads 'no windows pinned' / '1 window pinned' / '2 windows pinned' |
+| F-36 | 3 | P3 | About only in tray; CONTRIBUTING wrong | verified | Harness: About button in the window footer opens the About box; CONTRIBUTING and the bug template now point at it |
 | F-37 | 4 | P2 | Window titles written to the log | verified | Harness: pinit.log has 'Pinned a window of dummywin.exe' and not the window title |
 | F-38 | 4 | P2 | Site invisible without JavaScript | verified | Browser: with the js class removed every .reveal computes to opacity 1; class is now set in head before first paint |
 | F-39 | 4 | P2 | Site does not mention SmartScreen | verified | Browser: SmartScreen note renders under the hero CTA and in the download band; portable link returns 302 to the asset (direct installer link deferred, see report) |
@@ -60,12 +60,12 @@ and the affected flow has been exercised (the "How verified" column says how).
 | M-01 | Visible "this is pinned" indicator | in-progress | Outline on pin/unpin done (F-02); locate-from-list and tray list still to come |
 | M-02 | Pending restore for apps opened later (same work as F-12) | verified | Harness: 4 saved pins, 1 open at start → 1 pinned at saved opacity, 3 waiting rows; file keeps all 4 after an unrelated pin; awaited window pinned and outlined within 0.8 s of opening; late-titled window pinned once the title matches; another window of the same app ignored; forget/quit/session-end all checked |
 | M-03 | Code-signed installer | todo | |
-| M-04 | "Unpin all" | done |  |
-| M-05 | Tray menu lists pinned windows + "Pin a window…" | done |  |
+| M-04 | "Unpin all" | verified | Harness: Unpin all (window button and tray item) releases every window incl. opacity, clears waiting pins and the saved file, then disables itself |
+| M-05 | Tray menu lists pinned windows + "Pin a window…" | verified | Harness: tray menu lists each pinned window (ampersands escaped); choosing one unpins only that window; 'Pin a window…' present |
 | M-06 | Notifications on/off | verified | Harness: setting defaults to off, checkbox unchecked, ticking it writes show_notifications=true |
 | M-07 | Reset shortcuts to defaults | verified | Harness: Restore Defaults fills in the default set and clears the error; nothing applied until OK |
 | M-08 | Click-through for pinned windows | todo | |
-| M-09 | "Check for updates" link | done |  |
+| M-09 | "Check for updates" link | verified | Harness: tray has 'Check for updates…'; About box links to /releases/latest. Opening the browser itself was not triggered |
 | M-10 | Dark theme | todo | |
 | M-11 | winget / Scoop package | todo | |
 
