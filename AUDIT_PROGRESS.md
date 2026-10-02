@@ -17,7 +17,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | F-06 | 1 | P2 | Titles never refreshed | verified | Harness: retitled a pinned foreign window; manager, row and pinned.json all carry the new title |
 | F-07 | 1 | P3 | Buried window is hidden instead of raised | verified | Harness: toggling a visible unfocused window keeps it shown and focuses it; toggling the focused window hides it |
 | F-08 | 1 | P3 | 2 s polling only | verified | Harness: topmost stripped right after a timer tick was restored within 0.6 s of another window coming to the front |
-| F-09 | 1 | P3 | Session-ending flag sticks after cancelled shutdown | verified | Harness: WM_QUERYENDSESSION then WM_ENDSESSION(FALSE) → quit clears pins; without the cancel they are kept |
+| F-09 | 1 | P3 | Session-ending flag sticks after cancelled shutdown | verified | Harness: session-end detection now uses PinIt's own hidden top-level window (works with no Qt window, as at login); cancelled shutdown clears the flag; simulated shutdown with apps closing first keeps every pin and its opacity |
 | F-10 | 1 | P3 | Messages vanish without a tray | verified | Harness: notify() with the window focused shows the in-window message; list geometry unchanged (screenshot checked) |
 | F-11 | 2 | P0 | Restart fix is unreleased | blocked | Prepared: version 2.2.0, changelog, README and site metadata; the P1 restore/list fixes it depended on are in. Publishing means pushing a v2.2.0 tag, which creates a public release — needs your go-ahead after you merge |
 | F-12 | 2 | P1 | Restore is one-shot and erases unmatched pins | verified | Harness: 4 saved pins, 1 open at start → 1 pinned at saved opacity, 3 waiting rows; file keeps all 4 after an unrelated pin; awaited window pinned and outlined within 0.8 s of opening; late-titled window pinned once the title matches; another window of the same app ignored; forget/quit/session-end all checked |
@@ -59,7 +59,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 |----|---------|--------|----------------------------|
 | M-01 | Visible "this is pinned" indicator | verified | Harness: outline on pin/unpin/restore (F-02, F-12); resting the pointer on a row outlines its window after 350 ms, a passing pointer does not; tray menu lists pinned windows (M-05) |
 | M-02 | Pending restore for apps opened later (same work as F-12) | verified | Harness: 4 saved pins, 1 open at start → 1 pinned at saved opacity, 3 waiting rows; file keeps all 4 after an unrelated pin; awaited window pinned and outlined within 0.8 s of opening; late-titled window pinned once the title matches; another window of the same app ignored; forget/quit/session-end all checked |
-| M-03 | Code-signed installer | todo | |
+| M-03 | Code-signed installer | blocked | Needs a code-signing certificate or a SignPath (free for open source) account in your name — a credential and an external service. Not something that can be done from the repo; options in the report |
 | M-04 | "Unpin all" | verified | Harness: Unpin all (window button and tray item) releases every window incl. opacity, clears waiting pins and the saved file, then disables itself |
 | M-05 | Tray menu lists pinned windows + "Pin a window…" | verified | Harness: tray menu lists each pinned window (ampersands escaped); choosing one unpins only that window; 'Pin a window…' present |
 | M-06 | Notifications on/off | verified | Harness: setting defaults to off, checkbox unchecked, ticking it writes show_notifications=true |
@@ -67,7 +67,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | M-08 | Click-through for pinned windows | verified | Harness: toggle sets WS_EX_TRANSPARENT and WindowFromPoint no longer hits the window; off/unpin restore a normal clickable unlayered window; saved; undone correctly after a simulated crash |
 | M-09 | "Check for updates" link | verified | Harness: tray has 'Check for updates…'; About box links to /releases/latest. Opening the browser itself was not triggered |
 | M-10 | Dark theme | verified | Harness: every screen rendered in both variants and reviewed (main, picker, shortcuts, About, tray menu); rendered contrast >= 4.5 for all text pairs in both; a colour-scheme change at run time re-themes without restart. Real Windows setting toggle not exercised |
-| M-11 | winget / Scoop package | todo | |
+| M-11 | winget / Scoop package | blocked | winget and Scoop manifests need the download URL and SHA-256 of the released 2.2.0 installer, which does not exist until the tag is pushed (F-11); winget also means a pull request to microsoft/winget-pkgs from your account |
 
 ## Cleanup
 
@@ -80,8 +80,8 @@ and the affected flow has been exercised (the "How verified" column says how).
 | C-05 | Unused / missing includes | verified | Build with -Wall -Wextra clean; tests pass |
 | C-06 | Unused link libraries and `CMAKE_AUTOUIC` | verified | Clean reconfigure, link and tests pass; objdump shows no ADVAPI32 import |
 | C-07 | Unreachable `icon-128.png` fallback | verified | PinIt.exe 753,576 → 610,572 bytes; icon renders in header, tray, About (screenshots) |
-| C-08 | `resources/logo.svg` unreferenced | todo | |
-| C-09 | Stale remote branches | todo | |
+| C-08 | `resources/logo.svg` unreferenced | blocked | Left in place on purpose: resources/logo.svg is referenced by nothing in the build, site or README, but it looks like the source artwork for the icons. Your call: keep as source art or delete |
+| C-09 | Stale remote branches | blocked | Deleting remote branches (fix/clear-pins-on-quit, fix/lock-window-size, fix/review-improvements) changes the shared repository; not done without your say-so |
 | C-10 | Stale / wrong comments | verified | Build passes; installer and CMake comments corrected in their own commits (F-33, O-01) |
 | C-11 | One window-handle type, one cast helper | verified | Build clean; no void* handles or casts outside winpin.cpp/windowpicker.cpp; tier1, restore and click scenarios pass |
 | C-12 | Shared app-data directory helper | verified | Unit test persistenceRoundTrips checks dataDir(); log and settings land in the same scratch folder in the harness and real-exe run |
