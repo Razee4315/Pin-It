@@ -477,6 +477,8 @@ void MainWindow::syncList()
                 [this, hwnd](int percent) { m_manager->setOpacity(hwnd, percent); });
         connect(row, &PinRow::unpinRequested, this,
                 [this, hwnd]() { m_manager->unpin(hwnd); });
+        connect(row, &PinRow::locateRequested, this,
+                [hwnd]() { pinflash::show(hwnd, pinflash::Kind::Pinned); });
         m_rows.insert(hwnd, row);
         // After the last live row, ahead of the waiting rows and the stretch.
         m_listLayout->insertWidget(m_listLayout->count() - 1 - m_pendingRows.size(), row);

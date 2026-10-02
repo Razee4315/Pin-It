@@ -8,6 +8,7 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QSlider>
+#include <QTimer>
 #include <QVBoxLayout>
 
 namespace {
@@ -170,6 +171,25 @@ PinRow::PinRow(const PinnedWindow &window, QWidget *parent)
     m_unpin = unpinBtn;
 
     nameControls(window.title);
+
+    // Hovering a row outlines its window — but only once the pointer rests
+    // there, so sweeping the mouse across the list doesn't flash every window.
+    m_hoverTimer = new QTimer(this);
+    m_hoverTimer->setSingleShot(true);
+    m_hoverTimer->setInterval(350);
+    connect(m_hoverTimer, &QTimer::timeout, this, &PinRow::locateRequested);
+}
+
+void PinRow::enterEvent(QEnterEvent *event)
+{
+    m_hoverTimer->start();
+    QFrame::enterEvent(event);
+}
+
+void PinRow::leaveEvent(QEvent *event)
+{
+    m_hoverTimer->stop();
+    QFrame::leaveEvent(event);
 }
 
 QList<QWidget *> PinRow::focusChain() const

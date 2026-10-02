@@ -13,6 +13,7 @@
 class QLabel;
 class QPushButton;
 class QSlider;
+class QTimer;
 
 // How a window title / process name is shown to the user.
 // Console apps (PowerShell, cmd) set their window title to a full path; only
@@ -54,6 +55,12 @@ public:
 signals:
     void opacityRequested(int percent);
     void unpinRequested();
+    // The pointer has rested on the row: point out its window on screen.
+    void locateRequested();
+
+protected:
+    void enterEvent(QEnterEvent *event) override;
+    void leaveEvent(QEvent *event) override;
 
 private:
     // Screen readers announce controls by name; a bare "slider" or "button"
@@ -64,4 +71,5 @@ private:
     QSlider     *m_slider = nullptr;
     QLabel      *m_percent = nullptr;
     QPushButton *m_unpin = nullptr;
+    QTimer      *m_hoverTimer = nullptr;
 };

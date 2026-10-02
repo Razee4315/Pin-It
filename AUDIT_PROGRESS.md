@@ -57,7 +57,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 
 | ID | Summary | Status | How verified / why blocked |
 |----|---------|--------|----------------------------|
-| M-01 | Visible "this is pinned" indicator | in-progress | Outline on pin/unpin done (F-02); locate-from-list and tray list still to come |
+| M-01 | Visible "this is pinned" indicator | done |  |
 | M-02 | Pending restore for apps opened later (same work as F-12) | verified | Harness: 4 saved pins, 1 open at start → 1 pinned at saved opacity, 3 waiting rows; file keeps all 4 after an unrelated pin; awaited window pinned and outlined within 0.8 s of opening; late-titled window pinned once the title matches; another window of the same app ignored; forget/quit/session-end all checked |
 | M-03 | Code-signed installer | todo | |
 | M-04 | "Unpin all" | verified | Harness: Unpin all (window button and tray item) releases every window incl. opacity, clears waiting pins and the saved file, then disables itself |
