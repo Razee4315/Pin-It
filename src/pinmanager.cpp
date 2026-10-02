@@ -162,8 +162,11 @@ void PinManager::adjustForegroundOpacity(int deltaPercent)
         return;
     const intptr_t hwnd = reinterpret_cast<intptr_t>(fg);
     const PinnedWindow *w = find(hwnd);
-    if (!w)
-        return;   // only adjust opacity of pinned windows
+    if (!w) {
+        // Only pinned windows can be faded; say so instead of doing nothing.
+        emit errorOccurred(tr("Pin this window first to change its opacity."));
+        return;
+    }
     setOpacity(hwnd, w->opacity + deltaPercent);
 }
 
