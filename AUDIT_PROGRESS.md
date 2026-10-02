@@ -46,8 +46,8 @@ and the affected flow has been exercised (the "How verified" column says how).
 | F-35 | 3 | P3 | "window(s)" tooltip | todo | |
 | F-36 | 3 | P3 | About only in tray; CONTRIBUTING wrong | todo | |
 | F-37 | 4 | P2 | Window titles written to the log | verified | Harness: pinit.log has 'Pinned a window of dummywin.exe' and not the window title |
-| F-38 | 4 | P2 | Site invisible without JavaScript | todo | |
-| F-39 | 4 | P2 | Site does not mention SmartScreen | todo | |
+| F-38 | 4 | P2 | Site invisible without JavaScript | verified | Browser: with the js class removed every .reveal computes to opacity 1; class is now set in head before first paint |
+| F-39 | 4 | P2 | Site does not mention SmartScreen | verified | Browser: SmartScreen note renders under the hero CTA and in the download band; portable link returns 302 to the asset (direct installer link deferred, see report) |
 | F-40 | 4 | P3 | Autoplay video without controls | todo | |
 | F-41 | 4 | P3 | Failed save is ignored | todo | |
 | F-42 | 4 | P3 | CI permissions / pinning / checksums | todo | |
