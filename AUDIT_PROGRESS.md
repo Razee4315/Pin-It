@@ -65,7 +65,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | M-06 | Notifications on/off | verified | Harness: setting defaults to off, checkbox unchecked, ticking it writes show_notifications=true |
 | M-07 | Reset shortcuts to defaults | verified | Harness: Restore Defaults fills in the default set and clears the error; nothing applied until OK |
 | M-08 | Click-through for pinned windows | todo | |
-| M-09 | "Check for updates" link | todo | |
+| M-09 | "Check for updates" link | done |  |
 | M-10 | Dark theme | todo | |
 | M-11 | winget / Scoop package | todo | |
 

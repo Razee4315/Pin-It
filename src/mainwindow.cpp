@@ -28,6 +28,8 @@
 #include <QSet>
 #include <QTimer>
 #include <QAccessible>
+#include <QDesktopServices>
+#include <QUrl>
 
 #include "version.h"
 
@@ -566,6 +568,7 @@ void MainWindow::showAbout()
         "<p>%3</p>"
         "<p>Built with C++ &amp; Qt %4.</p>"
         "<p>By %5<br><a href=\"%6\">%6</a></p>"
+        "<p><a href=\"%6/releases/latest\">%8</a></p>"
         "<p style='color:gray'>%7</p>")
         .arg(QStringLiteral(PINIT_PRODUCT),
              QStringLiteral(PINIT_VERSION_STR),
@@ -573,7 +576,8 @@ void MainWindow::showAbout()
              QStringLiteral(QT_VERSION_STR),
              QStringLiteral(PINIT_COMPANY),
              QStringLiteral(PINIT_URL),
-             QStringLiteral(PINIT_COPYRIGHT)));
+             QStringLiteral(PINIT_COPYRIGHT),
+             tr("Check for a newer version")));
     box.exec();
 }
 
@@ -627,6 +631,11 @@ void MainWindow::fillTrayMenu()
         m_trayMenu->addSeparator();
     }
 
+    // PinIt never goes online by itself; this just opens the releases page
+    // in the browser.
+    m_trayMenu->addAction(tr("Check for updates…"), this, []() {
+        QDesktopServices::openUrl(QUrl(QStringLiteral(PINIT_URL "/releases/latest")));
+    });
     m_trayMenu->addAction(tr("About PinIt"), this, &MainWindow::showAbout);
     m_trayMenu->addSeparator();
 
