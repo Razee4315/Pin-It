@@ -10,15 +10,15 @@ and the affected flow has been exercised (the "How verified" column says how).
 | ID | Tier | Sev | Summary | Status | How verified / why blocked |
 |----|------|-----|---------|--------|----------------------------|
 | F-01 | 1 | P1 | Hotkey pins shell windows / PinIt itself | verified |  |
-| F-02 | 1 | P1 | Toast on every pin/unpin, no setting | in-progress |  |
-| F-03 | 1 | P2 | Hotkey registration failure is only a toast | done |  |
+| F-02 | 1 | P1 | Toast on every pin/unpin, no setting | verified | Harness: outline overlay appears on pin and unpin, matches the DWM frame to the pixel, is click-through, takes no focus, gone after ~0.6 s; toasts now gated by the setting |
+| F-03 | 1 | P2 | Hotkey registration failure is only a toast | verified | Harness: with the user's own PinIt holding the default keys all four failed; warning label and tray tooltip name them and clear when fixed (screenshot checked) |
 | F-04 | 1 | P2 | Tray double-click opens then hides | verified | Harness: tray Trigger shows the window, the following DoubleClick leaves it shown |
-| F-05 | 1 | P2 | Unpin strips an app's own always-on-top | done |  |
-| F-06 | 1 | P2 | Titles never refreshed | done |  |
-| F-07 | 1 | P3 | Buried window is hidden instead of raised | done |  |
-| F-08 | 1 | P3 | 2 s polling only | done |  |
-| F-09 | 1 | P3 | Session-ending flag sticks after cancelled shutdown | done |  |
-| F-10 | 1 | P3 | Messages vanish without a tray | done |  |
+| F-05 | 1 | P2 | Unpin strips an app's own always-on-top | verified | Harness: a window already topmost stays topmost after pin+unpin; an ordinary one does not |
+| F-06 | 1 | P2 | Titles never refreshed | verified | Harness: retitled a pinned foreign window; manager, row and pinned.json all carry the new title |
+| F-07 | 1 | P3 | Buried window is hidden instead of raised | verified | Harness: toggling a visible unfocused window keeps it shown and focuses it; toggling the focused window hides it |
+| F-08 | 1 | P3 | 2 s polling only | verified | Harness: topmost stripped right after a timer tick was restored within 0.6 s of another window coming to the front |
+| F-09 | 1 | P3 | Session-ending flag sticks after cancelled shutdown | verified | Harness: WM_QUERYENDSESSION then WM_ENDSESSION(FALSE) → quit clears pins; without the cancel they are kept |
+| F-10 | 1 | P3 | Messages vanish without a tray | verified | Harness: notify() with the window focused shows the in-window message; list geometry unchanged (screenshot checked) |
 | F-11 | 2 | P0 | Restart fix is unreleased | todo | |
 | F-12 | 2 | P1 | Restore is one-shot and erases unmatched pins | todo | |
 | F-13 | 2 | P1 | Restore fallback pins the wrong window | verified |  |
@@ -57,12 +57,12 @@ and the affected flow has been exercised (the "How verified" column says how).
 
 | ID | Summary | Status | How verified / why blocked |
 |----|---------|--------|----------------------------|
-| M-01 | Visible "this is pinned" indicator | in-progress |  |
+| M-01 | Visible "this is pinned" indicator | in-progress | Outline on pin/unpin done (F-02); locate-from-list and tray list still to come |
 | M-02 | Pending restore for apps opened later (same work as F-12) | todo | |
 | M-03 | Code-signed installer | todo | |
 | M-04 | "Unpin all" | todo | |
 | M-05 | Tray menu lists pinned windows + "Pin a window…" | todo | |
-| M-06 | Notifications on/off | done |  |
+| M-06 | Notifications on/off | verified | Harness: setting defaults to off, checkbox unchecked, ticking it writes show_notifications=true |
 | M-07 | Reset shortcuts to defaults | todo | |
 | M-08 | Click-through for pinned windows | todo | |
 | M-09 | "Check for updates" link | todo | |
@@ -87,7 +87,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | C-12 | Shared app-data directory helper | todo | |
 | C-13 | Chip-row builder duplicated three times | todo | |
 | C-14 | Hotkey-result messages duplicated | todo | |
-| C-15 | Un-pin sequence duplicated | done |  |
+| C-15 | Un-pin sequence duplicated | verified | Build + harness: unpin and quit paths both restore windows (F-05/F-09 scenarios) |
 | C-16 | `"Unknown"` sentinel strings | todo | |
 | C-17 | Inline row colours outside the stylesheet | todo | |
 | C-18 | Tests for persistence and restore matching | todo | |
