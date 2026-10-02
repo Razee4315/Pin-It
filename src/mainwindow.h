@@ -31,8 +31,6 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(PinManager *manager, QWidget *parent = nullptr);
 
-    void setShortcutConfig(const persistence::ShortcutConfig &cfg);
-
     // The settings MainWindow loaded at construction (so main() doesn't have to
     // read the file a second time just to register the initial hotkeys).
     persistence::ShortcutConfig shortcutConfig() const { return m_settings.shortcuts; }

@@ -73,7 +73,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 
 | ID | Summary | Status | How verified / why blocked |
 |----|---------|--------|----------------------------|
-| C-01 | Remove `MainWindow::setShortcutConfig` | todo | |
+| C-01 | Remove `MainWindow::setShortcutConfig` | verified | No references left (grep); build and tests pass |
 | C-02 | Remove `m_emptyLabel`, `m_shortcutsLabel` | todo | |
 | C-03 | Remove `winpin::opacityPercent` | todo | |
 | C-04 | Remove `PinManager::pinnedCount` | todo | |

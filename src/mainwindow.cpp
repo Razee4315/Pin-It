@@ -361,13 +361,6 @@ void MainWindow::resizeEvent(QResizeEvent *event)
     placeStatus();
 }
 
-void MainWindow::setShortcutConfig(const persistence::ShortcutConfig &cfg)
-{
-    m_settings.shortcuts = cfg;
-    if (m_shortcutsLayout)
-        fillShortcutRows(m_shortcutsLayout);
-}
-
 void MainWindow::fillShortcutRows(QVBoxLayout *scv)
 {
     clearLayout(scv);
