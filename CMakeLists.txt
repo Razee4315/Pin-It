@@ -9,7 +9,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_AUTOMOC ON)   # process Q_OBJECT classes
 set(CMAKE_AUTORCC ON)   # compile .qrc resources
-set(CMAKE_AUTOUIC ON)   # compile .ui files (none yet, harmless)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets)
 qt_standard_project_setup()
@@ -61,10 +60,10 @@ qt_add_executable(PinIt WIN32
 
 target_link_libraries(PinIt PRIVATE Qt6::Widgets)
 
-# Win32 APIs we call directly: window mgmt, DWM, registry (autostart),
-# winmm for PlaySound (the pin tick).
+# Win32 APIs we call directly: window management (user32), window frame
+# bounds and cloaking (dwmapi), PlaySound for the pin tick (winmm).
 if(WIN32)
-    target_link_libraries(PinIt PRIVATE user32 dwmapi advapi32 winmm)
+    target_link_libraries(PinIt PRIVATE user32 dwmapi winmm)
 endif()
 
 # Treat the compiler as a code reviewer: build with broad warnings on.
