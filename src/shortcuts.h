@@ -21,8 +21,13 @@ bool hasSafeModifier(unsigned mods);
 // UI, e.g. ["Win", "Ctrl", "T"]. Used by the main window and the editor dialog.
 QStringList displayTokens(const QString &s);
 
+// Every key the shortcut editor offers, as shown to the user: A–Z, 0–9,
+// F1–F24, punctuation, arrows and the navigation keys.
+QStringList keyLabels();
+
 // Build a Tauri-style shortcut string from modifier flags + a key label
-// ("T", "5", "=", "-"). Inverse of displayTokens/parse for the editor dialog.
-QString build(bool win, bool ctrl, bool alt, bool shift, const QString &key);
+// ("T", "5", "=", "F9", "Page Up"). Inverse of displayTokens/parse for the
+// editor dialog. A label that isn't one of keyLabels() is stored as written.
+QString build(bool win, bool ctrl, bool alt, bool shift, const QString &keyLabel);
 
 } // namespace shortcuts

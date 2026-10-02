@@ -4,6 +4,135 @@
 
 #include <windows.h>
 
+namespace {
+
+// Keys with a name rather than a letter or digit: the Tauri token stored in
+// pinned.json, the label shown to the user, and the Win32 virtual-key code.
+struct NamedKey {
+    const char *token;
+    const char *label;
+    unsigned    vk;
+};
+
+const NamedKey kNamedKeys[] = {
+    {"Equal",        "=",         VK_OEM_PLUS},
+    {"Minus",        "-",         VK_OEM_MINUS},
+    {"Comma",        ",",         VK_OEM_COMMA},
+    {"Period",       ".",         VK_OEM_PERIOD},
+    {"Slash",        "/",         VK_OEM_2},
+    {"Semicolon",    ";",         VK_OEM_1},
+    {"Quote",        "'",         VK_OEM_7},
+    {"BracketLeft",  "[",         VK_OEM_4},
+    {"BracketRight", "]",         VK_OEM_6},
+    {"Backslash",    "\\",        VK_OEM_5},
+    {"Backquote",    "`",         VK_OEM_3},
+    {"Space",        "Space",     VK_SPACE},
+    {"ArrowUp",      "Up",        VK_UP},
+    {"ArrowDown",    "Down",      VK_DOWN},
+    {"ArrowLeft",    "Left",      VK_LEFT},
+    {"ArrowRight",   "Right",     VK_RIGHT},
+    {"Home",         "Home",      VK_HOME},
+    {"End",          "End",       VK_END},
+    {"PageUp",       "Page Up",   VK_PRIOR},
+    {"PageDown",     "Page Down", VK_NEXT},
+    {"Insert",       "Insert",    VK_INSERT},
+    {"Delete",       "Delete",    VK_DELETE},
+};
+
+constexpr int kFunctionKeyCount = 24;   // F1..F24
+
+// "F1".."F24" -> 1..24, anything else -> 0.
+int functionKeyNumber(const QString &token)
+{
+    if (token.size() < 2 || token.size() > 3 || token.at(0).toUpper() != QLatin1Char('F'))
+        return 0;
+    bool ok = false;
+    const int n = token.mid(1).toInt(&ok);
+    return (ok && n >= 1 && n <= kFunctionKeyCount) ? n : 0;
+}
+
+const NamedKey *namedKeyByToken(const QString &token)
+{
+    for (const NamedKey &key : kNamedKeys) {
+        if (token.compare(QLatin1String(key.token), Qt::CaseInsensitive) == 0)
+            return &key;
+    }
+    return nullptr;
+}
+
+const NamedKey *namedKeyByLabel(const QString &label)
+{
+    for (const NamedKey &key : kNamedKeys) {
+        if (label.compare(QLatin1String(key.label), Qt::CaseInsensitive) == 0)
+            return &key;
+    }
+    return nullptr;
+}
+
+// Resolve the key part of a shortcut ("KeyT", "Digit5", "F9", "Equal"…).
+bool keyFromToken(const QString &token, unsigned &vk)
+{
+    if (token.startsWith(QLatin1String("Key")) && token.size() == 4 && token.at(3).isLetter()) {
+        vk = token.at(3).toUpper().unicode();          // KeyT -> 'T'
+        return true;
+    }
+    if (token.startsWith(QLatin1String("Digit")) && token.size() == 6 && token.at(5).isDigit()) {
+        vk = token.at(5).unicode();                    // Digit5 -> '5'
+        return true;
+    }
+    if (const int n = functionKeyNumber(token)) {
+        vk = VK_F1 + (n - 1);
+        return true;
+    }
+    if (const NamedKey *key = namedKeyByToken(token)) {
+        vk = key->vk;
+        return true;
+    }
+    // Hand-written configs: a bare character such as "T", "5", "=" or "-".
+    if (token.size() == 1) {
+        if (const NamedKey *key = namedKeyByLabel(token)) {
+            vk = key->vk;
+            return true;
+        }
+        if (token.at(0).isLetterOrNumber()) {
+            vk = token.at(0).toUpper().unicode();
+            return true;
+        }
+    }
+    return false;
+}
+
+// What the key part of a shortcut looks like to the user.
+QString labelForToken(const QString &token)
+{
+    if (token.startsWith(QLatin1String("Key")) && token.size() == 4)
+        return token.mid(3).toUpper();
+    if (token.startsWith(QLatin1String("Digit")) && token.size() == 6)
+        return token.mid(5);
+    if (functionKeyNumber(token))
+        return token.toUpper();
+    if (const NamedKey *key = namedKeyByToken(token))
+        return QLatin1String(key->label);
+    return token;   // unknown: show it as written
+}
+
+// Inverse of labelForToken. A label we don't know is passed through untouched,
+// so a hand-edited key the editor can't offer survives a round trip.
+QString tokenForLabel(const QString &label)
+{
+    if (label.size() == 1 && label.at(0).isLetter())
+        return QStringLiteral("Key") + label.toUpper();
+    if (label.size() == 1 && label.at(0).isDigit())
+        return QStringLiteral("Digit") + label;
+    if (functionKeyNumber(label))
+        return label.toUpper();
+    if (const NamedKey *key = namedKeyByLabel(label))
+        return QLatin1String(key->token);
+    return label;
+}
+
+} // namespace
+
 namespace shortcuts {
 
 bool parse(const QString &s, unsigned &mods, unsigned &vk)
@@ -26,20 +155,8 @@ bool parse(const QString &s, unsigned &mods, unsigned &vk)
         } else if (lower == "shift") {
             mods |= MOD_SHIFT;
         } else {
-            // The key token. Map the common Tauri key codes we use.
-            if (token.startsWith("Key") && token.size() == 4) {
-                vk = token.at(3).toUpper().unicode();          // KeyT -> 'T'
-            } else if (token.startsWith("Digit") && token.size() == 6) {
-                vk = token.at(5).unicode();                    // Digit5 -> '5'
-            } else if (lower == "equal" || token == "=") {
-                vk = VK_OEM_PLUS;
-            } else if (lower == "minus" || token == "-") {
-                vk = VK_OEM_MINUS;
-            } else if (token.size() == 1) {
-                vk = token.at(0).toUpper().unicode();
-            } else {
+            if (!keyFromToken(token, vk))
                 return false;   // unknown key token
-            }
             haveKey = true;
         }
     }
@@ -65,41 +182,34 @@ QStringList displayTokens(const QString &s)
             out << QStringLiteral("Alt");
         else if (lo == "shift")
             out << QStringLiteral("Shift");
-        else if (t.startsWith("Key") && t.size() == 4)
-            out << t.mid(3).toUpper();
-        else if (t.startsWith("Digit") && t.size() == 6)
-            out << t.mid(5);
-        else if (lo == "equal")
-            out << QStringLiteral("=");
-        else if (lo == "minus")
-            out << QStringLiteral("-");
         else
-            out << t;
+            out << labelForToken(t);
     }
     return out;
 }
 
-QString build(bool win, bool ctrl, bool alt, bool shift, const QString &key)
+QStringList keyLabels()
+{
+    QStringList keys;
+    for (char c = 'A'; c <= 'Z'; ++c)
+        keys << QString(QLatin1Char(c));
+    for (char c = '0'; c <= '9'; ++c)
+        keys << QString(QLatin1Char(c));
+    for (int n = 1; n <= kFunctionKeyCount; ++n)
+        keys << QStringLiteral("F%1").arg(n);
+    for (const NamedKey &key : kNamedKeys)
+        keys << QLatin1String(key.label);
+    return keys;
+}
+
+QString build(bool win, bool ctrl, bool alt, bool shift, const QString &keyLabel)
 {
     QStringList parts;
     if (win)   parts << QStringLiteral("super");
     if (ctrl)  parts << QStringLiteral("ctrl");
     if (alt)   parts << QStringLiteral("alt");
     if (shift) parts << QStringLiteral("shift");
-
-    QString tok;
-    if (key.size() == 1 && key.at(0).isLetter())
-        tok = QStringLiteral("Key") + key.toUpper();
-    else if (key.size() == 1 && key.at(0).isDigit())
-        tok = QStringLiteral("Digit") + key;
-    else if (key == QLatin1String("="))
-        tok = QStringLiteral("Equal");
-    else if (key == QLatin1String("-"))
-        tok = QStringLiteral("Minus");
-    else
-        tok = key;
-
-    parts << tok;
+    parts << tokenForLabel(keyLabel);
     return parts.join(QLatin1Char('+'));
 }
 

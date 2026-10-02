@@ -24,6 +24,9 @@ private slots:
     void shortcutBuildRoundTrips();
     void shortcutBuildDisplayTokens();
     void shortcutNeedsWinCtrlOrAlt();
+    void shortcutSupportsNamedAndFunctionKeys();
+    void shortcutEveryOfferedKeyRoundTrips();
+    void shortcutUnknownKeyIsPreserved();
     void savedPinMatchesOnlySameAppAndTitle();
     void shellWindowClassesAreNotPinnable();
 };
@@ -115,6 +118,52 @@ void TestPinIt::shortcutNeedsWinCtrlOrAlt()
     QVERIFY(shortcuts::hasSafeModifier(mods));
     QVERIFY(shortcuts::parse(QStringLiteral("super+KeyA"), mods, vk));
     QVERIFY(shortcuts::hasSafeModifier(mods));
+}
+
+void TestPinIt::shortcutSupportsNamedAndFunctionKeys()
+{
+    unsigned mods = 0, vk = 0;
+    QVERIFY(shortcuts::parse(QStringLiteral("super+ctrl+F9"), mods, vk));
+    QCOMPARE(vk, unsigned(VK_F9));
+    QVERIFY(shortcuts::parse(QStringLiteral("ctrl+alt+F24"), mods, vk));
+    QCOMPARE(vk, unsigned(VK_F24));
+    QVERIFY(!shortcuts::parse(QStringLiteral("ctrl+F25"), mods, vk));
+    QVERIFY(shortcuts::parse(QStringLiteral("ctrl+alt+ArrowUp"), mods, vk));
+    QCOMPARE(vk, unsigned(VK_UP));
+    QVERIFY(shortcuts::parse(QStringLiteral("ctrl+alt+PageDown"), mods, vk));
+    QCOMPARE(vk, unsigned(VK_NEXT));
+    QVERIFY(shortcuts::parse(QStringLiteral("ctrl+alt+Space"), mods, vk));
+    QCOMPARE(vk, unsigned(VK_SPACE));
+
+    QCOMPARE(shortcuts::displayTokens(QStringLiteral("super+ctrl+F9")).last(),
+             QStringLiteral("F9"));
+    QCOMPARE(shortcuts::displayTokens(QStringLiteral("ctrl+alt+PageDown")).last(),
+             QStringLiteral("Page Down"));
+}
+
+// Whatever the editor lets the user pick must build into something that
+// parses, and must show the same label again when the dialog is reopened.
+void TestPinIt::shortcutEveryOfferedKeyRoundTrips()
+{
+    const QStringList labels = shortcuts::keyLabels();
+    QVERIFY(labels.size() > 60);
+    for (const QString &label : labels) {
+        const QString s = shortcuts::build(true, true, false, false, label);
+        unsigned mods = 0, vk = 0;
+        QVERIFY2(shortcuts::parse(s, mods, vk), qUtf8Printable(s));
+        QCOMPARE(mods, unsigned(MOD_WIN | MOD_CONTROL));
+        QCOMPARE(shortcuts::displayTokens(s).last(), label);
+    }
+}
+
+// A key token the editor doesn't know must survive display -> build unchanged,
+// not be rewritten into something else when the user presses OK.
+void TestPinIt::shortcutUnknownKeyIsPreserved()
+{
+    const QString original = QStringLiteral("super+ctrl+NumpadAdd");
+    const QStringList tokens = shortcuts::displayTokens(original);
+    QCOMPARE(tokens.last(), QStringLiteral("NumpadAdd"));
+    QCOMPARE(shortcuts::build(true, true, false, false, tokens.last()), original);
 }
 
 // Restoring must never fall back to "any window of the same app".

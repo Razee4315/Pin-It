@@ -11,20 +11,6 @@
 #include <QStringList>
 #include <QSet>
 
-namespace {
-
-QStringList keyChoices()
-{
-    QStringList keys;
-    for (char c = 'A'; c <= 'Z'; ++c)
-        keys << QString(QChar(c));
-    for (char c = '0'; c <= '9'; ++c)
-        keys << QString(QChar(c));
-    keys << QStringLiteral("=") << QStringLiteral("-");
-    return keys;
-}
-
-} // namespace
 
 ShortcutsDialog::ShortcutsDialog(const persistence::ShortcutConfig &cfg, QWidget *parent)
     : QDialog(parent)
@@ -68,16 +54,21 @@ ShortcutsDialog::Row ShortcutsDialog::addRow(QGridLayout *grid, int r,
     row.alt   = new QCheckBox(this);
     row.shift = new QCheckBox(this);
     row.key   = new QComboBox(this);
-    row.key->addItems(keyChoices());
+    row.key->addItems(shortcuts::keyLabels());
 
     row.win->setChecked(tokens.contains(QStringLiteral("Win")));
     row.ctrl->setChecked(tokens.contains(QStringLiteral("Ctrl")));
     row.alt->setChecked(tokens.contains(QStringLiteral("Alt")));
     row.shift->setChecked(tokens.contains(QStringLiteral("Shift")));
     if (!tokens.isEmpty()) {
-        const int idx = row.key->findText(tokens.last());
-        if (idx >= 0)
-            row.key->setCurrentIndex(idx);
+        // A key from a hand-edited or older config that the editor doesn't
+        // offer is listed as-is rather than silently replaced by "A".
+        int idx = row.key->findText(tokens.last());
+        if (idx < 0) {
+            row.key->insertItem(0, tokens.last());
+            idx = 0;
+        }
+        row.key->setCurrentIndex(idx);
     }
 
     grid->addWidget(row.win,   r, 1, Qt::AlignCenter);
