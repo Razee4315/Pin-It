@@ -29,8 +29,8 @@ struct PinnableWindow {
 };
 
 // --- Window metadata ------------------------------------------------------
-QString windowTitle(void *hwnd);
-QString processName(void *hwnd);
+QString windowTitle(void *hwnd);     // empty if the window has no title
+QString processName(void *hwnd);     // e.g. "notepad.exe"; empty if it can't be read
 void   *foregroundWindow();          // nullptr if none
 bool    isValidWindow(void *hwnd);
 bool    isTopmost(void *hwnd);

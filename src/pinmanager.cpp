@@ -108,7 +108,7 @@ bool PinManager::pin(intptr_t hwnd, bool announce)
         if (announce) {
             qWarning("Pin failed for %s (likely elevated/UIPI)", qUtf8Printable(proc));
             emit errorOccurred(tr("Can't pin %1 — it may be running as administrator.")
-                                   .arg(proc));
+                                   .arg(proc.isEmpty() ? tr("this window") : proc));
         }
         return false;
     }
@@ -234,7 +234,7 @@ void PinManager::reenforce()
         // Browsers and editors retitle their window all the time. Keep the
         // list — and the title saved for the next restore — current.
         const QString title = winpin::windowTitle(H(w.hwnd));
-        if (title != w.title && title != QLatin1String("Unknown")) {
+        if (title != w.title && !title.isEmpty()) {
             w.title = title;
             schedulePersist();
             emit titleChanged(w.hwnd, title);

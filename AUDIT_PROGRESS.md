@@ -88,7 +88,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | C-13 | Chip-row builder duplicated three times | todo | |
 | C-14 | Hotkey-result messages duplicated | todo | |
 | C-15 | Un-pin sequence duplicated | verified | Build + harness: unpin and quit paths both restore windows (F-05/F-09 scenarios) |
-| C-16 | `"Unknown"` sentinel strings | todo | |
+| C-16 | `"Unknown"` sentinel strings | done |  |
 | C-17 | Inline row colours outside the stylesheet | todo | |
 | C-18 | Tests for persistence and restore matching | todo | |
 

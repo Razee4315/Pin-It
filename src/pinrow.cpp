@@ -2,6 +2,7 @@
 #include "winpin.h"
 
 #include <QColor>
+#include <QCoreApplication>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
@@ -78,8 +79,17 @@ private:
 
 } // namespace
 
+QString displayProcess(const QString &processName)
+{
+    return processName.isEmpty() ? QCoreApplication::translate("PinRow", "(unknown app)")
+                                 : processName;
+}
+
 QString displayTitle(const QString &title)
 {
+    if (title.isEmpty())
+        return QCoreApplication::translate("PinRow", "(untitled window)");
+
     const int slash = title.lastIndexOf(QLatin1Char('\\'));
     if (slash >= 0 && slash < title.size() - 1)
         return title.mid(slash + 1);
@@ -108,7 +118,7 @@ PendingRow::PendingRow(const persistence::SavedPin &pin, QWidget *parent)
     auto *name = new ElidedLabel(displayTitle(pin.title));
     name->setProperty("role", "muted");
     name->setToolTip(pin.title);
-    auto *proc = new ElidedLabel(pin.processName);
+    auto *proc = new ElidedLabel(displayProcess(pin.processName));
     proc->setProperty("role", "muted");
     info->addWidget(name);
     info->addWidget(proc);
@@ -153,7 +163,7 @@ PinRow::PinRow(const PinnedWindow &window, QWidget *parent)
     name->setStyleSheet(QStringLiteral("font-weight: 600;"));
     name->setToolTip(window.title);   // full title on hover
     m_title = name;
-    auto *proc = new ElidedLabel(window.processName);
+    auto *proc = new ElidedLabel(displayProcess(window.processName));
     proc->setProperty("role", "muted");
     info->addWidget(name);
     info->addWidget(proc);

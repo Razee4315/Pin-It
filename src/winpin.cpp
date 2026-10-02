@@ -41,12 +41,12 @@ QString windowTitle(void *hwnd)
 {
     const int len = GetWindowTextLengthW(H(hwnd));
     if (len <= 0)
-        return QStringLiteral("Unknown");
+        return QString();
 
     QVector<wchar_t> buf(len + 1);
     const int copied = GetWindowTextW(H(hwnd), buf.data(), len + 1);
     if (copied <= 0)
-        return QStringLiteral("Unknown");
+        return QString();
 
     return QString::fromWCharArray(buf.data(), copied);
 }
@@ -56,15 +56,15 @@ QString processName(void *hwnd)
     DWORD pid = 0;
     GetWindowThreadProcessId(H(hwnd), &pid);
     if (pid == 0)
-        return QStringLiteral("Unknown");
+        return QString();
 
     HANDLE proc = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
     if (!proc)
-        return QStringLiteral("Unknown");
+        return QString();
 
     wchar_t buf[MAX_PATH] = {0};
     DWORD size = MAX_PATH;
-    QString result = QStringLiteral("Unknown");
+    QString result;
     if (QueryFullProcessImageNameW(proc, 0, buf, &size)) {
         const QString full = QString::fromWCharArray(buf, size);
         const int slash = full.lastIndexOf(QLatin1Char('\\'));

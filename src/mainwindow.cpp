@@ -114,8 +114,8 @@ MainWindow::MainWindow(PinManager *manager, QWidget *parent)
                 pinflash::show(hwnd, pinned ? pinflash::Kind::Pinned
                                             : pinflash::Kind::Unpinned);
                 if (m_settings.showNotifications)
-                    notify(pinned ? tr("Pinned: %1").arg(title)
-                                  : tr("Unpinned: %1").arg(title));
+                    notify(pinned ? tr("Pinned: %1").arg(displayTitle(title))
+                                  : tr("Unpinned: %1").arg(displayTitle(title)));
             });
 }
 
@@ -476,7 +476,7 @@ void MainWindow::addWindowDialog()
     auto *list = new QListWidget(&dlg);
     const QString self = windowTitle();
     for (const winpin::PinnableWindow &w : winpin::enumerateWindows()) {
-        if (w.title.isEmpty() || w.title == QStringLiteral("Unknown"))
+        if (w.title.isEmpty())
             continue;
         if (w.title == self)
             continue;
