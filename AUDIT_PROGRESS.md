@@ -102,5 +102,5 @@ and the affected flow has been exercised (the "How verified" column says how).
 | O-04 | In-place list updates (same work as F-20) | verified | Same change and check as F-20 |
 | O-05 | Cache settings in memory instead of re-reading the file | verified | Unit tests (file contents checked after dropCache) + harness restore/crash/save/tray/shortcuts/autostart scenarios |
 | O-06 | Smaller README demo GIF | verified | Re-encoded from the MP4 at 720 px / 10 fps / 128 colours: 6,510,997 → 3,449,566 bytes (−47%); frame checked, README shows it at 720 px. Note: the recording itself still shows the old UI (see report) |
-| O-07 | Compress `og-image.png` | todo | |
+| O-07 | Compress `og-image.png` | verified | Palette-quantised (256 colours): 519,051 → 354,759 bytes (−32%), still 1200×630; image reviewed |
 | O-08 | Drop the Google Fonts request on the site | todo | |
