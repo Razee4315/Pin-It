@@ -21,7 +21,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | F-10 | 1 | P3 | Messages vanish without a tray | todo | |
 | F-11 | 2 | P0 | Restart fix is unreleased | todo | |
 | F-12 | 2 | P1 | Restore is one-shot and erases unmatched pins | todo | |
-| F-13 | 2 | P1 | Restore fallback pins the wrong window | todo | |
+| F-13 | 2 | P1 | Restore fallback pins the wrong window | verified | Unit test savedPinMatchesOnlySameAppAndTitle; restoreSaved no longer has a process-only fallback |
 | F-14 | 2 | P1 | Pinned row clips its unpin button | verified | Rendered 4 pins incl. a 90-char title: content width == viewport (315 px), every unpin button inside it |
 | F-15 | 2 | P2 | Pinned list is only 98 px tall | todo | |
 | F-16 | 2 | P2 | Slider not synced with opacity hotkeys | todo | |

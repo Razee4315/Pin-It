@@ -43,6 +43,7 @@ qt_add_executable(PinIt WIN32
     src/winpin.h            src/winpin.cpp
     src/persistence.h       src/persistence.cpp
     src/pinmanager.h        src/pinmanager.cpp
+    src/pinmatch.h
     src/globalhotkey.h      src/globalhotkey.cpp
     src/mainwindow.h        src/mainwindow.cpp
     src/logging.h           src/logging.cpp

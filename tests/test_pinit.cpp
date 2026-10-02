@@ -10,6 +10,7 @@
 
 #include "winpin.h"
 #include "shortcuts.h"
+#include "pinmatch.h"
 
 class TestPinIt : public QObject
 {
@@ -22,6 +23,7 @@ private slots:
     void shortcutRejectsGarbage();
     void shortcutBuildRoundTrips();
     void shortcutBuildDisplayTokens();
+    void savedPinMatchesOnlySameAppAndTitle();
 };
 
 void TestPinIt::opacityRoundTripIsLossless()
@@ -97,6 +99,23 @@ void TestPinIt::shortcutBuildDisplayTokens()
 
     const QString eq = shortcuts::build(true, true, false, false, "=");
     QCOMPARE(shortcuts::displayTokens(eq).last(), QStringLiteral("="));
+}
+
+// Restoring must never fall back to "any window of the same app".
+void TestPinIt::savedPinMatchesOnlySameAppAndTitle()
+{
+    persistence::SavedPin saved;
+    saved.processName = QStringLiteral("notepad.exe");
+    saved.title = QStringLiteral("notes.txt - Notepad");
+
+    QVERIFY(pinmatch::matches(saved, QStringLiteral("notepad.exe"), saved.title));
+    QVERIFY(pinmatch::matches(saved, QStringLiteral("Notepad.EXE"), saved.title));
+    QVERIFY(!pinmatch::matches(saved, QStringLiteral("notepad.exe"),
+                               QStringLiteral("other.txt - Notepad")));
+    QVERIFY(!pinmatch::matches(saved, QStringLiteral("explorer.exe"), saved.title));
+
+    saved.title.clear();   // legacy entries without a title match nothing
+    QVERIFY(!pinmatch::matches(saved, QStringLiteral("notepad.exe"), QString()));
 }
 
 QTEST_MAIN(TestPinIt)

@@ -1,6 +1,7 @@
 #include "pinmanager.h"
 #include "winpin.h"
 #include "persistence.h"
+#include "pinmatch.h"
 
 #include <QTimer>
 #include <QSet>
@@ -252,18 +253,12 @@ void PinManager::restoreSaved()
     QSet<intptr_t> used;
 
     for (const persistence::SavedPin &saved : state.pins) {
-        // Prefer an exact process+title match, else first unused window of
-        // the same process — mirrors the Rust restore() heuristic.
         intptr_t match = 0;
         for (const auto &w : live) {
-            if (w.processName != saved.processName || used.contains(w.hwnd))
-                continue;
-            if (!saved.title.isEmpty() && w.title == saved.title) {
+            if (!used.contains(w.hwnd) && pinmatch::matches(saved, w.processName, w.title)) {
                 match = w.hwnd;
                 break;
             }
-            if (match == 0)
-                match = w.hwnd;   // fallback candidate, keep scanning for exact
         }
 
         if (match != 0 && pin(match, /*announce=*/false)) {
