@@ -106,7 +106,9 @@ bool PinManager::pin(intptr_t hwnd, bool announce)
 
     persist();
     updateTimer();
-    qInfo("Pinned %s (%s)", qUtf8Printable(title), qUtf8Printable(proc));
+    // Process name only — window titles can hold document names, URLs or
+    // message subjects, and users are asked to attach this log to bug reports.
+    qInfo("Pinned a window of %s", qUtf8Printable(proc));
     if (announce)
         emit pinToggled(true, title, proc);
     emit pinsChanged();

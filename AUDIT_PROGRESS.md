@@ -45,7 +45,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | F-34 | 3 | P3 | Second launch only flashes the taskbar | todo | |
 | F-35 | 3 | P3 | "window(s)" tooltip | todo | |
 | F-36 | 3 | P3 | About only in tray; CONTRIBUTING wrong | todo | |
-| F-37 | 4 | P2 | Window titles written to the log | todo | |
+| F-37 | 4 | P2 | Window titles written to the log | done |  |
 | F-38 | 4 | P2 | Site invisible without JavaScript | todo | |
 | F-39 | 4 | P2 | Site does not mention SmartScreen | todo | |
 | F-40 | 4 | P3 | Autoplay video without controls | todo | |
