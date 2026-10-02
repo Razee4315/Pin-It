@@ -1,4 +1,5 @@
 #include "logging.h"
+#include "persistence.h"
 
 #include <QDateTime>
 #include <QDir>
@@ -40,10 +41,7 @@ namespace logging {
 
 void init()
 {
-    QString base = qEnvironmentVariable("LOCALAPPDATA");
-    if (base.isEmpty())
-        base = QDir::homePath();
-    const QString dir = QDir(base).filePath(QStringLiteral("PinIt"));
+    const QString dir = persistence::dataDir();
     QDir().mkpath(dir);
     g_logPath = QDir(dir).filePath(QStringLiteral("pinit.log"));
 

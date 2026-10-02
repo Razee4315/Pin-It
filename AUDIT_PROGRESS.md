@@ -84,7 +84,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | C-09 | Stale remote branches | todo | |
 | C-10 | Stale / wrong comments | verified | Build passes; installer and CMake comments corrected in their own commits (F-33, O-01) |
 | C-11 | One window-handle type, one cast helper | done |  |
-| C-12 | Shared app-data directory helper | todo | |
+| C-12 | Shared app-data directory helper | done |  |
 | C-13 | Chip-row builder duplicated three times | verified | Build + harness screenshots: cheat-sheet and empty-state chips render from the shared helper |
 | C-14 | Hotkey-result messages duplicated | verified | main.cpp has one applyShortcuts path for startup and edits; harness shortcuts scenario |
 | C-15 | Un-pin sequence duplicated | verified | Build + harness: unpin and quit paths both restore windows (F-05/F-09 scenarios) |

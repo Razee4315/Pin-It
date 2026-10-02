@@ -52,6 +52,9 @@ struct SavedState {
     UserSettings      settings;
 };
 
+// Where PinIt keeps its files (pinned.json, pinit.log): %LOCALAPPDATA%\PinIt.
+QString dataDir();
+
 SavedState load();
 void       save(const SavedState &state);
 

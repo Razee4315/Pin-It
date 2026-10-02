@@ -12,11 +12,7 @@ namespace {
 
 QString savePath()
 {
-    // dirs::data_local_dir() in the Rust app == %LOCALAPPDATA%.
-    QString base = qEnvironmentVariable("LOCALAPPDATA");
-    if (base.isEmpty())
-        base = QDir::homePath();
-    return QDir(base).filePath(QStringLiteral("PinIt/pinned.json"));
+    return QDir(persistence::dataDir()).filePath(QStringLiteral("pinned.json"));
 }
 
 persistence::ShortcutConfig readShortcuts(const QJsonObject &o)
@@ -64,6 +60,15 @@ QJsonObject writeSettings(const persistence::UserSettings &s)
 } // namespace
 
 namespace persistence {
+
+QString dataDir()
+{
+    // dirs::data_local_dir() in the Rust app == %LOCALAPPDATA%.
+    QString base = qEnvironmentVariable("LOCALAPPDATA");
+    if (base.isEmpty())
+        base = QDir::homePath();
+    return QDir(base).filePath(QStringLiteral("PinIt"));
+}
 
 SavedState load()
 {
