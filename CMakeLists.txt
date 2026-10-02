@@ -50,6 +50,7 @@ qt_add_executable(PinIt WIN32
     src/pinrow.h            src/pinrow.cpp
     src/pinflash.h          src/pinflash.cpp
     src/logging.h           src/logging.cpp
+    src/theme.h             src/theme.cpp
     src/shortcuts.h         src/shortcuts.cpp
     src/shortcutsdialog.h   src/shortcutsdialog.cpp
     resources/resources.qrc
