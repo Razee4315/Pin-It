@@ -11,9 +11,7 @@ set(CMAKE_AUTOMOC ON)   # process Q_OBJECT classes
 set(CMAKE_AUTORCC ON)   # compile .qrc resources
 set(CMAKE_AUTOUIC ON)   # compile .ui files (none yet, harmless)
 
-# Network is used only for QLocalServer/QLocalSocket (single-instance IPC);
-# windeployqt already bundles Qt6Network.dll transitively, so it adds no weight.
-find_package(Qt6 REQUIRED COMPONENTS Widgets Network)
+find_package(Qt6 REQUIRED COMPONENTS Widgets)
 qt_standard_project_setup()
 
 # Let the resource compiler find icon.ico (referenced relatively from app.rc).
@@ -46,6 +44,7 @@ qt_add_executable(PinIt WIN32
     src/pinmatch.h
     src/globalhotkey.h      src/globalhotkey.cpp
     src/sessionwatcher.h    src/sessionwatcher.cpp
+    src/singleinstance.h    src/singleinstance.cpp
     src/mainwindow.h        src/mainwindow.cpp
     src/pinrow.h            src/pinrow.cpp
     src/elidedlabel.h
@@ -60,7 +59,7 @@ qt_add_executable(PinIt WIN32
     resources/app.rc
 )
 
-target_link_libraries(PinIt PRIVATE Qt6::Widgets Qt6::Network)
+target_link_libraries(PinIt PRIVATE Qt6::Widgets)
 
 # Win32 APIs we call directly: window mgmt, DWM, registry (autostart),
 # winmm for PlaySound (the pin tick).

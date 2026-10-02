@@ -42,7 +42,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | F-31 | 3 | P3 | Shortcuts dialog accessibility | verified | Harness: all 16 checkboxes and 4 key lists carry '<action>: <part>' accessible names; errors are an inline label with an accessibility alert, no message boxes |
 | F-32 | 3 | P3 | Quit forgets pins with no hint | todo | |
 | F-33 | 3 | P3 | Uninstaller leaves Run key; no AppMutex | todo | |
-| F-34 | 3 | P3 | Second launch only flashes the taskbar | todo | |
+| F-34 | 3 | P3 | Second launch only flashes the taskbar | done |  |
 | F-35 | 3 | P3 | "window(s)" tooltip | todo | |
 | F-36 | 3 | P3 | About only in tray; CONTRIBUTING wrong | todo | |
 | F-37 | 4 | P2 | Window titles written to the log | verified | Harness: pinit.log has 'Pinned a window of dummywin.exe' and not the window title |
@@ -96,7 +96,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 
 | ID | Summary | Status | How verified / why blocked |
 |----|---------|--------|----------------------------|
-| O-01 | Drop Qt Network (mutex + window message for single instance) | todo | |
+| O-01 | Drop Qt Network (mutex + window message for single instance) | done |  |
 | O-02 | Trim unneeded Qt plugins from the bundle | todo | |
 | O-03 | Embed the small icon instead of the 141 KB one | todo | |
 | O-04 | In-place list updates (same work as F-20) | verified | Same change and check as F-20 |

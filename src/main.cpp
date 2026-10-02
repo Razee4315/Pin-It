@@ -7,8 +7,6 @@
 //   MainWindow           -> UI + system tray
 //
 #include <QApplication>
-#include <QLocalServer>
-#include <QLocalSocket>
 #include <QMessageBox>
 #include <QIcon>
 #include <QSystemTrayIcon>
@@ -17,6 +15,7 @@
 #include "pinmanager.h"
 #include "globalhotkey.h"
 #include "sessionwatcher.h"
+#include "singleinstance.h"
 #include "mainwindow.h"
 #include "persistence.h"
 #include "logging.h"
@@ -36,18 +35,13 @@ int main(int argc, char *argv[])
     qInfo("PinIt %s starting", PINIT_VERSION_STR);
 
     // Single instance: if PinIt is already running, ask it to show its window
-    // (via a local socket) and exit — instead of dying silently.
-    const QString kInstanceServer = QStringLiteral("PinIt_SingleInstance_v2");
-    {
-        QLocalSocket probe;
-        probe.connectToServer(kInstanceServer);
-        if (probe.waitForConnected(200)) {
-            probe.write("show");
-            probe.flush();
-            probe.waitForBytesWritten(200);
-            qInfo("Another instance is running; asked it to show");
-            return 0;
-        }
+    // and exit — instead of dying silently. (The name is also the installer's
+    // AppMutex; keep the two in step.)
+    SingleInstance instance(QStringLiteral("PinIt_SingleInstance_v2"));
+    if (!instance.isPrimary()) {
+        instance.askPrimaryToShow();
+        qInfo("Another instance is running; asked it to show");
+        return 0;
     }
 
     // Keep running when the window closes to the tray.
@@ -73,15 +67,9 @@ int main(int argc, char *argv[])
     QObject::connect(&sessionWatcher, &SessionWatcher::sessionEndCancelled, &manager,
                      &PinManager::clearSessionEnding);
 
-    // Listen for later launches; each connection means "show the window".
-    QLocalServer::removeServer(kInstanceServer);   // clear a stale socket from a crash
-    QLocalServer instanceServer;
-    instanceServer.listen(kInstanceServer);
-    QObject::connect(&instanceServer, &QLocalServer::newConnection, &window, [&]() {
-        while (QLocalSocket *c = instanceServer.nextPendingConnection())
-            c->deleteLater();
-        window.showFromTray();
-    });
+    // A later launch means "show the window".
+    QObject::connect(&instance, &SingleInstance::showRequested, &window,
+                     &MainWindow::showFromTray);
 
     GlobalHotkeyManager hotkeys;
     app.installNativeEventFilter(&hotkeys);
