@@ -149,6 +149,12 @@ void MainWindow::buildUi()
     fillShortcutRows(scv);
     root->addWidget(scCard);
 
+    m_hotkeyWarning = new QLabel;
+    m_hotkeyWarning->setProperty("role", "warning");
+    m_hotkeyWarning->setWordWrap(true);
+    m_hotkeyWarning->hide();
+    root->addWidget(m_hotkeyWarning);
+
     auto *editShortcuts = new QPushButton(tr("Edit shortcuts…"));
     connect(editShortcuts, &QPushButton::clicked, this, &MainWindow::openShortcutsDialog);
     root->addWidget(editShortcuts, 0, Qt::AlignLeft);
@@ -226,6 +232,32 @@ void MainWindow::buildUi()
     connect(m_statusTimer, &QTimer::timeout, m_status, &QWidget::hide);
 
     setCentralWidget(central);
+}
+
+void MainWindow::setHotkeyProblems(const QStringList &failedActions)
+{
+    m_hotkeyProblems = failedActions;
+    m_hotkeyWarning->setVisible(!failedActions.isEmpty());
+    if (!failedActions.isEmpty()) {
+        m_hotkeyWarning->setText(
+            tr("Not working: %1. Another app is probably using the same keys — "
+               "pick different ones with “Edit shortcuts…”.")
+                .arg(failedActions.join(QStringLiteral(", "))));
+    }
+    updateTrayToolTip();
+}
+
+void MainWindow::updateTrayToolTip()
+{
+    if (!m_tray)
+        return;
+    const int n = m_manager->pinnedCount();
+    QString tip = n == 0 ? tr("PinIt — no windows pinned")
+                         : tr("PinIt — %n window(s) pinned", "", n);
+    if (!m_hotkeyProblems.isEmpty())
+        tip += QLatin1Char('\n') + tr("Shortcut not working: %1")
+                                       .arg(m_hotkeyProblems.join(QStringLiteral(", ")));
+    m_tray->setToolTip(tip);
 }
 
 void MainWindow::showStatus(const QString &message)
@@ -380,11 +412,7 @@ void MainWindow::syncList()
     if (m_pinnedHeader)
         m_pinnedHeader->setText(tr("PINNED (%1)").arg(pinned.size()));
 
-    if (m_tray) {
-        const int n = pinned.size();
-        m_tray->setToolTip(n == 0 ? tr("PinIt — no windows pinned")
-                                  : tr("PinIt — %n window(s) pinned", "", n));
-    }
+    updateTrayToolTip();
 }
 
 void MainWindow::addWindowDialog()

@@ -11,7 +11,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 |----|------|-----|---------|--------|----------------------------|
 | F-01 | 1 | P1 | Hotkey pins shell windows / PinIt itself | verified |  |
 | F-02 | 1 | P1 | Toast on every pin/unpin, no setting | todo | |
-| F-03 | 1 | P2 | Hotkey registration failure is only a toast | todo | |
+| F-03 | 1 | P2 | Hotkey registration failure is only a toast | done |  |
 | F-04 | 1 | P2 | Tray double-click opens then hides | verified | Harness: tray Trigger shows the window, the following DoubleClick leaves it shown |
 | F-05 | 1 | P2 | Unpin strips an app's own always-on-top | done |  |
 | F-06 | 1 | P2 | Titles never refreshed | done |  |

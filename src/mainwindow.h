@@ -31,6 +31,11 @@ public:
     // read the file a second time just to register the initial hotkeys).
     persistence::ShortcutConfig shortcutConfig() const { return m_settings.shortcuts; }
 
+    // Names of the actions whose hotkey could not be registered (empty = all
+    // fine). Shown as a standing warning in the window and the tray tooltip —
+    // a one-off notification at login is too easy to miss.
+    void setHotkeyProblems(const QStringList &failedActions);
+
 signals:
     void shortcutsChanged(const persistence::ShortcutConfig &cfg);
 
@@ -59,6 +64,7 @@ private:
     void fillShortcutRows(QVBoxLayout *scv);   // (re)builds the SHORTCUTS chips
     void showStatus(const QString &message);   // in-window message, fades by itself
     void placeStatus();
+    void updateTrayToolTip();
 
     PinManager      *m_manager = nullptr;
     QSystemTrayIcon *m_tray = nullptr;
@@ -69,6 +75,8 @@ private:
     QHash<intptr_t, PinRow *> m_rows;   // one live row per pinned window
     QLabel          *m_emptyLabel = nullptr;
     QLabel          *m_pinnedHeader = nullptr;
+    QLabel          *m_hotkeyWarning = nullptr;
+    QStringList      m_hotkeyProblems;
     QWidget         *m_emptyCard = nullptr;
     QVBoxLayout     *m_shortcutsLayout = nullptr;
     QCheckBox       *m_soundBox = nullptr;

@@ -41,6 +41,10 @@ QLabel[role="key"] {
 }
 QLabel[role="plus"] { color: #9a948a; font-size: 12px; }
 
+QLabel[role="warning"] {
+    background: #fbeed3; border: 1px solid #e2c27d; border-radius: 8px;
+    padding: 6px 9px; color: #5c4307; font-size: 12px;
+}
 QLabel[role="status"] {
     background: #2a2622; color: #f8f6f2; border-radius: 8px;
     padding: 6px 10px; font-size: 12px;
@@ -156,7 +160,9 @@ int main(int argc, char *argv[])
     // Re-register hotkeys when the user edits them in the Shortcuts dialog.
     QObject::connect(&window, &MainWindow::shortcutsChanged, &window,
                      [&](const persistence::ShortcutConfig &c) {
-                         if (!hotkeys.registerAll(c))
+                         const bool any = hotkeys.registerAll(c);
+                         window.setHotkeyProblems(hotkeys.failedActions());
+                         if (!any)
                              window.notify(QObject::tr(
                                  "Could not register the new hotkeys — another app may be using them."));
                          else if (!hotkeys.failedActions().isEmpty())
@@ -166,7 +172,9 @@ int main(int argc, char *argv[])
                              window.notify(QObject::tr("Shortcuts updated."));
                      });
 
-    if (!hotkeys.registerAll(window.shortcutConfig())) {
+    const bool anyHotkey = hotkeys.registerAll(window.shortcutConfig());
+    window.setHotkeyProblems(hotkeys.failedActions());
+    if (!anyHotkey) {
         qWarning("No global hotkeys could be registered");
         window.notify(QObject::tr(
             "Could not register global hotkeys — another app may be using them."));
