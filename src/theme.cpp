@@ -4,7 +4,6 @@
 #include <QColor>
 #include <QPalette>
 #include <QString>
-#include <QStyle>
 #include <QStyleHints>
 
 #include <utility>
@@ -271,8 +270,13 @@ void apply(QApplication &app, Scheme scheme)
     // Fusion draws every control from the palette, so the same code looks the
     // same on Windows 10 and 11 and in both variants. (The native Windows
     // styles ignore much of a custom palette.)
-    if (app.style()->name().compare(QLatin1String("fusion"), Qt::CaseInsensitive) != 0)
+    // Set once: with a style sheet active, app.style() is a wrapper whose name
+    // no longer says "fusion", so it can't be asked.
+    static bool fusionSet = false;
+    if (!fusionSet) {
         QApplication::setStyle(QStringLiteral("Fusion"));
+        fusionSet = true;
+    }
     QApplication::setPalette(buildPalette(colors));
     app.setStyleSheet(build(colors));
 }
