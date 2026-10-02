@@ -8,6 +8,8 @@
 #include <QJsonArray>
 #include <QSaveFile>
 
+#include <optional>
+
 namespace {
 
 QString savePath()
@@ -57,22 +59,10 @@ QJsonObject writeSettings(const persistence::UserSettings &s)
     return o;
 }
 
-} // namespace
-
-namespace persistence {
-
-QString dataDir()
+persistence::SavedState readFile()
 {
-    // dirs::data_local_dir() in the Rust app == %LOCALAPPDATA%.
-    QString base = qEnvironmentVariable("LOCALAPPDATA");
-    if (base.isEmpty())
-        base = QDir::homePath();
-    return QDir(base).filePath(QStringLiteral("PinIt"));
-}
-
-SavedState load()
-{
-    SavedState state;
+    using persistence::SavedPin;
+    persistence::SavedState state;
 
     const QString path = savePath();
     QFile f(path);
@@ -120,8 +110,40 @@ SavedState load()
     return state;
 }
 
+// What is on disk, as last loaded or saved. PinIt is the only writer, so
+// re-reading and re-parsing the file before every single save is unnecessary.
+std::optional<persistence::SavedState> g_cache;
+
+} // namespace
+
+namespace persistence {
+
+QString dataDir()
+{
+    // dirs::data_local_dir() in the Rust app == %LOCALAPPDATA%.
+    QString base = qEnvironmentVariable("LOCALAPPDATA");
+    if (base.isEmpty())
+        base = QDir::homePath();
+    return QDir(base).filePath(QStringLiteral("PinIt"));
+}
+
+void dropCache()
+{
+    g_cache.reset();
+}
+
+SavedState load()
+{
+    if (g_cache)
+        return *g_cache;
+    g_cache = readFile();
+    return *g_cache;
+}
+
 void save(const SavedState &state)
 {
+    g_cache = state;
+
     const QString path = savePath();
     QDir().mkpath(QFileInfo(path).absolutePath());
 

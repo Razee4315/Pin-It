@@ -64,4 +64,9 @@ void           saveSettings(const UserSettings &settings);
 // Replace just the pin list, preserving settings.
 void savePins(const QVector<SavedPin> &pins);
 
+// The file is read once and kept in memory; every save updates that copy and
+// rewrites the file. Forget the copy so the next load() reads the file again
+// (after the file was changed from outside — in practice, by tests).
+void dropCache();
+
 } // namespace persistence

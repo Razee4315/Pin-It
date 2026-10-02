@@ -100,7 +100,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | O-02 | Trim unneeded Qt plugins from the bundle | todo | |
 | O-03 | Embed the small icon instead of the 141 KB one | done |  |
 | O-04 | In-place list updates (same work as F-20) | verified | Same change and check as F-20 |
-| O-05 | Cache settings in memory instead of re-reading the file | todo | |
+| O-05 | Cache settings in memory instead of re-reading the file | done |  |
 | O-06 | Smaller README demo GIF | todo | |
 | O-07 | Compress `og-image.png` | todo | |
 | O-08 | Drop the Google Fonts request on the site | todo | |

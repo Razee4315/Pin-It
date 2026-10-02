@@ -259,8 +259,13 @@ struct ScratchDataDir {
     ScratchDataDir()
     {
         qputenv("LOCALAPPDATA", dir.path().toLocal8Bit());
+        persistence::dropCache();
     }
-    ~ScratchDataDir() { qputenv("LOCALAPPDATA", previous); }
+    ~ScratchDataDir()
+    {
+        qputenv("LOCALAPPDATA", previous);
+        persistence::dropCache();
+    }
 
     QString file() const { return dir.filePath(QStringLiteral("PinIt/pinned.json")); }
     void write(const QByteArray &content) const
@@ -269,6 +274,8 @@ struct ScratchDataDir {
         QFile f(file());
         QVERIFY(f.open(QIODevice::WriteOnly));
         f.write(content);
+        f.close();
+        persistence::dropCache();   // the file changed behind PinIt's back
     }
 
     QTemporaryDir dir;
@@ -314,6 +321,7 @@ void TestPinIt::persistenceRoundTrips()
     persistence::saveSettings(settings);
     persistence::savePins({a, b});
 
+    persistence::dropCache();   // compare against what is in the file
     state = persistence::load();
     QCOMPARE(state.pins.size(), 2);
     // The file keys pins by "<process>:<index>", so they come back sorted by key.
@@ -338,6 +346,7 @@ void TestPinIt::persistenceRoundTrips()
     QCOMPARE(state.settings.shortcuts.opacityUp, QStringLiteral("super+ctrl+Equal"));
 
     persistence::savePins({});
+    persistence::dropCache();
     QVERIFY(persistence::load().pins.isEmpty());
     QVERIFY(!persistence::load().settings.enableSound);   // settings untouched
 }
@@ -380,6 +389,7 @@ void TestPinIt::persistenceBacksUpACorruptFile()
 
     // The next save replaces the broken file with a valid one.
     persistence::saveSettings(state.settings);
+    persistence::dropCache();
     QVERIFY(persistence::load().settings.enableSound);
     QFile f(scratch.file());
     QVERIFY(f.open(QIODevice::ReadOnly));
