@@ -95,32 +95,21 @@ int main(int argc, char *argv[])
     QObject::connect(&hotkeys, &GlobalHotkeyManager::toggleWindow,
                      &window, &MainWindow::toggleVisibility);
 
-    // Re-register hotkeys when the user edits them in the Shortcuts dialog.
-    QObject::connect(&window, &MainWindow::shortcutsChanged, &window,
-                     [&](const persistence::ShortcutConfig &c) {
-                         const bool any = hotkeys.registerAll(c);
-                         window.setHotkeyProblems(hotkeys.failedActions());
-                         if (!any)
-                             window.notify(QObject::tr(
-                                 "Could not register the new hotkeys — another app may be using them."));
-                         else if (!hotkeys.failedActions().isEmpty())
-                             window.notify(QObject::tr("Some hotkeys are unavailable: %1")
-                                               .arg(hotkeys.failedActions().join(QStringLiteral(", "))));
-                         else
-                             window.notify(QObject::tr("Shortcuts updated."));
-                     });
+    // The one way hotkeys get (re)registered — at startup and whenever the
+    // Shortcuts dialog tries a new set. Returns the actions that failed.
+    const auto applyShortcuts = [&hotkeys](const persistence::ShortcutConfig &c) {
+        hotkeys.registerAll(c);
+        return hotkeys.failedActions();
+    };
+    window.setShortcutApplier(applyShortcuts);
 
-    const bool anyHotkey = hotkeys.registerAll(window.shortcutConfig());
-    window.setHotkeyProblems(hotkeys.failedActions());
-    if (!anyHotkey) {
-        qWarning("No global hotkeys could be registered");
-        window.notify(QObject::tr(
-            "Could not register global hotkeys — another app may be using them."));
-    } else if (!hotkeys.failedActions().isEmpty()) {
-        qWarning("Some hotkeys unavailable: %s",
-                 qUtf8Printable(hotkeys.failedActions().join(QStringLiteral(", "))));
+    const QStringList failedHotkeys = applyShortcuts(window.shortcutConfig());
+    window.setHotkeyProblems(failedHotkeys);
+    if (!failedHotkeys.isEmpty()) {
+        qWarning("Hotkeys unavailable: %s",
+                 qUtf8Printable(failedHotkeys.join(QStringLiteral(", "))));
         window.notify(QObject::tr("Some hotkeys are unavailable: %1")
-                          .arg(hotkeys.failedActions().join(QStringLiteral(", "))));
+                          .arg(failedHotkeys.join(QStringLiteral(", "))));
     }
 
     // Re-pin whatever was pinned last session.

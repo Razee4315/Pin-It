@@ -5,6 +5,8 @@
 //
 #include <QElapsedTimer>
 #include <QMainWindow>
+
+#include <functional>
 #include <QHash>
 
 #include "persistence.h"
@@ -38,8 +40,10 @@ public:
     // a one-off notification at login is too easy to miss.
     void setHotkeyProblems(const QStringList &failedActions);
 
-signals:
-    void shortcutsChanged(const persistence::ShortcutConfig &cfg);
+    // How a shortcut set is made live (registered with Windows). Returns the
+    // names of the actions that could not be registered; empty = all active.
+    using ShortcutApplier = std::function<QStringList(const persistence::ShortcutConfig &)>;
+    void setShortcutApplier(ShortcutApplier applier) { m_applyShortcuts = std::move(applier); }
 
 public slots:
     void toggleVisibility();      // bound to the Show/Hide hotkey
@@ -92,6 +96,8 @@ private:
 
     // Running since the window last lost focus (see toggleVisibility).
     QElapsedTimer m_sinceDeactivated;
+
+    ShortcutApplier m_applyShortcuts;
 
     persistence::UserSettings m_settings;
 };

@@ -393,15 +393,28 @@ void MainWindow::fillShortcutRows(QVBoxLayout *scv)
 
 void MainWindow::openShortcutsDialog()
 {
-    ShortcutsDialog dlg(m_settings.shortcuts, this);
+    // The dialog only closes with OK once Windows has accepted the new set.
+    // If it is refused, the set that was working is put straight back.
+    const auto tryShortcuts = [this](const persistence::ShortcutConfig &candidate) {
+        if (!m_applyShortcuts)
+            return QStringList();
+        const QStringList refused = m_applyShortcuts(candidate);
+        if (!refused.isEmpty())
+            m_applyShortcuts(m_settings.shortcuts);
+        return refused;
+    };
+
+    ShortcutsDialog dlg(m_settings.shortcuts, tryShortcuts, this);
     if (dlg.exec() != QDialog::Accepted)
         return;
 
+    // Only a set that is live gets saved.
     m_settings.shortcuts = dlg.config();
     persistence::saveSettings(m_settings);
     if (m_shortcutsLayout)
         fillShortcutRows(m_shortcutsLayout);
-    emit shortcutsChanged(m_settings.shortcuts);
+    setHotkeyProblems({});
+    notify(tr("Shortcuts updated."));
 }
 
 void MainWindow::syncList()
