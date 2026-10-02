@@ -453,10 +453,26 @@ void MainWindow::applyAutostart(bool enabled)
 
 void MainWindow::toggleVisibility()
 {
-    if (isVisible() && !isMinimized())
+    // Hide only when the user is actually looking at the window. If it is open
+    // but buried under other windows, bring it forward instead.
+    //
+    // Clicking the tray icon moves focus to the taskbar just before this runs,
+    // so "was active a moment ago" has to count as active too.
+    constexpr qint64 kJustDeactivatedMs = 400;
+    const bool inFront = isActiveWindow()
+        || (m_sinceDeactivated.isValid() && m_sinceDeactivated.elapsed() < kJustDeactivatedMs);
+
+    if (isVisible() && !isMinimized() && inFront)
         hide();
     else
         showFromTray();
+}
+
+void MainWindow::changeEvent(QEvent *event)
+{
+    if (event->type() == QEvent::ActivationChange && !isActiveWindow())
+        m_sinceDeactivated.start();
+    QMainWindow::changeEvent(event);
 }
 
 void MainWindow::showFromTray()

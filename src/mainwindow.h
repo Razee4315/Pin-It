@@ -3,6 +3,7 @@
 // MainWindow — the PinIt UI: list of pinned windows with opacity sliders,
 // an "add window" picker, settings, and the system-tray integration.
 //
+#include <QElapsedTimer>
 #include <QMainWindow>
 #include <QHash>
 
@@ -38,6 +39,7 @@ public slots:
 
 protected:
     void closeEvent(QCloseEvent *event) override;   // hide to tray
+    void changeEvent(QEvent *event) override;       // tracks when focus was lost
 
 private slots:
     void syncList();              // bring the rows in line with the pin list
@@ -62,6 +64,9 @@ private:
     QCheckBox       *m_soundBox = nullptr;
     QCheckBox       *m_autostartBox = nullptr;
     QLabel          *m_shortcutsLabel = nullptr;
+
+    // Running since the window last lost focus (see toggleVisibility).
+    QElapsedTimer m_sinceDeactivated;
 
     persistence::UserSettings m_settings;
 };
