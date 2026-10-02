@@ -82,7 +82,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | C-07 | Unreachable `icon-128.png` fallback | todo | |
 | C-08 | `resources/logo.svg` unreferenced | todo | |
 | C-09 | Stale remote branches | todo | |
-| C-10 | Stale / wrong comments | todo | |
+| C-10 | Stale / wrong comments | verified | Build passes; installer and CMake comments corrected in their own commits (F-33, O-01) |
 | C-11 | One window-handle type, one cast helper | done |  |
 | C-12 | Shared app-data directory helper | todo | |
 | C-13 | Chip-row builder duplicated three times | verified | Build + harness screenshots: cheat-sheet and empty-state chips render from the shared helper |

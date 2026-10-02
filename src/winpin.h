@@ -92,7 +92,8 @@ void stopWatchingForeground();
 // False when the user turned off "Animation effects" in Windows settings.
 bool animationsEnabled();
 
-// Play the system default notification sound (used for the pin chime).
-void beep();
+// Play PinIt's soft "tick" (a small WAV bundled in the executable) — the pin
+// confirmation sound.
+void playPinSound();
 
 } // namespace winpin

@@ -270,7 +270,7 @@ bool animationsEnabled()
     return enabled != FALSE;
 }
 
-void beep()
+void playPinSound()
 {
     // Play a soft bundled "tick" instead of the harsh system ding. PlaySound
     // with SND_MEMORY plays a WAV image straight from memory, so we avoid Qt

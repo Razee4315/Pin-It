@@ -138,7 +138,7 @@ MainWindow::MainWindow(PinManager *manager, QWidget *parent)
     connect(m_manager, &PinManager::pinToggled, this,
             [this](intptr_t hwnd, bool pinned, const QString &title) {
                 if (pinned && m_settings.enableSound)
-                    winpin::beep();
+                    winpin::playPinSound();
                 // The outline around the window itself is the primary feedback:
                 // instant, and exactly where the user is looking.
                 pinflash::show(hwnd, pinned ? pinflash::Kind::Pinned
