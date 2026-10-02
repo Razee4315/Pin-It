@@ -68,7 +68,11 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path dist\PinIt | Out-Null
           Copy-Item build\PinIt.exe dist\PinIt\
-          windeployqt --release --no-translations --no-system-d3d-compiler --no-opengl-sw dist\PinIt\PinIt.exe
+          # PinIt needs only the platform plugin: PNG decoding is built into
+          # Qt GUI and the Fusion style into Qt Widgets. Skipping the other
+          # plugin types also drops the libraries only they depend on
+          # (Qt6Network via the TUIO touch plugin, Qt6Svg) — about 4 MB.
+          windeployqt --release --no-translations --no-system-d3d-compiler --no-opengl-sw --skip-plugin-types imageformats,iconengines,generic,networkinformation,tls,styles dist\PinIt\PinIt.exe
           # Drop the Direct3D shader compiler — a Widgets app doesn't need it (~27 MB).
           Remove-Item dist\PinIt\dxcompiler.dll,dist\PinIt\dxil.dll -ErrorAction SilentlyContinue
 

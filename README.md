@@ -116,7 +116,7 @@ cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=<pat
 cmake --build build
 ```
 
-The executable is `build/PinIt.exe`. To run it standalone, bundle the Qt runtime with `windeployqt`. To produce the installer, run the [Inno Setup](https://jrsoftware.org/isinfo.php) script at `installer/PinIt.iss`.
+The executable is `build/PinIt.exe`. To run it standalone, bundle the Qt runtime with `windeployqt` (the exact flags are in `.github/workflows/build.yml`). To produce the installer, run the [Inno Setup](https://jrsoftware.org/isinfo.php) script at `installer/PinIt.iss`.
 
 > Every push is built automatically by GitHub Actions (`.github/workflows/build.yml`), which produces the installer and a portable ZIP. Pushing a `v*` tag publishes them to a GitHub Release.
 

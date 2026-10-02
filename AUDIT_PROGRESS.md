@@ -79,28 +79,28 @@ and the affected flow has been exercised (the "How verified" column says how).
 | C-04 | Remove `PinManager::pinnedCount` | verified | No longer dead: pinnedCount() is now used by the tray tooltip and menu (F-32/F-35), so it stays |
 | C-05 | Unused / missing includes | verified | Build with -Wall -Wextra clean; tests pass |
 | C-06 | Unused link libraries and `CMAKE_AUTOUIC` | verified | Clean reconfigure, link and tests pass; objdump shows no ADVAPI32 import |
-| C-07 | Unreachable `icon-128.png` fallback | done |  |
+| C-07 | Unreachable `icon-128.png` fallback | verified | PinIt.exe 753,576 → 610,572 bytes; icon renders in header, tray, About (screenshots) |
 | C-08 | `resources/logo.svg` unreferenced | todo | |
 | C-09 | Stale remote branches | todo | |
 | C-10 | Stale / wrong comments | verified | Build passes; installer and CMake comments corrected in their own commits (F-33, O-01) |
-| C-11 | One window-handle type, one cast helper | done |  |
-| C-12 | Shared app-data directory helper | done |  |
+| C-11 | One window-handle type, one cast helper | verified | Build clean; no void* handles or casts outside winpin.cpp/windowpicker.cpp; tier1, restore and click scenarios pass |
+| C-12 | Shared app-data directory helper | verified | Unit test persistenceRoundTrips checks dataDir(); log and settings land in the same scratch folder in the harness and real-exe run |
 | C-13 | Chip-row builder duplicated three times | verified | Build + harness screenshots: cheat-sheet and empty-state chips render from the shared helper |
 | C-14 | Hotkey-result messages duplicated | verified | main.cpp has one applyShortcuts path for startup and edits; harness shortcuts scenario |
 | C-15 | Un-pin sequence duplicated | verified | Build + harness: unpin and quit paths both restore windows (F-05/F-09 scenarios) |
 | C-16 | `"Unknown"` sentinel strings | verified | Build + harness enumerate/list scenarios; no "Unknown" literal left in src |
-| C-17 | Inline row colours outside the stylesheet | done |  |
-| C-18 | Tests for persistence and restore matching | done |  |
+| C-17 | Inline row colours outside the stylesheet | verified | Rendered in both themes: pin title still semi-bold, About text readable; only the per-app badge colour is set inline (it is data, not theme) |
+| C-18 | Tests for persistence and restore matching | verified | 3 new unit tests pass (19 total) |
 
 ## Optimisation
 
 | ID | Summary | Status | How verified / why blocked |
 |----|---------|--------|----------------------------|
 | O-01 | Drop Qt Network (mutex + window message for single instance) | verified | Harness: second process finds the primary, one show request, hidden and minimised windows are shown and take the foreground; PinIt.exe no longer imports Qt6Network.dll (objdump) |
-| O-02 | Trim unneeded Qt plugins from the bundle | todo | |
-| O-03 | Embed the small icon instead of the 141 KB one | done |  |
+| O-02 | Trim unneeded Qt plugins from the bundle | verified | Deployed locally with the old and new flags: 38.68 MB / 20 files → 34.35 MB / 8 files. From the trimmed folder (no Qt on PATH) the UI renders pixel-identical, picker icons load, and the real PinIt.exe starts, stays up and hands over a second launch. CI flag change itself runs on the next CI build |
+| O-03 | Embed the small icon instead of the 141 KB one | verified | PinIt.exe 753,576 → 610,572 bytes; icon renders in header, tray, About (screenshots) |
 | O-04 | In-place list updates (same work as F-20) | verified | Same change and check as F-20 |
-| O-05 | Cache settings in memory instead of re-reading the file | done |  |
+| O-05 | Cache settings in memory instead of re-reading the file | verified | Unit tests (file contents checked after dropCache) + harness restore/crash/save/tray/shortcuts/autostart scenarios |
 | O-06 | Smaller README demo GIF | todo | |
 | O-07 | Compress `og-image.png` | todo | |
 | O-08 | Drop the Google Fonts request on the site | todo | |
