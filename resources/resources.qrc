@@ -4,5 +4,9 @@
         <file alias="icon.png">icon.png</file>
         <file alias="icon-128.png">icon-128.png</file>
         <file alias="tick.wav">tick.wav</file>
+        <file alias="check-white.png">check-white.png</file>
+        <file alias="check-white@2x.png">check-white@2x.png</file>
+        <file alias="check-dark.png">check-dark.png</file>
+        <file alias="check-dark@2x.png">check-dark@2x.png</file>
     </qresource>
 </RCC>

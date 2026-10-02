@@ -18,6 +18,8 @@ struct Colors {
     const char *card;          // cards, buttons
     const char *cardBorder;
     const char *border;        // buttons, key chips
+    const char *controlBorder; // check box outline (3:1 against the window)
+    const char *checkIcon;     // tick drawn on accentStrong
     const char *text;
     const char *textMuted;     // secondary text
     const char *textSubtle;    // "+" separators, the unpin glyph
@@ -42,6 +44,8 @@ constexpr Colors kLight = {
     "#ffffff",              // card
     "rgba(0,0,0,0.08)",     // cardBorder
     "rgba(0,0,0,0.12)",     // border
+    "#8a8378",              // controlBorder
+    ":/check-white.png",    // checkIcon
     "#2a2622",              // text
     "#6b6760",              // textMuted
     "#6b655d",              // textSubtle
@@ -66,6 +70,8 @@ constexpr Colors kDark = {
     "#2a2724",              // card
     "rgba(255,255,255,0.08)",   // cardBorder
     "rgba(255,255,255,0.16)",   // border
+    "#8d867b",              // controlBorder
+    ":/check-dark.png",     // checkIcon
     "#f1ede6",              // text
     "#b8b1a6",              // textMuted
     "#aba498",              // textSubtle
@@ -164,8 +170,18 @@ QPushButton#link:hover { background: $keyBg$; }
 QPushButton#link:focus { background: $keyBg$; border-color: $accentStrong$; }
 QPushButton#link:disabled { color: $textSubtle$; }
 
-/* Check boxes have no rules on purpose: the Fusion style draws them — box,
-   tick and focus frame — from the palette, in both variants. */
+QCheckBox { spacing: 7px; }
+QCheckBox:focus { text-decoration: underline; }
+QCheckBox::indicator {
+    width: 14px; height: 14px; border: 1px solid $controlBorder$; border-radius: 3px;
+    background: $card$;
+}
+QCheckBox::indicator:hover { border-color: $accentStrong$; }
+QCheckBox::indicator:focus { border-color: $text$; }
+QCheckBox::indicator:checked {
+    background: $accentStrong$; border-color: $accentStrong$; image: url($checkIcon$);
+}
+QCheckBox::indicator:checked:focus { border-color: $text$; }
 
 QSlider::groove:horizontal { height: 4px; background: $track$; border-radius: 2px; }
 QSlider::sub-page:horizontal { background: $accent$; border-radius: 2px; }
@@ -186,6 +202,8 @@ QString build(const Colors &c)
         {"$card$", c.card},
         {"$cardBorder$", c.cardBorder},
         {"$border$", c.border},
+        {"$controlBorder$", c.controlBorder},
+        {"$checkIcon$", c.checkIcon},
         {"$text$", c.text},
         {"$textMuted$", c.textMuted},
         {"$textSubtle$", c.textSubtle},
