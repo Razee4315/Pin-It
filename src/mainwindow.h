@@ -64,6 +64,7 @@ private slots:
     void addWindowDialog();
     void showAbout();
     void openShortcutsDialog();
+    void unpinAll();
 
 private:
     void buildUi();
@@ -87,6 +88,7 @@ private:
     QList<PendingRow *> m_pendingRows;  // saved pins still waiting for their window
     QPushButton     *m_editShortcuts = nullptr;
     QPushButton     *m_addButton = nullptr;
+    QPushButton     *m_unpinAll = nullptr;
     QLabel          *m_emptyLabel = nullptr;
     QLabel          *m_pinnedHeader = nullptr;
     QLabel          *m_hotkeyWarning = nullptr;

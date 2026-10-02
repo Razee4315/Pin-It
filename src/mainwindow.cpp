@@ -267,6 +267,15 @@ void MainWindow::buildUi()
     });
     root->addWidget(m_autostartBox);
 
+    // --- Footer -------------------------------------------------------------
+    auto *footer = new QHBoxLayout;
+    m_unpinAll = new QPushButton(tr("Unpin all"));
+    m_unpinAll->setObjectName(QStringLiteral("link"));
+    connect(m_unpinAll, &QPushButton::clicked, this, &MainWindow::unpinAll);
+    footer->addWidget(m_unpinAll);
+    footer->addStretch();
+    root->addLayout(footer);
+
     // In-window message. Not in a layout: it floats over the bottom of the
     // list so showing it never moves anything.
     m_status = new QLabel(central);
@@ -490,8 +499,21 @@ void MainWindow::syncList()
             : tr("PINNED (%1)  ·  WAITING (%2)").arg(pinned.size()).arg(pending.size()));
     }
 
+    m_unpinAll->setEnabled(!pinned.isEmpty() || !pending.isEmpty());
+
     updateTrayToolTip();
     updateTabOrder();
+}
+
+void MainWindow::unpinAll()
+{
+    // Outline each window as it is let go, like a single unpin does.
+    const QVector<PinnedWindow> windows = m_manager->pinnedWindows();
+    for (const PinnedWindow &w : windows)
+        pinflash::show(w.hwnd, pinflash::Kind::Unpinned);
+
+    const int count = m_manager->unpinAll();
+    notify(count == 1 ? tr("Unpinned 1 window.") : tr("Unpinned %1 windows.").arg(count));
 }
 
 void MainWindow::updateTabOrder()
@@ -506,7 +528,7 @@ void MainWindow::updateTabOrder()
     }
     for (const PendingRow *row : std::as_const(m_pendingRows))
         chain += row->focusChain();
-    chain += {m_soundBox, m_notifyBox, m_autostartBox};
+    chain += {m_soundBox, m_notifyBox, m_autostartBox, m_unpinAll};
 
     for (qsizetype i = 1; i < chain.size(); ++i)
         QWidget::setTabOrder(chain[i - 1], chain[i]);
@@ -595,8 +617,10 @@ void MainWindow::fillTrayMenu()
         m_trayMenu->addAction(tr("Unpin: %1").arg(title), this,
                               [this, hwnd]() { m_manager->unpin(hwnd); });
     }
-    if (!windows.isEmpty())
+    if (!windows.isEmpty()) {
+        m_trayMenu->addAction(tr("Unpin all"), this, &MainWindow::unpinAll);
         m_trayMenu->addSeparator();
+    }
 
     m_trayMenu->addAction(tr("About PinIt"), this, &MainWindow::showAbout);
     m_trayMenu->addSeparator();

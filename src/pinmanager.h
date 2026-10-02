@@ -37,6 +37,9 @@ public:
     // user asking and may be retried.
     bool pin(intptr_t hwnd, bool announce = true);
     bool unpin(intptr_t hwnd);
+    // Unpin every window and stop waiting for the pending ones. Returns how
+    // many live windows were unpinned.
+    int  unpinAll();
     bool toggle(intptr_t hwnd);
     bool isPinned(intptr_t hwnd) const;
 

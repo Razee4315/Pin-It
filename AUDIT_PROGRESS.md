@@ -60,7 +60,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | M-01 | Visible "this is pinned" indicator | in-progress | Outline on pin/unpin done (F-02); locate-from-list and tray list still to come |
 | M-02 | Pending restore for apps opened later (same work as F-12) | verified | Harness: 4 saved pins, 1 open at start → 1 pinned at saved opacity, 3 waiting rows; file keeps all 4 after an unrelated pin; awaited window pinned and outlined within 0.8 s of opening; late-titled window pinned once the title matches; another window of the same app ignored; forget/quit/session-end all checked |
 | M-03 | Code-signed installer | todo | |
-| M-04 | "Unpin all" | todo | |
+| M-04 | "Unpin all" | done |  |
 | M-05 | Tray menu lists pinned windows + "Pin a window…" | done |  |
 | M-06 | Notifications on/off | verified | Harness: setting defaults to off, checkbox unchecked, ticking it writes show_notifications=true |
 | M-07 | Reset shortcuts to defaults | verified | Harness: Restore Defaults fills in the default set and clears the error; nothing applied until OK |

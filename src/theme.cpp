@@ -114,6 +114,15 @@ QPushButton#unpin {
 QPushButton#unpin:hover { background: $dangerHoverBg$; color: $accentHover$; border-color: $accentHover$; }
 QPushButton#unpin:focus { background: $dangerHoverBg$; color: $accentHover$; border-color: $accentHover$; }
 
+/* Low-key text buttons in the footer. */
+QPushButton#link {
+    background: transparent; border: 1px solid transparent; border-radius: 6px;
+    padding: 3px 6px; color: $accentStrong$; font-size: 12px;
+}
+QPushButton#link:hover { background: $keyBg$; }
+QPushButton#link:focus { background: $keyBg$; border-color: $accentStrong$; }
+QPushButton#link:disabled { color: $textSubtle$; }
+
 QCheckBox { color: $textControl$; font-size: 12px; spacing: 7px; }
 QCheckBox:focus { color: $text$; text-decoration: underline; }
 

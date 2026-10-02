@@ -173,6 +173,22 @@ bool PinManager::unpin(intptr_t hwnd)
     return true;
 }
 
+int PinManager::unpinAll()
+{
+    const int count = m_pinned.size();
+    if (count == 0 && m_pending.isEmpty())
+        return 0;
+
+    for (const PinnedWindow &w : std::as_const(m_pinned))
+        release(w);
+    m_pinned.clear();
+    m_pending.clear();
+    persist();
+    updateTimer();
+    emit pinsChanged();
+    return count;
+}
+
 bool PinManager::toggle(intptr_t hwnd)
 {
     return isPinned(hwnd) ? unpin(hwnd) : pin(hwnd);
