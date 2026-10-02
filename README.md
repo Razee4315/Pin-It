@@ -101,7 +101,7 @@ Yes — PinIt is completely free and open source under the [Apache 2.0 license](
 
 ### Prerequisites
 
-- [Qt 6](https://www.qt.io/download-open-source) (Widgets) with a C++17 compiler (MinGW or MSVC)
+- [Qt 6.5 or newer](https://www.qt.io/download-open-source) (Widgets) with a C++17 compiler (MinGW or MSVC)
 - [CMake](https://cmake.org/) 3.21+
 
 ### Build

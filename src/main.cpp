@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
     QCoreApplication::setOrganizationName(QStringLiteral("PinIt"));
     QApplication::setApplicationVersion(QStringLiteral(PINIT_VERSION_STR));
     QApplication::setWindowIcon(QIcon(QStringLiteral(":/icon.png")));
-    app.setStyleSheet(theme::styleSheet());
+    theme::followSystem(app);
 
     logging::init();
     qInfo("PinIt %s starting", PINIT_VERSION_STR);

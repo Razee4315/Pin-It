@@ -66,7 +66,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | M-07 | Reset shortcuts to defaults | verified | Harness: Restore Defaults fills in the default set and clears the error; nothing applied until OK |
 | M-08 | Click-through for pinned windows | done |  |
 | M-09 | "Check for updates" link | verified | Harness: tray has 'Check for updates…'; About box links to /releases/latest. Opening the browser itself was not triggered |
-| M-10 | Dark theme | todo | |
+| M-10 | Dark theme | done |  |
 | M-11 | winget / Scoop package | todo | |
 
 ## Cleanup

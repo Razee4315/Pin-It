@@ -1,5 +1,12 @@
 #include "theme.h"
 
+#include <QApplication>
+#include <QColor>
+#include <QPalette>
+#include <QString>
+#include <QStyle>
+#include <QStyleHints>
+
 #include <utility>
 
 namespace {
@@ -53,6 +60,31 @@ constexpr Colors kLight = {
     "#5c4307",              // warningText
     "#2a2622",              // statusBg
     "#f8f6f2",              // statusText
+};
+
+// The same paper, at night. Text/background pairs keep at least 4.5:1.
+constexpr Colors kDark = {
+    "#1f1d1a",              // window
+    "#2a2724",              // card
+    "rgba(255,255,255,0.08)",   // cardBorder
+    "rgba(255,255,255,0.16)",   // border
+    "#f1ede6",              // text
+    "#b8b1a6",              // textMuted
+    "#aba498",              // textSubtle
+    "#d6d0c6",              // textControl
+    "#38342f",              // keyBg
+    "#d0a06c",              // accent
+    "#d9a871",              // accentStrong
+    "#e6ba88",              // accentHover
+    "#1f1d1a",              // onAccent
+    "#2a2622",              // onAvatar
+    "#4a3328",              // dangerHoverBg
+    "#45403a",              // track
+    "#4a3a17",              // warningBg
+    "#7a6124",              // warningBorder
+    "#f5deb0",              // warningText
+    "#f1ede6",              // statusBg
+    "#1f1d1a",              // statusText
 };
 
 const char *kStyleSheet = R"qss(
@@ -146,6 +178,8 @@ QSlider::handle:horizontal {
 }
 QSlider::handle:horizontal:focus { background: $accentStrong$; border-color: $accentStrong$; }
 QScrollArea { background: transparent; border: none; }
+
+QToolTip { background: $card$; color: $text$; border: 1px solid $border$; padding: 3px 6px; }
 )qss";
 
 QString build(const Colors &c)
@@ -180,13 +214,60 @@ QString build(const Colors &c)
     return sheet;
 }
 
+// For the widgets the style sheet doesn't describe.
+QPalette buildPalette(const Colors &c)
+{
+    const QColor window(c.window), card(c.card), text(c.text), subtle(c.textSubtle);
+    const QColor strong(c.accentStrong);
+
+    QPalette p;
+    p.setColor(QPalette::Window, window);
+    p.setColor(QPalette::WindowText, text);
+    p.setColor(QPalette::Base, card);
+    p.setColor(QPalette::AlternateBase, QColor(c.keyBg));
+    p.setColor(QPalette::Text, text);
+    p.setColor(QPalette::Button, card);
+    p.setColor(QPalette::ButtonText, text);
+    p.setColor(QPalette::ToolTipBase, card);
+    p.setColor(QPalette::ToolTipText, text);
+    p.setColor(QPalette::PlaceholderText, subtle);
+    p.setColor(QPalette::Highlight, strong);
+    p.setColor(QPalette::HighlightedText, QColor(c.onAccent));
+    p.setColor(QPalette::Link, strong);
+    for (const QPalette::ColorRole role :
+         {QPalette::WindowText, QPalette::Text, QPalette::ButtonText})
+        p.setColor(QPalette::Disabled, role, subtle);
+    return p;
+}
+
 } // namespace
 
 namespace theme {
 
-QString styleSheet()
+Scheme systemScheme()
 {
-    return build(kLight);
+    return QGuiApplication::styleHints()->colorScheme() == Qt::ColorScheme::Dark
+               ? Scheme::Dark : Scheme::Light;
+}
+
+void apply(QApplication &app, Scheme scheme)
+{
+    const Colors &colors = scheme == Scheme::Dark ? kDark : kLight;
+
+    // Fusion draws every control from the palette, so the same code looks the
+    // same on Windows 10 and 11 and in both variants. (The native Windows
+    // styles ignore much of a custom palette.)
+    if (app.style()->name().compare(QLatin1String("fusion"), Qt::CaseInsensitive) != 0)
+        QApplication::setStyle(QStringLiteral("Fusion"));
+    QApplication::setPalette(buildPalette(colors));
+    app.setStyleSheet(build(colors));
+}
+
+void followSystem(QApplication &app)
+{
+    apply(app, systemScheme());
+    QObject::connect(QGuiApplication::styleHints(), &QStyleHints::colorSchemeChanged, &app,
+                     [&app]() { apply(app, systemScheme()); });
 }
 
 } // namespace theme
