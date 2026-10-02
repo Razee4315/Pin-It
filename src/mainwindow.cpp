@@ -580,6 +580,24 @@ void MainWindow::fillTrayMenu()
     const int pinned = m_manager->pinnedCount();
 
     m_trayMenu->addAction(tr("Show PinIt"), this, &MainWindow::showFromTray);
+    m_trayMenu->addAction(tr("Pin a window…"), this, &MainWindow::addWindowDialog);
+    m_trayMenu->addSeparator();
+
+    // What is pinned right now, each one click away from being unpinned —
+    // so the tray alone is enough to see and manage pins.
+    const QVector<PinnedWindow> windows = m_manager->pinnedWindows();
+    for (const PinnedWindow &w : windows) {
+        const intptr_t hwnd = w.hwnd;
+        // Keep the menu narrow, and stop "&" in a title becoming a mnemonic.
+        QString title = m_trayMenu->fontMetrics().elidedText(displayTitle(w.title),
+                                                             Qt::ElideRight, 260);
+        title.replace(QLatin1Char('&'), QLatin1String("&&"));
+        m_trayMenu->addAction(tr("Unpin: %1").arg(title), this,
+                              [this, hwnd]() { m_manager->unpin(hwnd); });
+    }
+    if (!windows.isEmpty())
+        m_trayMenu->addSeparator();
+
     m_trayMenu->addAction(tr("About PinIt"), this, &MainWindow::showAbout);
     m_trayMenu->addSeparator();
 
