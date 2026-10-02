@@ -11,6 +11,7 @@
 #include "pinmanager.h"
 
 class QLabel;
+class QPushButton;
 class QSlider;
 
 // How a window title / process name is shown to the user.
@@ -47,7 +48,12 @@ signals:
     void unpinRequested();
 
 private:
-    QLabel  *m_title = nullptr;
-    QSlider *m_slider = nullptr;
-    QLabel  *m_percent = nullptr;
+    // Screen readers announce controls by name; a bare "slider" or "button"
+    // per row says nothing about which window it belongs to.
+    void nameControls(const QString &title);
+
+    QLabel      *m_title = nullptr;
+    QSlider     *m_slider = nullptr;
+    QLabel      *m_percent = nullptr;
+    QPushButton *m_unpin = nullptr;
 };

@@ -37,6 +37,20 @@ QString avatarInitial(const QString &name)
     return n.isEmpty() ? QStringLiteral("?") : QString(n.at(0).toUpper());
 }
 
+// Coloured badge with the process initial. Purely decorative: the process
+// name is spelled out right next to it.
+QLabel *makeAvatar(const QString &processName)
+{
+    auto *avatar = new QLabel(avatarInitial(processName));
+    avatar->setProperty("role", "avatar");
+    avatar->setFixedSize(28, 28);
+    avatar->setAlignment(Qt::AlignCenter);
+    // Only the per-app colour is set here; the rest comes from the theme.
+    avatar->setStyleSheet(
+        QStringLiteral("background: %1;").arg(avatarColor(processName).name()));
+    return avatar;
+}
+
 // A single-line label that elides its text to whatever width the layout gives
 // it. A plain QLabel reports its full text width as its minimum, which made a
 // long window title push the slider and unpin button out of the list.
@@ -105,13 +119,7 @@ PendingRow::PendingRow(const persistence::SavedPin &pin, QWidget *parent)
     row->setContentsMargins(10, 6, 8, 6);
     row->setSpacing(8);
 
-    auto *avatar = new QLabel(avatarInitial(pin.processName));
-    avatar->setFixedSize(28, 28);
-    avatar->setAlignment(Qt::AlignCenter);
-    avatar->setStyleSheet(QStringLiteral(
-        "background:%1; border-radius:6px; color:white;"
-        "font-weight:700; font-size:12px;").arg(avatarColor(pin.processName).name()));
-    row->addWidget(avatar);
+    row->addWidget(makeAvatar(pin.processName));
 
     auto *info = new QVBoxLayout;
     info->setSpacing(0);
@@ -133,6 +141,7 @@ PendingRow::PendingRow(const persistence::SavedPin &pin, QWidget *parent)
     forgetBtn->setObjectName(QStringLiteral("unpin"));
     forgetBtn->setFixedSize(24, 24);
     forgetBtn->setToolTip(tr("Stop waiting for this window"));
+    forgetBtn->setAccessibleName(tr("Stop waiting for %1").arg(displayTitle(pin.title)));
     forgetBtn->setCursor(Qt::PointingHandCursor);
     connect(forgetBtn, &QPushButton::clicked, this, &PendingRow::forgetRequested);
     row->addWidget(forgetBtn);
@@ -147,14 +156,7 @@ PinRow::PinRow(const PinnedWindow &window, QWidget *parent)
     row->setContentsMargins(10, 6, 8, 6);
     row->setSpacing(8);
 
-    // Coloured badge with the process initial.
-    auto *avatar = new QLabel(avatarInitial(window.processName));
-    avatar->setFixedSize(28, 28);
-    avatar->setAlignment(Qt::AlignCenter);
-    avatar->setStyleSheet(QStringLiteral(
-        "background:%1; border-radius:6px; color:white;"
-        "font-weight:700; font-size:12px;").arg(avatarColor(window.processName).name()));
-    row->addWidget(avatar);
+    row->addWidget(makeAvatar(window.processName));
 
     // Title + process name stacked tightly; takes the leftover width.
     auto *info = new QVBoxLayout;
@@ -198,12 +200,23 @@ PinRow::PinRow(const PinnedWindow &window, QWidget *parent)
     unpinBtn->setCursor(Qt::PointingHandCursor);
     connect(unpinBtn, &QPushButton::clicked, this, &PinRow::unpinRequested);
     row->addWidget(unpinBtn);
+    m_unpin = unpinBtn;
+
+    nameControls(window.title);
+}
+
+void PinRow::nameControls(const QString &title)
+{
+    const QString shown = displayTitle(title);
+    m_slider->setAccessibleName(tr("Opacity of %1").arg(shown));
+    m_unpin->setAccessibleName(tr("Unpin %1").arg(shown));
 }
 
 void PinRow::setTitle(const QString &title)
 {
     static_cast<ElidedLabel *>(m_title)->setFullText(displayTitle(title));
     m_title->setToolTip(title);
+    nameControls(title);
 }
 
 void PinRow::setOpacity(int percent)

@@ -16,9 +16,11 @@ struct Colors {
     const char *textSubtle;    // "+" separators, the unpin glyph
     const char *textControl;   // checkbox labels
     const char *keyBg;         // key chips, button hover
-    const char *accent;        // primary button, slider
+    const char *accent;        // slider, non-text accents (3:1 against the card)
+    const char *accentStrong;  // primary button, focus rings (4.5:1 with onAccent)
     const char *accentHover;
-    const char *onAccent;      // text on the accent colour
+    const char *onAccent;      // text on accentStrong
+    const char *onAvatar;      // initial on the pastel app badges
     const char *dangerHoverBg; // unpin button hover
     const char *track;         // slider groove
     const char *warningBg;
@@ -36,12 +38,14 @@ constexpr Colors kLight = {
     "rgba(0,0,0,0.12)",     // border
     "#2a2622",              // text
     "#6b6760",              // textMuted
-    "#9a948a",              // textSubtle
+    "#767067",              // textSubtle
     "#5a564e",              // textControl
     "#f0ede6",              // keyBg
-    "#c49464",              // accent
-    "#b6855a",              // accentHover
+    "#b07c4a",              // accent
+    "#96653a",              // accentStrong
+    "#855832",              // accentHover
     "#ffffff",              // onAccent
+    "#2a2622",              // onAvatar
     "#f6e3da",              // dangerHoverBg
     "#e6e2da",              // track
     "#fbeed3",              // warningBg
@@ -68,6 +72,9 @@ QLabel[role="key"] {
     color: $text$; font-weight: 700; font-size: 11px;
 }
 QLabel[role="plus"] { color: $textSubtle$; font-size: 12px; }
+QLabel[role="avatar"] {
+    border-radius: 6px; color: $onAvatar$; font-weight: 700; font-size: 12px;
+}
 
 QLabel[role="warning"] {
     background: $warningBg$; border: 1px solid $warningBorder$; border-radius: 8px;
@@ -88,21 +95,27 @@ QPushButton {
     border-radius: 8px; padding: 7px 14px; color: $text$; font-size: 12px;
 }
 QPushButton:hover { background: $keyBg$; }
+QPushButton:focus { background: $keyBg$; border-color: $accentStrong$; }
 
+/* The 2px border is always there (in the fill colour) so the focus ring can
+   appear without the button changing size. */
 QPushButton#primary {
-    background: $accent$; border: none; color: $onAccent$; font-weight: 700;
-    padding: 9px 14px;
+    background: $accentStrong$; border: 2px solid $accentStrong$; color: $onAccent$;
+    font-weight: 700; padding: 7px 12px;
 }
-QPushButton#primary:hover { background: $accentHover$; }
+QPushButton#primary:hover { background: $accentHover$; border-color: $accentHover$; }
+QPushButton#primary:focus { border-color: $text$; }
 
 QPushButton#unpin {
     background: transparent; border: 1px solid $border$;
     border-radius: 5px; color: $textSubtle$; font-weight: 700; font-size: 12px;
     padding: 0;
 }
-QPushButton#unpin:hover { background: $dangerHoverBg$; color: $accentHover$; border-color: $accent$; }
+QPushButton#unpin:hover { background: $dangerHoverBg$; color: $accentStrong$; border-color: $accentStrong$; }
+QPushButton#unpin:focus { background: $dangerHoverBg$; color: $accentStrong$; border-color: $accentStrong$; }
 
 QCheckBox { color: $textControl$; font-size: 12px; spacing: 7px; }
+QCheckBox:focus { color: $text$; text-decoration: underline; }
 
 QSlider::groove:horizontal { height: 4px; background: $track$; border-radius: 2px; }
 QSlider::sub-page:horizontal { background: $accent$; border-radius: 2px; }
@@ -110,6 +123,7 @@ QSlider::handle:horizontal {
     background: $card$; border: 1px solid $accent$; width: 14px; height: 14px;
     margin: -6px 0; border-radius: 7px;
 }
+QSlider::handle:horizontal:focus { background: $accentStrong$; border-color: $accentStrong$; }
 QScrollArea { background: transparent; border: none; }
 )qss";
 
@@ -126,8 +140,10 @@ QString build(const Colors &c)
         {"$textControl$", c.textControl},
         {"$keyBg$", c.keyBg},
         {"$accent$", c.accent},
+        {"$accentStrong$", c.accentStrong},
         {"$accentHover$", c.accentHover},
         {"$onAccent$", c.onAccent},
+        {"$onAvatar$", c.onAvatar},
         {"$dangerHoverBg$", c.dangerHoverBg},
         {"$track$", c.track},
         {"$warningBg$", c.warningBg},
