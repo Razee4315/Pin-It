@@ -41,6 +41,11 @@ QLabel[role="key"] {
 }
 QLabel[role="plus"] { color: #9a948a; font-size: 12px; }
 
+QLabel[role="status"] {
+    background: #2a2622; color: #f8f6f2; border-radius: 8px;
+    padding: 6px 10px; font-size: 12px;
+}
+
 QFrame[role="card"] {
     background: #ffffff; border: 1px solid rgba(0,0,0,0.08);
     border-radius: 12px;

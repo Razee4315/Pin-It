@@ -26,6 +26,8 @@
 #include <QDir>
 #include <QMessageBox>
 #include <QSet>
+#include <QTimer>
+#include <QAccessible>
 
 #include "version.h"
 
@@ -157,6 +159,7 @@ void MainWindow::buildUi()
     root->addWidget(m_pinnedHeader);
 
     auto *scroll = new QScrollArea(central);
+    m_scroll = scroll;
     scroll->setWidgetResizable(true);
     scroll->setFrameShape(QFrame::NoFrame);
     scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -210,7 +213,50 @@ void MainWindow::buildUi()
     });
     root->addWidget(m_autostartBox);
 
+    // In-window message. Not in a layout: it floats over the bottom of the
+    // list so showing it never moves anything.
+    m_status = new QLabel(central);
+    m_status->setProperty("role", "status");
+    m_status->setWordWrap(true);
+    m_status->setAlignment(Qt::AlignCenter);
+    m_status->hide();
+    m_statusTimer = new QTimer(this);
+    m_statusTimer->setSingleShot(true);
+    m_statusTimer->setInterval(4000);
+    connect(m_statusTimer, &QTimer::timeout, m_status, &QWidget::hide);
+
     setCentralWidget(central);
+}
+
+void MainWindow::showStatus(const QString &message)
+{
+    m_status->setText(message);
+    placeStatus();
+    m_status->show();
+    m_status->raise();
+    m_statusTimer->start();
+
+    // Screen readers don't notice a label appearing; announce it.
+    QAccessibleEvent alert(m_status, QAccessible::Alert);
+    QAccessible::updateAccessibility(&alert);
+}
+
+void MainWindow::placeStatus()
+{
+    if (!m_status || !m_scroll)
+        return;
+    constexpr int kInset = 6;
+    const QRect area = m_scroll->geometry();
+    const int width = area.width() - 2 * kInset;
+    const int height = m_status->heightForWidth(width);
+    m_status->setGeometry(area.left() + kInset, area.bottom() - kInset - height + 1,
+                          width, height);
+}
+
+void MainWindow::resizeEvent(QResizeEvent *event)
+{
+    QMainWindow::resizeEvent(event);
+    placeStatus();
 }
 
 void MainWindow::setShortcutConfig(const persistence::ShortcutConfig &cfg)
@@ -484,7 +530,14 @@ void MainWindow::showFromTray()
 
 void MainWindow::notify(const QString &message)
 {
-    if (m_tray && m_tray->isVisible())
+    const bool hasTray = m_tray && m_tray->isVisible();
+    const bool userIsLooking = isVisible() && !isMinimized() && isActiveWindow();
+
+    // Without a tray there is nowhere else to say it, so the message would be
+    // lost; and when the window is in front, a system notification is overkill.
+    if (!hasTray || userIsLooking)
+        showStatus(message);
+    else
         m_tray->showMessage(QStringLiteral("PinIt"), message,
                             QSystemTrayIcon::Information, 2500);
 }

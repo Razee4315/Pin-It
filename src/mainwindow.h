@@ -16,6 +16,8 @@ class QWidget;
 class QSystemTrayIcon;
 class QCheckBox;
 class QLabel;
+class QScrollArea;
+class QTimer;
 
 class MainWindow : public QMainWindow
 {
@@ -35,11 +37,14 @@ signals:
 public slots:
     void toggleVisibility();      // bound to the Show/Hide hotkey
     void showFromTray();
-    void notify(const QString &message);   // transient tray balloon
+    // Transient message: shown inside the window while the user is looking at
+    // it (or when there is no tray), as a tray notification otherwise.
+    void notify(const QString &message);
 
 protected:
     void closeEvent(QCloseEvent *event) override;   // hide to tray
     void changeEvent(QEvent *event) override;       // tracks when focus was lost
+    void resizeEvent(QResizeEvent *event) override;
 
 private slots:
     void syncList();              // bring the rows in line with the pin list
@@ -52,9 +57,14 @@ private:
     void buildTray();
     void applyAutostart(bool enabled);
     void fillShortcutRows(QVBoxLayout *scv);   // (re)builds the SHORTCUTS chips
+    void showStatus(const QString &message);   // in-window message, fades by itself
+    void placeStatus();
 
     PinManager      *m_manager = nullptr;
     QSystemTrayIcon *m_tray = nullptr;
+    QScrollArea     *m_scroll = nullptr;
+    QLabel          *m_status = nullptr;        // floats over the bottom of the list
+    QTimer          *m_statusTimer = nullptr;
     QVBoxLayout     *m_listLayout = nullptr;
     QHash<intptr_t, PinRow *> m_rows;   // one live row per pinned window
     QLabel          *m_emptyLabel = nullptr;
