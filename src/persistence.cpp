@@ -141,9 +141,15 @@ void save(const SavedState &state)
     // QSaveFile writes to a temp file then atomically renames — same crash
     // safety the Rust version got from its tmp+rename dance.
     QSaveFile f(path);
-    if (f.open(QIODevice::WriteOnly)) {
-        f.write(QJsonDocument(root).toJson(QJsonDocument::Indented));
-        f.commit();
+    if (!f.open(QIODevice::WriteOnly)) {
+        qWarning("Could not save %s: %s", qUtf8Printable(QDir::toNativeSeparators(path)),
+                 qUtf8Printable(f.errorString()));
+        return;
+    }
+    f.write(QJsonDocument(root).toJson(QJsonDocument::Indented));
+    if (!f.commit()) {
+        qWarning("Could not save %s: %s", qUtf8Printable(QDir::toNativeSeparators(path)),
+                 qUtf8Printable(f.errorString()));
     }
 }
 
