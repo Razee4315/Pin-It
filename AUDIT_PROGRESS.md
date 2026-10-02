@@ -41,7 +41,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | F-30 | 3 | P3 | Unsupported keys shown as "A" | verified | Unit tests (named/function keys, every offered key round-trips, unknown key preserved) + harness: F13–F17 register and display; NumpadAdd is shown as written, reported unavailable, not rewritten |
 | F-31 | 3 | P3 | Shortcuts dialog accessibility | verified | Harness: all 16 checkboxes and 4 key lists carry '<action>: <part>' accessible names; errors are an inline label with an accessibility alert, no message boxes |
 | F-32 | 3 | P3 | Quit forgets pins with no hint | todo | |
-| F-33 | 3 | P3 | Uninstaller leaves Run key; no AppMutex | todo | |
+| F-33 | 3 | P3 | Uninstaller leaves Run key; no AppMutex | done |  |
 | F-34 | 3 | P3 | Second launch only flashes the taskbar | done |  |
 | F-35 | 3 | P3 | "window(s)" tooltip | todo | |
 | F-36 | 3 | P3 | About only in tray; CONTRIBUTING wrong | todo | |
