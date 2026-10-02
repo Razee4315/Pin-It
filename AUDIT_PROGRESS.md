@@ -28,7 +28,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | F-17 | 2 | P2 | Opacity hotkey silent on unpinned window | todo | |
 | F-18 | 2 | P2 | Opacity hotkeys do not repeat | todo | |
 | F-19 | 2 | P2 | List order is hash order | todo | |
-| F-20 | 2 | P2 | List rebuilt from scratch on every change | todo | |
+| F-20 | 2 | P2 | List rebuilt from scratch on every change | done |  |
 | F-21 | 2 | P2 | Picker lists shell / cloaked windows | todo | |
 | F-22 | 2 | P2 | Picker: no search, icons, empty state; dead-end OK | todo | |
 | F-23 | 2 | P2 | Accessible names and contrast | todo | |
@@ -99,7 +99,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | O-01 | Drop Qt Network (mutex + window message for single instance) | todo | |
 | O-02 | Trim unneeded Qt plugins from the bundle | todo | |
 | O-03 | Embed the small icon instead of the 141 KB one | todo | |
-| O-04 | In-place list updates (same work as F-20) | todo | |
+| O-04 | In-place list updates (same work as F-20) | done |  |
 | O-05 | Cache settings in memory instead of re-reading the file | todo | |
 | O-06 | Smaller README demo GIF | todo | |
 | O-07 | Compress `og-image.png` | todo | |

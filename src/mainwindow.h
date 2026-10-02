@@ -4,10 +4,12 @@
 // an "add window" picker, settings, and the system-tray integration.
 //
 #include <QMainWindow>
+#include <QHash>
 
 #include "persistence.h"
 
 class PinManager;
+class PinRow;
 class QVBoxLayout;
 class QWidget;
 class QSystemTrayIcon;
@@ -38,7 +40,7 @@ protected:
     void closeEvent(QCloseEvent *event) override;   // hide to tray
 
 private slots:
-    void rebuildList();
+    void syncList();              // bring the rows in line with the pin list
     void addWindowDialog();
     void showAbout();
     void openShortcutsDialog();
@@ -52,6 +54,7 @@ private:
     PinManager      *m_manager = nullptr;
     QSystemTrayIcon *m_tray = nullptr;
     QVBoxLayout     *m_listLayout = nullptr;
+    QHash<intptr_t, PinRow *> m_rows;   // one live row per pinned window
     QLabel          *m_emptyLabel = nullptr;
     QLabel          *m_pinnedHeader = nullptr;
     QWidget         *m_emptyCard = nullptr;

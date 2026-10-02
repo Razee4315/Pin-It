@@ -1,0 +1,148 @@
+#include "pinrow.h"
+#include "winpin.h"
+
+#include <QColor>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QPushButton>
+#include <QResizeEvent>
+#include <QSlider>
+#include <QVBoxLayout>
+
+namespace {
+
+// Deterministic avatar colour for a process name (ported from the original
+// PinIt frontend) so each pinned app gets a stable little badge.
+QColor avatarColor(const QString &name)
+{
+    static const char *kColors[] = {
+        "#e57373", "#f06292", "#ba68c8", "#9575cd", "#7986cb",
+        "#64b5f6", "#4fc3f7", "#4dd0e1", "#4db6ac", "#81c784",
+        "#aed581", "#ffd54f", "#ffb74d", "#ff8a65", "#a1887f",
+    };
+    constexpr int count = int(sizeof(kColors) / sizeof(kColors[0]));
+    quint32 hash = 0;
+    for (const QChar ch : name)
+        hash = ch.unicode() + (hash << 5) - hash;   // wraps mod 2^32 (well-defined)
+    return QColor(QString::fromLatin1(kColors[hash % count]));
+}
+
+// First letter of the process name (sans .exe) for the avatar badge.
+QString avatarInitial(const QString &name)
+{
+    QString n = name;
+    if (n.endsWith(QStringLiteral(".exe"), Qt::CaseInsensitive))
+        n.chop(4);
+    return n.isEmpty() ? QStringLiteral("?") : QString(n.at(0).toUpper());
+}
+
+// A single-line label that elides its text to whatever width the layout gives
+// it. A plain QLabel reports its full text width as its minimum, which made a
+// long window title push the slider and unpin button out of the list.
+class ElidedLabel : public QLabel
+{
+public:
+    explicit ElidedLabel(const QString &text, QWidget *parent = nullptr)
+        : QLabel(parent)
+    {
+        setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+        setFullText(text);
+    }
+
+    void setFullText(const QString &text)
+    {
+        m_fullText = text;
+        updateElision();
+    }
+
+    QSize minimumSizeHint() const override
+    {
+        return QSize(0, QLabel::minimumSizeHint().height());
+    }
+
+protected:
+    void resizeEvent(QResizeEvent *event) override
+    {
+        QLabel::resizeEvent(event);
+        updateElision();
+    }
+
+private:
+    void updateElision()
+    {
+        setText(fontMetrics().elidedText(m_fullText, Qt::ElideRight, width()));
+    }
+
+    QString m_fullText;
+};
+
+} // namespace
+
+QString displayTitle(const QString &title)
+{
+    const int slash = title.lastIndexOf(QLatin1Char('\\'));
+    if (slash >= 0 && slash < title.size() - 1)
+        return title.mid(slash + 1);
+    return title;
+}
+
+PinRow::PinRow(const PinnedWindow &window, QWidget *parent)
+    : QFrame(parent)
+{
+    setProperty("role", "card");
+
+    auto *row = new QHBoxLayout(this);
+    row->setContentsMargins(10, 6, 8, 6);
+    row->setSpacing(8);
+
+    // Coloured badge with the process initial.
+    auto *avatar = new QLabel(avatarInitial(window.processName));
+    avatar->setFixedSize(28, 28);
+    avatar->setAlignment(Qt::AlignCenter);
+    avatar->setStyleSheet(QStringLiteral(
+        "background:%1; border-radius:6px; color:white;"
+        "font-weight:700; font-size:12px;").arg(avatarColor(window.processName).name()));
+    row->addWidget(avatar);
+
+    // Title + process name stacked tightly; takes the leftover width.
+    auto *info = new QVBoxLayout;
+    info->setSpacing(0);
+    auto *name = new ElidedLabel(displayTitle(window.title));
+    name->setStyleSheet(QStringLiteral("font-weight: 600;"));
+    name->setToolTip(window.title);   // full title on hover
+    auto *proc = new ElidedLabel(window.processName);
+    proc->setProperty("role", "muted");
+    info->addWidget(name);
+    info->addWidget(proc);
+    row->addLayout(info, 1);
+
+    // Opacity slider + percentage.
+    m_slider = new QSlider(Qt::Horizontal);
+    m_slider->setRange(winpin::kMinOpacity, winpin::kMaxOpacity);
+    m_slider->setValue(window.opacity);
+    m_slider->setFixedWidth(76);
+    // The round handle is pulled out over the thin groove (margin:-6px in
+    // the QSS); without enough vertical room it gets clipped at the top.
+    m_slider->setMinimumHeight(20);
+    row->addWidget(m_slider);
+
+    m_percent = new QLabel(QStringLiteral("%1%").arg(window.opacity));
+    m_percent->setProperty("role", "muted");
+    m_percent->setMinimumWidth(30);
+    m_percent->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    row->addWidget(m_percent);
+
+    connect(m_slider, &QSlider::valueChanged, this, [this](int v) {
+        m_percent->setText(QStringLiteral("%1%").arg(v));
+        emit opacityRequested(v);
+    });
+
+    // Compact unpin button (full label still available as a tooltip).
+    auto *unpinBtn = new QPushButton(QString::fromUtf8("\xE2\x9C\x95"));   // ✕
+    unpinBtn->setObjectName(QStringLiteral("unpin"));
+    unpinBtn->setFixedSize(24, 24);
+    unpinBtn->setToolTip(tr("Unpin this window"));
+    unpinBtn->setCursor(Qt::PointingHandCursor);
+    connect(unpinBtn, &QPushButton::clicked, this, &PinRow::unpinRequested);
+    row->addWidget(unpinBtn);
+}
