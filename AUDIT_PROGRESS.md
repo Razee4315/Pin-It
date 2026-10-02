@@ -85,7 +85,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | C-10 | Stale / wrong comments | todo | |
 | C-11 | One window-handle type, one cast helper | todo | |
 | C-12 | Shared app-data directory helper | todo | |
-| C-13 | Chip-row builder duplicated three times | todo | |
+| C-13 | Chip-row builder duplicated three times | done |  |
 | C-14 | Hotkey-result messages duplicated | done |  |
 | C-15 | Un-pin sequence duplicated | verified | Build + harness: unpin and quit paths both restore windows (F-05/F-09 scenarios) |
 | C-16 | `"Unknown"` sentinel strings | verified | Build + harness enumerate/list scenarios; no "Unknown" literal left in src |

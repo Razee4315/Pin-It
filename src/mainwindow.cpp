@@ -55,6 +55,30 @@ QLabel *plusLabel(const QString &text = QStringLiteral("+"))
     return l;
 }
 
+// A shortcut as chips: [ Win ] + [ Ctrl ] + [ T ].
+void addKeyChips(QHBoxLayout *row, const QStringList &keys)
+{
+    for (int i = 0; i < keys.size(); ++i) {
+        if (i > 0)
+            row->addWidget(plusLabel());
+        row->addWidget(keyChip(keys[i]));
+    }
+}
+
+// Empty a layout, deleting its widgets and nested layouts.
+void clearLayout(QLayout *layout)
+{
+    while (QLayoutItem *item = layout->takeAt(0)) {
+        if (QLayout *child = item->layout())
+            clearLayout(child);
+        if (QWidget *widget = item->widget()) {
+            widget->hide();
+            widget->deleteLater();
+        }
+        delete item;
+    }
+}
+
 QFrame *makeCard()
 {
     auto *card = new QFrame;
@@ -214,12 +238,7 @@ void MainWindow::buildUi()
     auto *use = new QLabel(tr("Use"));
     use->setProperty("role", "muted");
     hintRow->addWidget(use);
-    const QStringList toggleKeys = shortcuts::displayTokens(m_settings.shortcuts.togglePin);
-    for (int i = 0; i < toggleKeys.size(); ++i) {
-        if (i > 0)
-            hintRow->addWidget(plusLabel());
-        hintRow->addWidget(keyChip(toggleKeys[i]));
-    }
+    addKeyChips(hintRow, shortcuts::displayTokens(m_settings.shortcuts.togglePin));
     hintRow->addStretch();
     ec->addLayout(hintRow);
     m_listLayout->insertWidget(0, m_emptyCard);   // lives in the list region
@@ -331,29 +350,20 @@ void MainWindow::setShortcutConfig(const persistence::ShortcutConfig &cfg)
 
 void MainWindow::fillShortcutRows(QVBoxLayout *scv)
 {
-    // Clear any existing rows (each row is a nested QHBoxLayout of chips).
-    while (QLayoutItem *item = scv->takeAt(0)) {
-        if (QLayout *child = item->layout()) {
-            while (QLayoutItem *ci = child->takeAt(0)) {
-                if (ci->widget())
-                    ci->widget()->deleteLater();
-                delete ci;
-            }
-        }
-        if (item->widget())
-            item->widget()->deleteLater();
-        delete item;
-    }
+    clearLayout(scv);
 
     const persistence::ShortcutConfig &sc = m_settings.shortcuts;
 
-    auto addRow = [&](const QStringList &keys, const QString &desc) {
+    // One row: the shortcut's chips, optionally "/ [alternative key]", then
+    // what it does on the right.
+    auto addRow = [scv](const QStringList &keys, const QString &desc,
+                        const QString &alternativeKey = QString()) {
         auto *row = new QHBoxLayout;
         row->setSpacing(6);
-        for (int i = 0; i < keys.size(); ++i) {
-            if (i > 0)
-                row->addWidget(plusLabel());
-            row->addWidget(keyChip(keys[i]));
+        addKeyChips(row, keys);
+        if (!alternativeKey.isEmpty()) {
+            row->addWidget(plusLabel(QStringLiteral("/")));
+            row->addWidget(keyChip(alternativeKey));
         }
         row->addStretch();
         auto *d = new QLabel(desc);
@@ -364,29 +374,10 @@ void MainWindow::fillShortcutRows(QVBoxLayout *scv)
 
     addRow(shortcuts::displayTokens(sc.togglePin), tr("Pin / unpin window"));
 
-    {   // Opacity row shows both +/- keys sharing the same modifiers.
-        const QStringList up = shortcuts::displayTokens(sc.opacityUp);
-        const QStringList down = shortcuts::displayTokens(sc.opacityDown);
-        auto *row = new QHBoxLayout;
-        row->setSpacing(6);
-        for (int i = 0; i < up.size(); ++i) {
-            const bool isKey = (i == up.size() - 1);
-            if (i > 0)
-                row->addWidget(plusLabel());
-            if (isKey) {
-                row->addWidget(keyChip(up[i]));
-                row->addWidget(plusLabel(QStringLiteral("/")));
-                row->addWidget(keyChip(down.isEmpty() ? QStringLiteral("-") : down.last()));
-            } else {
-                row->addWidget(keyChip(up[i]));
-            }
-        }
-        row->addStretch();
-        auto *d = new QLabel(tr("Adjust opacity"));
-        d->setProperty("role", "desc");
-        row->addWidget(d);
-        scv->addLayout(row);
-    }
+    // Opacity row shows both +/- keys sharing the same modifiers.
+    const QStringList up = shortcuts::displayTokens(sc.opacityUp);
+    const QStringList down = shortcuts::displayTokens(sc.opacityDown);
+    addRow(up, tr("Adjust opacity"), down.isEmpty() ? QStringLiteral("-") : down.last());
 
     addRow(shortcuts::displayTokens(sc.toggleWindow), tr("Show / hide PinIt"));
 }
