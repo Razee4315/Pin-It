@@ -220,10 +220,18 @@ void TestPinIt::autostartFollowsTheRegistry()
              autostart::command());
     QVERIFY(!autostart::repairPath());            // already points here
 
-    // Something else (the installer, an older copy) wrote a different path.
+    // Another copy that still exists (an installed PinIt) owns the entry:
+    // autostart counts as on, and its path is not taken over.
+    const QString other = QStringLiteral("\"%1\" --minimized").arg(qEnvironmentVariable("ComSpec"));
+    QSettings(key, QSettings::NativeFormat).setValue(QStringLiteral("PinIt"), other);
+    QVERIFY(autostart::isEnabled());              // the registry is the truth
+    QVERIFY(!autostart::repairPath());
+    QCOMPARE(QSettings(key, QSettings::NativeFormat).value(QStringLiteral("PinIt")).toString(),
+             other);
+
+    // The registered copy is gone (a portable folder that was moved): repair.
     QSettings(key, QSettings::NativeFormat)
-        .setValue(QStringLiteral("PinIt"), QStringLiteral("\"C:\\Old\\PinIt.exe\" --minimized"));
-    QVERIFY(autostart::isEnabled());              // still on: the registry is the truth
+        .setValue(QStringLiteral("PinIt"), QStringLiteral("\"C:\\No Such Folder\\PinIt.exe\" --minimized"));
     QVERIFY(autostart::repairPath());
     QCOMPARE(QSettings(key, QSettings::NativeFormat).value(QStringLiteral("PinIt")).toString(),
              autostart::command());

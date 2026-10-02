@@ -14,9 +14,11 @@ namespace autostart {
 bool isEnabled();
 void setEnabled(bool enabled);
 
-// If autostart is on but points at another location (a portable copy that was
-// moved, or an older install), point it at this executable. Returns true if
-// the entry was rewritten.
+// If autostart is on but points at an executable that no longer exists (a
+// portable copy that was moved or renamed), point it at this one. An entry
+// whose target still exists is left alone — it may be another, installed copy
+// and running a second build once must not take over its autostart. Returns
+// true if the entry was rewritten.
 bool repairPath();
 
 // The command line stored in the Run key for this executable.

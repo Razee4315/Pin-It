@@ -2,6 +2,7 @@
 
 #include <QCoreApplication>
 #include <QDir>
+#include <QFile>
 #include <QSettings>
 
 namespace {
@@ -45,8 +46,15 @@ void setEnabled(bool enabled)
 bool repairPath()
 {
     QSettings run(registryKey(), QSettings::NativeFormat);
-    if (!run.contains(kValueName) || run.value(kValueName).toString() == command())
+    if (!run.contains(kValueName))
         return false;
+
+    // The stored command is "<exe>" --minimized; take the quoted path.
+    const QString stored = run.value(kValueName).toString();
+    const QString target = stored.section(QLatin1Char('"'), 1, 1);
+    if (target.isEmpty() || QFile::exists(target))
+        return false;
+
     run.setValue(kValueName, command());
     return true;
 }
