@@ -27,7 +27,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | F-16 | 2 | P2 | Slider not synced with opacity hotkeys | done |  |
 | F-17 | 2 | P2 | Opacity hotkey silent on unpinned window | todo | |
 | F-18 | 2 | P2 | Opacity hotkeys do not repeat | todo | |
-| F-19 | 2 | P2 | List order is hash order | todo | |
+| F-19 | 2 | P2 | List order is hash order | done |  |
 | F-20 | 2 | P2 | List rebuilt from scratch on every change | done |  |
 | F-21 | 2 | P2 | Picker lists shell / cloaked windows | todo | |
 | F-22 | 2 | P2 | Picker: no search, icons, empty state; dead-end OK | todo | |

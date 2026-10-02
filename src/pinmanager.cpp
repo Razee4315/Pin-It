@@ -45,14 +45,32 @@ void PinManager::updateTimer()
         m_timer->start();
 }
 
+PinnedWindow *PinManager::find(intptr_t hwnd)
+{
+    for (PinnedWindow &w : m_pinned) {
+        if (w.hwnd == hwnd)
+            return &w;
+    }
+    return nullptr;
+}
+
+const PinnedWindow *PinManager::find(intptr_t hwnd) const
+{
+    for (const PinnedWindow &w : m_pinned) {
+        if (w.hwnd == hwnd)
+            return &w;
+    }
+    return nullptr;
+}
+
 bool PinManager::isPinned(intptr_t hwnd) const
 {
-    return m_pinned.contains(hwnd);
+    return find(hwnd) != nullptr;
 }
 
 bool PinManager::pin(intptr_t hwnd, bool announce)
 {
-    if (m_pinned.contains(hwnd))
+    if (isPinned(hwnd))
         return true;
 
     if (!winpin::isValidWindow(H(hwnd))) {
@@ -84,7 +102,7 @@ bool PinManager::pin(intptr_t hwnd, bool announce)
     w.processName = proc;
     w.opacity = 100;
     w.wasLayered = winpin::isLayered(H(hwnd));   // remember its original style
-    m_pinned.insert(hwnd, w);
+    m_pinned.push_back(w);
 
     persist();
     updateTimer();
@@ -97,14 +115,13 @@ bool PinManager::pin(intptr_t hwnd, bool announce)
 
 bool PinManager::unpin(intptr_t hwnd)
 {
-    auto it = m_pinned.find(hwnd);
     QString title, proc;
     bool opacityChanged = false, wasLayered = false;
-    if (it != m_pinned.end()) {
-        title = it->title;
-        proc  = it->processName;
-        opacityChanged = it->opacityChanged;
-        wasLayered = it->wasLayered;
+    if (const PinnedWindow *w = find(hwnd)) {
+        title = w->title;
+        proc  = w->processName;
+        opacityChanged = w->opacityChanged;
+        wasLayered = w->wasLayered;
     }
 
     if (winpin::isValidWindow(H(hwnd))) {
@@ -115,7 +132,7 @@ bool PinManager::unpin(intptr_t hwnd)
         winpin::removeTopmost(H(hwnd));
     }
 
-    m_pinned.remove(hwnd);
+    m_pinned.removeIf([hwnd](const PinnedWindow &w) { return w.hwnd == hwnd; });
     persist();
     updateTimer();
     emit pinToggled(false, title, proc);
@@ -144,15 +161,16 @@ void PinManager::adjustForegroundOpacity(int deltaPercent)
     if (!fg)
         return;
     const intptr_t hwnd = reinterpret_cast<intptr_t>(fg);
-    if (!m_pinned.contains(hwnd))
+    const PinnedWindow *w = find(hwnd);
+    if (!w)
         return;   // only adjust opacity of pinned windows
-    setOpacity(hwnd, m_pinned[hwnd].opacity + deltaPercent);
+    setOpacity(hwnd, w->opacity + deltaPercent);
 }
 
 bool PinManager::setOpacity(intptr_t hwnd, int percent)
 {
-    auto it = m_pinned.find(hwnd);
-    if (it == m_pinned.end())
+    PinnedWindow *w = find(hwnd);
+    if (!w)
         return false;
 
     if (percent < winpin::kMinOpacity) percent = winpin::kMinOpacity;
@@ -161,37 +179,24 @@ bool PinManager::setOpacity(intptr_t hwnd, int percent)
     if (!winpin::setOpacityPercent(H(hwnd), percent))
         return false;
 
-    it->opacity = percent;
-    it->opacityChanged = true;   // remember so unpin/exit undoes it
+    w->opacity = percent;
+    w->opacityChanged = true;   // remember so unpin/exit undoes it
     schedulePersist();   // debounced — slider drags fire this dozens of times
     emit opacityChanged(hwnd, percent);
     return true;
 }
 
-QVector<PinnedWindow> PinManager::pinnedWindows() const
-{
-    QVector<PinnedWindow> out;
-    out.reserve(m_pinned.size());
-    for (const auto &w : m_pinned)
-        out.push_back(w);
-    return out;
-}
-
 void PinManager::reenforce()
 {
-    QVector<intptr_t> stale;
-    for (auto it = m_pinned.begin(); it != m_pinned.end(); ++it) {
-        if (!winpin::isValidWindow(H(it.key()))) {
-            stale.push_back(it.key());
-            continue;
-        }
-        if (!winpin::isTopmost(H(it.key())))
-            winpin::applyTopmost(H(it.key()));
+    const qsizetype before = m_pinned.size();
+    m_pinned.removeIf([](const PinnedWindow &w) { return !winpin::isValidWindow(H(w.hwnd)); });
+
+    for (const PinnedWindow &w : m_pinned) {
+        if (!winpin::isTopmost(H(w.hwnd)))
+            winpin::applyTopmost(H(w.hwnd));
     }
 
-    if (!stale.isEmpty()) {
-        for (intptr_t h : stale)
-            m_pinned.remove(h);
+    if (m_pinned.size() != before) {
         persist();
         updateTimer();
         emit pinsChanged();
@@ -201,11 +206,11 @@ void PinManager::reenforce()
 void PinManager::restoreAllWindows()
 {
     int restored = 0;
-    for (auto it = m_pinned.begin(); it != m_pinned.end(); ++it) {
-        if (winpin::isValidWindow(H(it.key()))) {
-            if (it->opacityChanged)
-                winpin::restoreOpacity(H(it.key()), it->wasLayered);
-            winpin::removeTopmost(H(it.key()));
+    for (const PinnedWindow &w : m_pinned) {
+        if (winpin::isValidWindow(H(w.hwnd))) {
+            if (w.opacityChanged)
+                winpin::restoreOpacity(H(w.hwnd), w.wasLayered);
+            winpin::removeTopmost(H(w.hwnd));
             ++restored;
         }
     }

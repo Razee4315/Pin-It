@@ -6,7 +6,6 @@
 // and re-enforcement behaviour. UI and tray observe it via signals.
 //
 #include <QObject>
-#include <QHash>
 #include <QString>
 #include <QVector>
 #include <cstdint>
@@ -43,7 +42,8 @@ public:
 
     bool setOpacity(intptr_t hwnd, int percent);
 
-    QVector<PinnedWindow> pinnedWindows() const;
+    // In the order the windows were pinned.
+    QVector<PinnedWindow> pinnedWindows() const { return m_pinned; }
     int pinnedCount() const { return m_pinned.size(); }
 
     // Restore pins saved from a previous session (called once at startup).
@@ -75,7 +75,10 @@ private:
     void schedulePersist();    // coalesce rapid writes (opacity slider drags)
     void updateTimer();        // run the re-enforce timer only while pins exist
 
-    QHash<intptr_t, PinnedWindow> m_pinned;
+    PinnedWindow *find(intptr_t hwnd);
+    const PinnedWindow *find(intptr_t hwnd) const;
+
+    QVector<PinnedWindow> m_pinned;    // pin order — also the order the UI lists them
     QTimer *m_timer = nullptr;
     QTimer *m_persistTimer = nullptr;  // single-shot debounce for persist()
     bool    m_sessionEnding = false;   // true once Windows is logging off/shutting down
