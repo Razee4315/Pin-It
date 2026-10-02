@@ -101,6 +101,10 @@ MainWindow::MainWindow(PinManager *manager, QWidget *parent)
         if (PinRow *row = m_rows.value(hwnd))
             row->setOpacity(percent);
     });
+    // A saved pin found its window (which the user has just opened): outline
+    // it so the silent re-pin doesn't go unnoticed.
+    connect(m_manager, &PinManager::pinRestored, this,
+            [](intptr_t hwnd) { pinflash::show(hwnd, pinflash::Kind::Pinned); });
     connect(m_manager, &PinManager::pinToggled, this,
             [this](intptr_t hwnd, bool pinned, const QString &title) {
                 if (pinned && m_settings.enableSound)
@@ -428,13 +432,33 @@ void MainWindow::syncList()
         connect(row, &PinRow::unpinRequested, this,
                 [this, hwnd]() { m_manager->unpin(hwnd); });
         m_rows.insert(hwnd, row);
+        // After the last live row, ahead of the waiting rows and the stretch.
+        m_listLayout->insertWidget(m_listLayout->count() - 1 - m_pendingRows.size(), row);
+    }
+
+    // Waiting rows are static, so simply rebuild them.
+    for (QWidget *row : std::as_const(m_pendingRows)) {
+        m_listLayout->removeWidget(row);
+        row->hide();
+        row->deleteLater();
+    }
+    m_pendingRows.clear();
+    const QVector<persistence::SavedPin> pending = m_manager->pendingPins();
+    for (int i = 0; i < pending.size(); ++i) {
+        auto *row = new PendingRow(pending[i]);
+        connect(row, &PendingRow::forgetRequested, this,
+                [this, i]() { m_manager->forgetPending(i); });
+        m_pendingRows.push_back(row);
         m_listLayout->insertWidget(m_listLayout->count() - 1, row);   // before the stretch
     }
 
     if (m_emptyCard)
-        m_emptyCard->setVisible(pinned.isEmpty());
-    if (m_pinnedHeader)
-        m_pinnedHeader->setText(tr("PINNED (%1)").arg(pinned.size()));
+        m_emptyCard->setVisible(pinned.isEmpty() && pending.isEmpty());
+    if (m_pinnedHeader) {
+        m_pinnedHeader->setText(pending.isEmpty()
+            ? tr("PINNED (%1)").arg(pinned.size())
+            : tr("PINNED (%1)  ·  WAITING (%2)").arg(pinned.size()).arg(pending.size()));
+    }
 
     updateTrayToolTip();
 }

@@ -10,6 +10,8 @@
 #include <QVector>
 #include <cstdint>
 
+#include "persistence.h"
+
 class QTimer;
 
 struct PinnedWindow {
@@ -30,9 +32,9 @@ public:
     ~PinManager() override;
 
     // High-level actions (hwnd as intptr_t for Qt-friendliness).
-    // announce=false suppresses the pin chime + tray balloon (used when
-    // re-pinning a batch of saved windows at startup, which would otherwise
-    // fire one sound and one notification per window).
+    // announce=false makes the pin silent — no chime, no outline, no error
+    // message. Used when re-pinning saved windows, which happens without the
+    // user asking and may be retried.
     bool pin(intptr_t hwnd, bool announce = true);
     bool unpin(intptr_t hwnd);
     bool toggle(intptr_t hwnd);
@@ -49,7 +51,14 @@ public:
     int pinnedCount() const { return m_pinned.size(); }
 
     // Restore pins saved from a previous session (called once at startup).
+    // Saved pins whose window isn't open yet are kept as "pending" and applied
+    // when that window shows up — after a reboot PinIt usually starts before
+    // the apps it had pinned.
     void restoreSaved();
+
+    // Saved pins still waiting for their window.
+    QVector<persistence::SavedPin> pendingPins() const { return m_pending; }
+    void forgetPending(int index);
 
     // On exit: undo always-on-top + opacity on every pinned foreign window so
     // they aren't left stuck topmost/translucent. After a manual quit the pins
@@ -69,24 +78,30 @@ public:
 signals:
     void pinsChanged();
     void pinToggled(intptr_t hwnd, bool isPinned, const QString &title);
+    void pinRestored(intptr_t hwnd);   // a pending pin found its window
     void opacityChanged(intptr_t hwnd, int percent);
     void titleChanged(intptr_t hwnd, const QString &title);
     void errorOccurred(const QString &message);
 
 private slots:
-    void reenforce();          // periodic: re-apply topmost, drop dead windows, refresh titles
+    // Periodic and on foreground changes: re-apply topmost, drop dead windows,
+    // refresh titles, apply pending pins.
+    void reenforce();
 
 private:
     // Give a window back the way we found it. Returns false if it is gone.
     static bool release(const PinnedWindow &window);
     void persist() const;
     void schedulePersist();    // coalesce rapid writes (opacity slider drags)
-    void updateTimer();        // watch (timer + foreground events) only while pins exist
+    void updateTimer();        // watch (timer + foreground events) only while there is work
+    bool applySaved(intptr_t hwnd, const persistence::SavedPin &saved);
+    void restorePending();     // pin the foreground window if a pending pin matches it
 
     PinnedWindow *find(intptr_t hwnd);
     const PinnedWindow *find(intptr_t hwnd) const;
 
     QVector<PinnedWindow> m_pinned;    // pin order — also the order the UI lists them
+    QVector<persistence::SavedPin> m_pending;   // saved pins whose window isn't open yet
     QTimer *m_timer = nullptr;
     QTimer *m_persistTimer = nullptr;  // single-shot debounce for persist()
     bool    m_sessionEnding = false;   // true once Windows is logging off/shutting down

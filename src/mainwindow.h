@@ -73,6 +73,7 @@ private:
     QTimer          *m_statusTimer = nullptr;
     QVBoxLayout     *m_listLayout = nullptr;
     QHash<intptr_t, PinRow *> m_rows;   // one live row per pinned window
+    QList<QWidget *> m_pendingRows;     // saved pins still waiting for their window
     QLabel          *m_emptyLabel = nullptr;
     QLabel          *m_pinnedHeader = nullptr;
     QLabel          *m_hotkeyWarning = nullptr;

@@ -20,7 +20,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | F-09 | 1 | P3 | Session-ending flag sticks after cancelled shutdown | verified | Harness: WM_QUERYENDSESSION then WM_ENDSESSION(FALSE) → quit clears pins; without the cancel they are kept |
 | F-10 | 1 | P3 | Messages vanish without a tray | verified | Harness: notify() with the window focused shows the in-window message; list geometry unchanged (screenshot checked) |
 | F-11 | 2 | P0 | Restart fix is unreleased | todo | |
-| F-12 | 2 | P1 | Restore is one-shot and erases unmatched pins | todo | |
+| F-12 | 2 | P1 | Restore is one-shot and erases unmatched pins | verified | Harness: 4 saved pins, 1 open at start → 1 pinned at saved opacity, 3 waiting rows; file keeps all 4 after an unrelated pin; awaited window pinned and outlined within 0.8 s of opening; late-titled window pinned once the title matches; another window of the same app ignored; forget/quit/session-end all checked |
 | F-13 | 2 | P1 | Restore fallback pins the wrong window | verified |  |
 | F-14 | 2 | P1 | Pinned row clips its unpin button | verified |  |
 | F-15 | 2 | P2 | Pinned list is only 98 px tall | verified | Measured in harness: list area 254 px at the default size (was 98), 108 px at minimum height with the hotkey warning showing, grows with the window; screenshots checked |
@@ -58,7 +58,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | ID | Summary | Status | How verified / why blocked |
 |----|---------|--------|----------------------------|
 | M-01 | Visible "this is pinned" indicator | in-progress | Outline on pin/unpin done (F-02); locate-from-list and tray list still to come |
-| M-02 | Pending restore for apps opened later (same work as F-12) | todo | |
+| M-02 | Pending restore for apps opened later (same work as F-12) | verified | Harness: 4 saved pins, 1 open at start → 1 pinned at saved opacity, 3 waiting rows; file keeps all 4 after an unrelated pin; awaited window pinned and outlined within 0.8 s of opening; late-titled window pinned once the title matches; another window of the same app ignored; forget/quit/session-end all checked |
 | M-03 | Code-signed installer | todo | |
 | M-04 | "Unpin all" | todo | |
 | M-05 | Tray menu lists pinned windows + "Pin a window…" | todo | |

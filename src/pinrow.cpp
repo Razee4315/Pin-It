@@ -86,6 +86,48 @@ QString displayTitle(const QString &title)
     return title;
 }
 
+PendingRow::PendingRow(const persistence::SavedPin &pin, QWidget *parent)
+    : QFrame(parent)
+{
+    setProperty("role", "card");
+
+    auto *row = new QHBoxLayout(this);
+    row->setContentsMargins(10, 6, 8, 6);
+    row->setSpacing(8);
+
+    auto *avatar = new QLabel(avatarInitial(pin.processName));
+    avatar->setFixedSize(28, 28);
+    avatar->setAlignment(Qt::AlignCenter);
+    avatar->setStyleSheet(QStringLiteral(
+        "background:%1; border-radius:6px; color:white;"
+        "font-weight:700; font-size:12px;").arg(avatarColor(pin.processName).name()));
+    row->addWidget(avatar);
+
+    auto *info = new QVBoxLayout;
+    info->setSpacing(0);
+    auto *name = new ElidedLabel(displayTitle(pin.title));
+    name->setProperty("role", "muted");
+    name->setToolTip(pin.title);
+    auto *proc = new ElidedLabel(pin.processName);
+    proc->setProperty("role", "muted");
+    info->addWidget(name);
+    info->addWidget(proc);
+    row->addLayout(info, 1);
+
+    auto *waiting = new QLabel(tr("Waiting for window"));
+    waiting->setProperty("role", "muted");
+    waiting->setToolTip(tr("PinIt will pin this window again as soon as it is opened."));
+    row->addWidget(waiting);
+
+    auto *forgetBtn = new QPushButton(QString::fromUtf8("\xE2\x9C\x95"));   // ✕
+    forgetBtn->setObjectName(QStringLiteral("unpin"));
+    forgetBtn->setFixedSize(24, 24);
+    forgetBtn->setToolTip(tr("Stop waiting for this window"));
+    forgetBtn->setCursor(Qt::PointingHandCursor);
+    connect(forgetBtn, &QPushButton::clicked, this, &PendingRow::forgetRequested);
+    row->addWidget(forgetBtn);
+}
+
 PinRow::PinRow(const PinnedWindow &window, QWidget *parent)
     : QFrame(parent)
 {

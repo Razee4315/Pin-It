@@ -4,8 +4,9 @@
 #include "pinmatch.h"
 
 #include <QTimer>
-#include <QSet>
 #include <QtGlobal>
+
+#include <utility>
 
 namespace {
 inline void *H(intptr_t h) { return reinterpret_cast<void *>(h); }
@@ -44,7 +45,7 @@ void PinManager::schedulePersist()
 
 void PinManager::updateTimer()
 {
-    if (m_pinned.isEmpty()) {
+    if (m_pinned.isEmpty() && m_pending.isEmpty()) {
         m_timer->stop();
         winpin::stopWatchingForeground();
     } else if (!m_timer->isActive()) {
@@ -83,13 +84,15 @@ bool PinManager::pin(intptr_t hwnd, bool announce)
         return true;
 
     if (!winpin::isValidWindow(H(hwnd))) {
-        emit errorOccurred(tr("That window no longer exists."));
+        if (announce)
+            emit errorOccurred(tr("That window no longer exists."));
         return false;
     }
 
     if (!winpin::isPinnable(H(hwnd))) {
         // The desktop, the taskbar, Start… or PinIt itself.
-        emit errorOccurred(tr("That window can't be pinned."));
+        if (announce)
+            emit errorOccurred(tr("That window can't be pinned."));
         return false;
     }
 
@@ -102,9 +105,11 @@ bool PinManager::pin(intptr_t hwnd, bool announce)
     if (!winpin::applyTopmost(H(hwnd)) || !winpin::isTopmost(H(hwnd))) {
         // UIPI silently blocks SetWindowPos on elevated windows; verifying the
         // style actually took is how we detect that (same as the Rust port).
-        qWarning("Pin failed for %s (likely elevated/UIPI)", qUtf8Printable(proc));
-        emit errorOccurred(tr("Can't pin %1 — it may be running as administrator.")
-                               .arg(proc));
+        if (announce) {
+            qWarning("Pin failed for %s (likely elevated/UIPI)", qUtf8Printable(proc));
+            emit errorOccurred(tr("Can't pin %1 — it may be running as administrator.")
+                                   .arg(proc));
+        }
         return false;
     }
 
@@ -116,6 +121,15 @@ bool PinManager::pin(intptr_t hwnd, bool announce)
     w.wasLayered = winpin::isLayered(H(hwnd));   // remember its original style
     w.wasTopmost = wasTopmost;
     m_pinned.push_back(w);
+
+    // This window is no longer being waited for (whether a pending pin was
+    // just applied to it or the user pinned it by hand first).
+    for (qsizetype i = 0; i < m_pending.size(); ++i) {
+        if (pinmatch::matches(m_pending[i], proc, title)) {
+            m_pending.removeAt(i);
+            break;
+        }
+    }
 
     persist();
     updateTimer();
@@ -232,6 +246,53 @@ void PinManager::reenforce()
         updateTimer();
         emit pinsChanged();
     }
+
+    restorePending();
+}
+
+void PinManager::restorePending()
+{
+    if (m_pending.isEmpty())
+        return;
+
+    // Only the window in front is checked: a window that has just opened is
+    // the foreground window, and looking at one window costs next to nothing
+    // (no enumeration of every window on each tick).
+    void *fg = winpin::foregroundWindow();
+    const intptr_t hwnd = reinterpret_cast<intptr_t>(fg);
+    if (!fg || isPinned(hwnd) || !winpin::isPinnable(fg))
+        return;
+
+    const QString title = winpin::windowTitle(fg);
+    const QString proc = winpin::processName(fg);
+    for (const persistence::SavedPin &pending : std::as_const(m_pending)) {
+        if (!pinmatch::matches(pending, proc, title))
+            continue;
+        const persistence::SavedPin saved = pending;   // pin() removes the entry
+        if (applySaved(hwnd, saved))
+            emit pinRestored(hwnd);
+        return;
+    }
+}
+
+bool PinManager::applySaved(intptr_t hwnd, const persistence::SavedPin &saved)
+{
+    if (!pin(hwnd, /*announce=*/false))
+        return false;
+    const int percent = winpin::alphaToPercent(saved.opacity);
+    if (percent < 100)
+        setOpacity(hwnd, percent);
+    return true;
+}
+
+void PinManager::forgetPending(int index)
+{
+    if (index < 0 || index >= m_pending.size())
+        return;
+    m_pending.removeAt(index);
+    persist();
+    updateTimer();
+    emit pinsChanged();
 }
 
 void PinManager::restoreAllWindows()
@@ -258,6 +319,7 @@ void PinManager::restoreAllWindows()
     // are preserved because persist() only rewrites the pin list). Closing to
     // the tray never reaches here — this runs only on a real quit (aboutToQuit).
     m_pinned.clear();
+    m_pending.clear();
     persist();
     updateTimer();
     qInfo("Restored and cleared %d pinned window(s) on manual quit", restored);
@@ -270,7 +332,7 @@ void PinManager::persist() const
         m_persistTimer->stop();
 
     QVector<persistence::SavedPin> pins;
-    pins.reserve(m_pinned.size());
+    pins.reserve(m_pinned.size() + m_pending.size());
     for (const auto &w : m_pinned) {
         persistence::SavedPin sp;
         sp.processName = w.processName;
@@ -278,6 +340,10 @@ void PinManager::persist() const
         sp.opacity     = winpin::percentToAlpha(w.opacity);
         pins.push_back(sp);
     }
+    // Pins still waiting for their window stay saved until the user quits or
+    // forgets them — dropping them here is what used to erase every pin whose
+    // app wasn't open yet at login.
+    pins += m_pending;
     persistence::savePins(pins);
 }
 
@@ -287,23 +353,20 @@ void PinManager::restoreSaved()
     if (state.pins.isEmpty())
         return;
 
-    const QVector<winpin::PinnableWindow> live = winpin::enumerateWindows();
-    QSet<intptr_t> used;
+    // Everything starts out pending; pin() takes an entry off that list when
+    // its window is pinned. What is left waits for its window to appear.
+    m_pending = state.pins;
 
+    const QVector<winpin::PinnableWindow> live = winpin::enumerateWindows();
     for (const persistence::SavedPin &saved : state.pins) {
-        intptr_t match = 0;
         for (const auto &w : live) {
-            if (!used.contains(w.hwnd) && pinmatch::matches(saved, w.processName, w.title)) {
-                match = w.hwnd;
+            if (!isPinned(w.hwnd) && pinmatch::matches(saved, w.processName, w.title)) {
+                applySaved(w.hwnd, saved);
                 break;
             }
         }
-
-        if (match != 0 && pin(match, /*announce=*/false)) {
-            used.insert(match);
-            const int percent = winpin::alphaToPercent(saved.opacity);
-            if (percent < 100)
-                setOpacity(match, percent);
-        }
     }
+
+    updateTimer();
+    emit pinsChanged();
 }

@@ -17,6 +17,17 @@ class QSlider;
 // Show just the final component so lists stay readable.
 QString displayTitle(const QString &title);
 
+// A saved pin whose window is not open yet: [avatar] [title / process] [x].
+class PendingRow : public QFrame
+{
+    Q_OBJECT
+public:
+    explicit PendingRow(const persistence::SavedPin &pin, QWidget *parent = nullptr);
+
+signals:
+    void forgetRequested();
+};
+
 class PinRow : public QFrame
 {
     Q_OBJECT
