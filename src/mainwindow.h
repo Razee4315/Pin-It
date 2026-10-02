@@ -11,6 +11,8 @@
 
 class PinManager;
 class PinRow;
+class PendingRow;
+class QPushButton;
 class QVBoxLayout;
 class QWidget;
 class QSystemTrayIcon;
@@ -65,6 +67,7 @@ private:
     void showStatus(const QString &message);   // in-window message, fades by itself
     void placeStatus();
     void updateTrayToolTip();
+    void updateTabOrder();     // top to bottom, including the list rows
 
     PinManager      *m_manager = nullptr;
     QSystemTrayIcon *m_tray = nullptr;
@@ -73,7 +76,9 @@ private:
     QTimer          *m_statusTimer = nullptr;
     QVBoxLayout     *m_listLayout = nullptr;
     QHash<intptr_t, PinRow *> m_rows;   // one live row per pinned window
-    QList<QWidget *> m_pendingRows;     // saved pins still waiting for their window
+    QList<PendingRow *> m_pendingRows;  // saved pins still waiting for their window
+    QPushButton     *m_editShortcuts = nullptr;
+    QPushButton     *m_addButton = nullptr;
     QLabel          *m_emptyLabel = nullptr;
     QLabel          *m_pinnedHeader = nullptr;
     QLabel          *m_hotkeyWarning = nullptr;

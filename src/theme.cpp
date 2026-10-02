@@ -38,7 +38,7 @@ constexpr Colors kLight = {
     "rgba(0,0,0,0.12)",     // border
     "#2a2622",              // text
     "#6b6760",              // textMuted
-    "#767067",              // textSubtle
+    "#6b655d",              // textSubtle
     "#5a564e",              // textControl
     "#f0ede6",              // keyBg
     "#b07c4a",              // accent
@@ -111,8 +111,8 @@ QPushButton#unpin {
     border-radius: 5px; color: $textSubtle$; font-weight: 700; font-size: 12px;
     padding: 0;
 }
-QPushButton#unpin:hover { background: $dangerHoverBg$; color: $accentStrong$; border-color: $accentStrong$; }
-QPushButton#unpin:focus { background: $dangerHoverBg$; color: $accentStrong$; border-color: $accentStrong$; }
+QPushButton#unpin:hover { background: $dangerHoverBg$; color: $accentHover$; border-color: $accentHover$; }
+QPushButton#unpin:focus { background: $dangerHoverBg$; color: $accentHover$; border-color: $accentHover$; }
 
 QCheckBox { color: $textControl$; font-size: 12px; spacing: 7px; }
 QCheckBox:focus { color: $text$; text-decoration: underline; }

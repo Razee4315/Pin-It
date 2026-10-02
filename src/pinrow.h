@@ -28,8 +28,13 @@ class PendingRow : public QFrame
 public:
     explicit PendingRow(const persistence::SavedPin &pin, QWidget *parent = nullptr);
 
+    QList<QWidget *> focusChain() const;
+
 signals:
     void forgetRequested();
+
+private:
+    QPushButton *m_forget = nullptr;
 };
 
 class PinRow : public QFrame
@@ -42,6 +47,9 @@ public:
     // it back as a request.
     void setOpacity(int percent);
     void setTitle(const QString &title);
+
+    // The row's keyboard-reachable controls, in order (for the tab chain).
+    QList<QWidget *> focusChain() const;
 
 signals:
     void opacityRequested(int percent);

@@ -13,13 +13,14 @@
 namespace {
 
 // Deterministic avatar colour for a process name (ported from the original
-// PinIt frontend) so each pinned app gets a stable little badge.
+// PinIt frontend) so each pinned app gets a stable little badge. The shades
+// are light enough for the dark initial to stay readable on every one.
 QColor avatarColor(const QString &name)
 {
     static const char *kColors[] = {
-        "#e57373", "#f06292", "#ba68c8", "#9575cd", "#7986cb",
-        "#64b5f6", "#4fc3f7", "#4dd0e1", "#4db6ac", "#81c784",
-        "#aed581", "#ffd54f", "#ffb74d", "#ff8a65", "#a1887f",
+        "#ef9a9a", "#f48fb1", "#ce93d8", "#b39ddb", "#9fa8da",
+        "#90caf9", "#81d4fa", "#80deea", "#80cbc4", "#a5d6a7",
+        "#c5e1a5", "#ffe082", "#ffcc80", "#ffab91", "#bcaaa4",
     };
     constexpr int count = int(sizeof(kColors) / sizeof(kColors[0]));
     quint32 hash = 0;
@@ -145,6 +146,12 @@ PendingRow::PendingRow(const persistence::SavedPin &pin, QWidget *parent)
     forgetBtn->setCursor(Qt::PointingHandCursor);
     connect(forgetBtn, &QPushButton::clicked, this, &PendingRow::forgetRequested);
     row->addWidget(forgetBtn);
+    m_forget = forgetBtn;
+}
+
+QList<QWidget *> PendingRow::focusChain() const
+{
+    return {m_forget};
 }
 
 PinRow::PinRow(const PinnedWindow &window, QWidget *parent)
@@ -203,6 +210,11 @@ PinRow::PinRow(const PinnedWindow &window, QWidget *parent)
     m_unpin = unpinBtn;
 
     nameControls(window.title);
+}
+
+QList<QWidget *> PinRow::focusChain() const
+{
+    return {m_slider, m_unpin};
 }
 
 void PinRow::nameControls(const QString &title)

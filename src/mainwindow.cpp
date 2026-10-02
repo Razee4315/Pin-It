@@ -148,6 +148,7 @@ void MainWindow::buildUi()
     auto *editShortcuts = new QPushButton(tr("Edit shortcuts…"));
     connect(editShortcuts, &QPushButton::clicked, this, &MainWindow::openShortcutsDialog);
     header->addWidget(editShortcuts, 0, Qt::AlignVCenter);
+    m_editShortcuts = editShortcuts;
     root->addLayout(header);
 
     // --- Pin button ----------------------------------------------------------
@@ -155,6 +156,7 @@ void MainWindow::buildUi()
     addBtn->setObjectName(QStringLiteral("primary"));
     connect(addBtn, &QPushButton::clicked, this, &MainWindow::addWindowDialog);
     root->addWidget(addBtn);
+    m_addButton = addBtn;
 
     // --- SHORTCUTS -----------------------------------------------------------
     auto *scLabel = new QLabel(tr("SHORTCUTS"));
@@ -187,6 +189,8 @@ void MainWindow::buildUi()
     scroll->setWidgetResizable(true);
     scroll->setFrameShape(QFrame::NoFrame);
     scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    // Not a tab stop itself: its rows are, and focusing one scrolls it into view.
+    scroll->setFocusPolicy(Qt::NoFocus);
     scroll->setMinimumHeight(108);   // two rows, even with the hotkey warning showing
     auto *listContainer = new QWidget(scroll);
     m_listLayout = new QVBoxLayout(listContainer);
@@ -436,7 +440,7 @@ void MainWindow::syncList()
     }
 
     // Waiting rows are static, so simply rebuild them.
-    for (QWidget *row : std::as_const(m_pendingRows)) {
+    for (PendingRow *row : std::as_const(m_pendingRows)) {
         m_listLayout->removeWidget(row);
         row->hide();
         row->deleteLater();
@@ -460,6 +464,25 @@ void MainWindow::syncList()
     }
 
     updateTrayToolTip();
+    updateTabOrder();
+}
+
+void MainWindow::updateTabOrder()
+{
+    // Rows are created long after the rest of the window, which would put
+    // them at the very end of the tab chain. Keep Tab moving top to bottom.
+    QList<QWidget *> chain = {m_editShortcuts, m_addButton};
+    const QVector<PinnedWindow> pinned = m_manager->pinnedWindows();
+    for (const PinnedWindow &w : pinned) {
+        if (const PinRow *row = m_rows.value(w.hwnd))
+            chain += row->focusChain();
+    }
+    for (const PendingRow *row : std::as_const(m_pendingRows))
+        chain += row->focusChain();
+    chain += {m_soundBox, m_notifyBox, m_autostartBox};
+
+    for (qsizetype i = 1; i < chain.size(); ++i)
+        QWidget::setTabOrder(chain[i - 1], chain[i]);
 }
 
 void MainWindow::addWindowDialog()
