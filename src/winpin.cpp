@@ -188,20 +188,6 @@ bool setClickThrough(WindowId hwnd, bool enabled)
     return isClickThrough(hwnd) == enabled;
 }
 
-int opacityPercent(WindowId hwnd)
-{
-    const LONG ex = GetWindowLongW(H(hwnd), GWL_EXSTYLE);
-    if ((static_cast<DWORD>(ex) & WS_EX_LAYERED) == 0)
-        return 100;
-
-    COLORREF color = 0;
-    BYTE alpha = 255;
-    DWORD flags = 0;
-    if (GetLayeredWindowAttributes(H(hwnd), &color, &alpha, &flags))
-        return alphaToPercent(alpha);
-    return 100;
-}
-
 bool restoreOpacity(WindowId hwnd, bool keepLayered)
 {
     SetLayeredWindowAttributes(H(hwnd), RGB(0, 0, 0), 255, LWA_ALPHA);

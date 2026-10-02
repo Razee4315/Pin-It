@@ -75,7 +75,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 |----|---------|--------|----------------------------|
 | C-01 | Remove `MainWindow::setShortcutConfig` | verified | No references left (grep); build and tests pass |
 | C-02 | Remove `m_emptyLabel`, `m_shortcutsLabel` | verified | No references left (grep); build and tests pass |
-| C-03 | Remove `winpin::opacityPercent` | todo | |
+| C-03 | Remove `winpin::opacityPercent` | verified | No references left (grep); build and tests pass |
 | C-04 | Remove `PinManager::pinnedCount` | todo | |
 | C-05 | Unused / missing includes | todo | |
 | C-06 | Unused link libraries and `CMAKE_AUTOUIC` | todo | |

@@ -59,7 +59,6 @@ bool removeTopmost(WindowId hwnd);      // HWND_NOTOPMOST
 // --- Transparency ---------------------------------------------------------
 // percent is clamped to [kMinOpacity, kMaxOpacity].
 bool setOpacityPercent(WindowId hwnd, int percent);
-int  opacityPercent(WindowId hwnd);     // 100 if the window isn't layered
 // Back to fully opaque. Only removes WS_EX_LAYERED when keepLayered is false;
 // pass true when the window had the style before PinIt touched it, so we don't
 // strip a style the app relies on for its own transparency.
