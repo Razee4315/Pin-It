@@ -24,7 +24,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | F-13 | 2 | P1 | Restore fallback pins the wrong window | verified | Unit test savedPinMatchesOnlySameAppAndTitle; restoreSaved no longer has a process-only fallback |
 | F-14 | 2 | P1 | Pinned row clips its unpin button | verified | Rendered 4 pins incl. a 90-char title: content width == viewport (315 px), every unpin button inside it |
 | F-15 | 2 | P2 | Pinned list is only 98 px tall | todo | |
-| F-16 | 2 | P2 | Slider not synced with opacity hotkeys | todo | |
+| F-16 | 2 | P2 | Slider not synced with opacity hotkeys | done |  |
 | F-17 | 2 | P2 | Opacity hotkey silent on unpinned window | todo | |
 | F-18 | 2 | P2 | Opacity hotkeys do not repeat | todo | |
 | F-19 | 2 | P2 | List order is hash order | todo | |

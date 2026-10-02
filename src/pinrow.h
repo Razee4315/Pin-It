@@ -23,6 +23,10 @@ class PinRow : public QFrame
 public:
     explicit PinRow(const PinnedWindow &window, QWidget *parent = nullptr);
 
+    // Reflect an opacity change made elsewhere (the hotkeys) without echoing
+    // it back as a request.
+    void setOpacity(int percent);
+
 signals:
     void opacityRequested(int percent);
     void unpinRequested();

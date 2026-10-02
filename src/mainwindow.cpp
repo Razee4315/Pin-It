@@ -83,6 +83,10 @@ MainWindow::MainWindow(PinManager *manager, QWidget *parent)
 
     connect(m_manager, &PinManager::pinsChanged, this, &MainWindow::syncList);
     connect(m_manager, &PinManager::errorOccurred, this, &MainWindow::notify);
+    connect(m_manager, &PinManager::opacityChanged, this, [this](intptr_t hwnd, int percent) {
+        if (PinRow *row = m_rows.value(hwnd))
+            row->setOpacity(percent);
+    });
     connect(m_manager, &PinManager::pinToggled, this,
             [this](bool pinned, const QString &title, const QString &) {
                 if (pinned && m_settings.enableSound)

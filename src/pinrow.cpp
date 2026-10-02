@@ -146,3 +146,10 @@ PinRow::PinRow(const PinnedWindow &window, QWidget *parent)
     connect(unpinBtn, &QPushButton::clicked, this, &PinRow::unpinRequested);
     row->addWidget(unpinBtn);
 }
+
+void PinRow::setOpacity(int percent)
+{
+    const QSignalBlocker blocker(m_slider);
+    m_slider->setValue(percent);
+    m_percent->setText(QStringLiteral("%1%").arg(percent));
+}
