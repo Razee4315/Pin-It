@@ -23,6 +23,7 @@ private slots:
     void shortcutRejectsGarbage();
     void shortcutBuildRoundTrips();
     void shortcutBuildDisplayTokens();
+    void shortcutNeedsWinCtrlOrAlt();
     void savedPinMatchesOnlySameAppAndTitle();
     void shellWindowClassesAreNotPinnable();
 };
@@ -100,6 +101,20 @@ void TestPinIt::shortcutBuildDisplayTokens()
 
     const QString eq = shortcuts::build(true, true, false, false, "=");
     QCOMPARE(shortcuts::displayTokens(eq).last(), QStringLiteral("="));
+}
+
+// Shift+letter (or a bare key) as a global hotkey would eat normal typing.
+void TestPinIt::shortcutNeedsWinCtrlOrAlt()
+{
+    unsigned mods = 0, vk = 0;
+    QVERIFY(shortcuts::parse(QStringLiteral("shift+KeyA"), mods, vk));
+    QVERIFY(!shortcuts::hasSafeModifier(mods));
+    QVERIFY(shortcuts::parse(QStringLiteral("KeyA"), mods, vk));
+    QVERIFY(!shortcuts::hasSafeModifier(mods));
+    QVERIFY(shortcuts::parse(QStringLiteral("alt+shift+KeyA"), mods, vk));
+    QVERIFY(shortcuts::hasSafeModifier(mods));
+    QVERIFY(shortcuts::parse(QStringLiteral("super+KeyA"), mods, vk));
+    QVERIFY(shortcuts::hasSafeModifier(mods));
 }
 
 // Restoring must never fall back to "any window of the same app".

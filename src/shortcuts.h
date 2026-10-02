@@ -13,6 +13,10 @@ namespace shortcuts {
 // Returns false if the string has no key or an unrecognised token.
 bool parse(const QString &s, unsigned &mods, unsigned &vk);
 
+// A global hotkey must include Win, Ctrl or Alt. Shift (or nothing) plus a
+// key would swallow ordinary typing in every application.
+bool hasSafeModifier(unsigned mods);
+
 // Turn a Tauri-style shortcut ("super+ctrl+KeyT") into display tokens for the
 // UI, e.g. ["Win", "Ctrl", "T"]. Used by the main window and the editor dialog.
 QStringList displayTokens(const QString &s);

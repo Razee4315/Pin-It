@@ -46,6 +46,11 @@ bool parse(const QString &s, unsigned &mods, unsigned &vk)
     return haveKey && vk != 0;
 }
 
+bool hasSafeModifier(unsigned mods)
+{
+    return (mods & (MOD_WIN | MOD_CONTROL | MOD_ALT)) != 0;
+}
+
 QStringList displayTokens(const QString &s)
 {
     QStringList out;

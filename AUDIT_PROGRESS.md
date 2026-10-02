@@ -33,7 +33,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | F-22 | 2 | P2 | Picker: no search, icons, empty state; dead-end OK | todo | |
 | F-23 | 2 | P2 | Accessible names and contrast | todo | |
 | F-24 | 2 | P3 | Layered style left behind after crash re-pin | todo | |
-| F-25 | 3 | P2 | Shift-only shortcuts accepted | todo | |
+| F-25 | 3 | P2 | Shift-only shortcuts accepted | done |  |
 | F-26 | 3 | P2 | Shortcuts saved before registration is tested | todo | |
 | F-27 | 3 | P2 | Autostart checkbox ignores the registry | todo | |
 | F-28 | 3 | P3 | Empty-state hint chips go stale | todo | |

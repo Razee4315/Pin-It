@@ -34,7 +34,7 @@ ShortcutsDialog::ShortcutsDialog(const persistence::ShortcutConfig &cfg, QWidget
 
     auto *root = new QVBoxLayout(this);
     root->addWidget(new QLabel(tr("Pick the modifiers and key for each action.\n"
-                                  "Each shortcut needs at least one modifier."), this));
+                                  "Each shortcut needs Win, Ctrl or Alt."), this));
 
     auto *grid = new QGridLayout;
     grid->addWidget(new QLabel(tr("Action"), this),  0, 0);
@@ -95,16 +95,18 @@ void ShortcutsDialog::accept()
                                 row.alt->isChecked(), row.shift->isChecked(),
                                 row.key->currentText());
     };
-    auto hasModifier = [](const Row &row) {
-        return row.win->isChecked() || row.ctrl->isChecked()
-               || row.alt->isChecked() || row.shift->isChecked();
+    // Shift alone is not enough: Shift+A as a global hotkey would swallow
+    // every capital A typed anywhere.
+    auto hasSafeModifier = [](const Row &row) {
+        return row.win->isChecked() || row.ctrl->isChecked() || row.alt->isChecked();
     };
 
     const Row rows[] = {m_togglePin, m_opacityUp, m_opacityDown, m_toggleWindow};
     for (const Row &row : rows) {
-        if (!hasModifier(row)) {
+        if (!hasSafeModifier(row)) {
             QMessageBox::warning(this, tr("Invalid shortcut"),
-                tr("Each shortcut needs at least one modifier (Win/Ctrl/Alt/Shift)."));
+                tr("Each shortcut needs Win, Ctrl or Alt. Shift on its own would "
+                   "capture ordinary typing."));
             return;
         }
     }

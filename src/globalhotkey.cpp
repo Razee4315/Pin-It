@@ -28,7 +28,7 @@ GlobalHotkeyManager::~GlobalHotkeyManager()
 bool GlobalHotkeyManager::registerOne(int id, const QString &shortcut, bool autoRepeat)
 {
     unsigned mods = 0, vk = 0;
-    if (!shortcuts::parse(shortcut, mods, vk))
+    if (!shortcuts::parse(shortcut, mods, vk) || !shortcuts::hasSafeModifier(mods))
         return false;
 
     // MOD_NOREPEAT: holding the keys fires once, not a stream. The opacity keys
