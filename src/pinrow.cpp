@@ -1,12 +1,12 @@
 #include "pinrow.h"
 #include "winpin.h"
+#include "elidedlabel.h"
 
 #include <QColor>
 #include <QCoreApplication>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
-#include <QResizeEvent>
 #include <QSlider>
 #include <QVBoxLayout>
 
@@ -51,46 +51,6 @@ QLabel *makeAvatar(const QString &processName)
         QStringLiteral("background: %1;").arg(avatarColor(processName).name()));
     return avatar;
 }
-
-// A single-line label that elides its text to whatever width the layout gives
-// it. A plain QLabel reports its full text width as its minimum, which made a
-// long window title push the slider and unpin button out of the list.
-class ElidedLabel : public QLabel
-{
-public:
-    explicit ElidedLabel(const QString &text, QWidget *parent = nullptr)
-        : QLabel(parent)
-    {
-        setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
-        setFullText(text);
-    }
-
-    void setFullText(const QString &text)
-    {
-        m_fullText = text;
-        updateElision();
-    }
-
-    QSize minimumSizeHint() const override
-    {
-        return QSize(0, QLabel::minimumSizeHint().height());
-    }
-
-protected:
-    void resizeEvent(QResizeEvent *event) override
-    {
-        QLabel::resizeEvent(event);
-        updateElision();
-    }
-
-private:
-    void updateElision()
-    {
-        setText(fontMetrics().elidedText(m_fullText, Qt::ElideRight, width()));
-    }
-
-    QString m_fullText;
-};
 
 } // namespace
 

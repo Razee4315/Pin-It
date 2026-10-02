@@ -48,6 +48,7 @@ qt_add_executable(PinIt WIN32
     src/sessionwatcher.h    src/sessionwatcher.cpp
     src/mainwindow.h        src/mainwindow.cpp
     src/pinrow.h            src/pinrow.cpp
+    src/elidedlabel.h
     src/pinflash.h          src/pinflash.cpp
     src/windowpicker.h      src/windowpicker.cpp
     src/logging.h           src/logging.cpp

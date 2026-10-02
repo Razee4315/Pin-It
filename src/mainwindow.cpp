@@ -4,6 +4,7 @@
 #include "shortcuts.h"
 #include "shortcutsdialog.h"
 #include "pinrow.h"
+#include "elidedlabel.h"
 #include "pinflash.h"
 #include "windowpicker.h"
 
@@ -360,10 +361,13 @@ void MainWindow::fillShortcutRows(QVBoxLayout *scv)
             row->addWidget(plusLabel(QStringLiteral("/")));
             row->addWidget(keyChip(alternativeKey));
         }
-        row->addStretch();
-        auto *d = new QLabel(desc);
+        // The description takes what is left and shortens itself if a long
+        // shortcut (three modifiers) leaves little room.
+        auto *d = new ElidedLabel(desc);
         d->setProperty("role", "desc");
-        row->addWidget(d);
+        d->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+        d->setToolTip(desc);
+        row->addWidget(d, 1);
         scv->addLayout(row);
     };
 
