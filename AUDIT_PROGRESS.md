@@ -35,7 +35,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | F-24 | 2 | P3 | Layered style left behind after crash re-pin | verified | Harness: instance destroyed without cleanup leaves the window topmost+layered; next instance restores it and unpin removes both |
 | F-25 | 3 | P2 | Shift-only shortcuts accepted | verified | Unit test shortcutNeedsWinCtrlOrAlt + harness: Shift+A from config is refused at registration |
 | F-26 | 3 | P2 | Shortcuts saved before registration is tested | verified | Harness: with Win+Ctrl+T held by the running PinIt, OK keeps the dialog open, names Pin/Unpin, restores the previous hotkeys and saves nothing; a free set is registered, saved and clears the standing warning |
-| F-27 | 3 | P2 | Autostart checkbox ignores the registry | todo | |
+| F-27 | 3 | P2 | Autostart checkbox ignores the registry | done |  |
 | F-28 | 3 | P3 | Empty-state hint chips go stale | verified | Harness: after rebinding, the empty-state hint shows the new pin shortcut (screenshot checked) |
 | F-29 | 3 | P3 | Opacity cheat-sheet row assumes shared modifiers | verified | Harness: opacity shortcuts with different modifiers render as Increase/Decrease rows; same modifiers keep the combined row; long shortcuts elide the description |
 | F-30 | 3 | P3 | Unsupported keys shown as "A" | verified | Unit tests (named/function keys, every offered key round-trips, unknown key preserved) + harness: F13–F17 register and display; NumpadAdd is shown as written, reported unavailable, not rewritten |

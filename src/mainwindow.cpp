@@ -7,6 +7,7 @@
 #include "elidedlabel.h"
 #include "pinflash.h"
 #include "windowpicker.h"
+#include "autostart.h"
 
 #include <QApplication>
 #include <QVBoxLayout>
@@ -22,9 +23,7 @@
 #include <QCloseEvent>
 #include <QPixmap>
 #include <QIcon>
-#include <QSettings>
 #include <QCoreApplication>
-#include <QDir>
 #include <QMessageBox>
 #include <QSet>
 #include <QTimer>
@@ -257,10 +256,13 @@ void MainWindow::buildUi()
     root->addWidget(m_notifyBox);
 
     m_autostartBox = new QCheckBox(tr("Start PinIt with Windows"));
-    m_autostartBox->setChecked(m_settings.startWithWindows);
+    // The Run key is the truth (the installer can set it too); the copy in
+    // the settings file is only kept in step for older versions.
+    autostart::repairPath();
+    m_autostartBox->setChecked(autostart::isEnabled());
     connect(m_autostartBox, &QCheckBox::toggled, this, [this](bool on) {
+        autostart::setEnabled(on);
         m_settings.startWithWindows = on;
-        applyAutostart(on);
         persistence::saveSettings(m_settings);
     });
     root->addWidget(m_autostartBox);
@@ -573,23 +575,6 @@ void MainWindow::buildTray()
                     toggleVisibility();
             });
     m_tray->show();
-}
-
-void MainWindow::applyAutostart(bool enabled)
-{
-    QSettings run(QStringLiteral(
-        "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"),
-        QSettings::NativeFormat);
-    if (enabled) {
-        const QString exe = QDir::toNativeSeparators(
-            QCoreApplication::applicationFilePath());
-        // --minimized: when launched at login, start silently in the tray
-        // instead of popping the window every boot.
-        run.setValue(QStringLiteral("PinIt"),
-                     QStringLiteral("\"%1\" --minimized").arg(exe));
-    } else {
-        run.remove(QStringLiteral("PinIt"));
-    }
 }
 
 void MainWindow::toggleVisibility()

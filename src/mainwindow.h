@@ -67,7 +67,6 @@ private slots:
 private:
     void buildUi();
     void buildTray();
-    void applyAutostart(bool enabled);
     void fillShortcutRows(QVBoxLayout *scv);   // (re)builds the SHORTCUTS chips
     void fillEmptyHint();                      // (re)builds the empty-state hotkey hint
     void showStatus(const QString &message);   // in-window message, fades by itself

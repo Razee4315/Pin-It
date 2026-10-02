@@ -11,6 +11,9 @@
 #include "winpin.h"
 #include "shortcuts.h"
 #include "pinmatch.h"
+#include "autostart.h"
+
+#include <QSettings>
 
 class TestPinIt : public QObject
 {
@@ -29,6 +32,7 @@ private slots:
     void shortcutUnknownKeyIsPreserved();
     void savedPinMatchesOnlySameAppAndTitle();
     void shellWindowClassesAreNotPinnable();
+    void autostartFollowsTheRegistry();
 };
 
 void TestPinIt::opacityRoundTripIsLossless()
@@ -197,6 +201,38 @@ void TestPinIt::shellWindowClassesAreNotPinnable()
     if (HWND taskbar = FindWindowW(L"Shell_TrayWnd", nullptr))
         QVERIFY(!winpin::isPinnable(taskbar));
     QVERIFY(!winpin::isPinnable(nullptr));
+}
+
+// Uses a scratch key, never the real Run key.
+void TestPinIt::autostartFollowsTheRegistry()
+{
+    const QString key = QStringLiteral("HKEY_CURRENT_USER\\Software\\PinIt-Tests\\Run-%1")
+                            .arg(QCoreApplication::applicationPid());
+    autostart::setRegistryKeyForTesting(key);
+
+    QVERIFY(!autostart::isEnabled());
+    QVERIFY(!autostart::repairPath());            // nothing to repair when off
+
+    autostart::setEnabled(true);
+    QVERIFY(autostart::isEnabled());
+    QVERIFY(autostart::command().endsWith(QStringLiteral("\" --minimized")));
+    QCOMPARE(QSettings(key, QSettings::NativeFormat).value(QStringLiteral("PinIt")).toString(),
+             autostart::command());
+    QVERIFY(!autostart::repairPath());            // already points here
+
+    // Something else (the installer, an older copy) wrote a different path.
+    QSettings(key, QSettings::NativeFormat)
+        .setValue(QStringLiteral("PinIt"), QStringLiteral("\"C:\\Old\\PinIt.exe\" --minimized"));
+    QVERIFY(autostart::isEnabled());              // still on: the registry is the truth
+    QVERIFY(autostart::repairPath());
+    QCOMPARE(QSettings(key, QSettings::NativeFormat).value(QStringLiteral("PinIt")).toString(),
+             autostart::command());
+
+    autostart::setEnabled(false);
+    QVERIFY(!autostart::isEnabled());
+
+    QSettings(QStringLiteral("HKEY_CURRENT_USER\\Software"), QSettings::NativeFormat)
+        .remove(QStringLiteral("PinIt-Tests"));
 }
 
 QTEST_MAIN(TestPinIt)
