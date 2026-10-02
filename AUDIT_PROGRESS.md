@@ -44,7 +44,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | F-33 | 3 | P3 | Uninstaller leaves Run key; no AppMutex | blocked | Implemented (AppMutex + unconditional uninsdeletevalue; app holds the mutex — harness-checked). Inno Setup is not installed here, so the script could not be compiled or an uninstall run; CI compiles it on push. Needs one manual install/uninstall |
 | F-34 | 3 | P3 | Second launch only flashes the taskbar | verified | Harness: after a second launch the PinIt window was the foreground window (AllowSetForegroundWindow from the second process) |
 | F-35 | 3 | P3 | "window(s)" tooltip | done |  |
-| F-36 | 3 | P3 | About only in tray; CONTRIBUTING wrong | todo | |
+| F-36 | 3 | P3 | About only in tray; CONTRIBUTING wrong | done |  |
 | F-37 | 4 | P2 | Window titles written to the log | verified | Harness: pinit.log has 'Pinned a window of dummywin.exe' and not the window title |
 | F-38 | 4 | P2 | Site invisible without JavaScript | verified | Browser: with the js class removed every .reveal computes to opacity 1; class is now set in head before first paint |
 | F-39 | 4 | P2 | Site does not mention SmartScreen | verified | Browser: SmartScreen note renders under the hero CTA and in the download band; portable link returns 302 to the asset (direct installer link deferred, see report) |

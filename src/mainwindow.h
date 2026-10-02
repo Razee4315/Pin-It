@@ -89,6 +89,7 @@ private:
     QPushButton     *m_editShortcuts = nullptr;
     QPushButton     *m_addButton = nullptr;
     QPushButton     *m_unpinAll = nullptr;
+    QPushButton     *m_aboutButton = nullptr;
     QLabel          *m_emptyLabel = nullptr;
     QLabel          *m_pinnedHeader = nullptr;
     QLabel          *m_hotkeyWarning = nullptr;

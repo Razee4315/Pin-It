@@ -274,6 +274,11 @@ void MainWindow::buildUi()
     connect(m_unpinAll, &QPushButton::clicked, this, &MainWindow::unpinAll);
     footer->addWidget(m_unpinAll);
     footer->addStretch();
+    // Also reachable without the tray (version number for bug reports).
+    m_aboutButton = new QPushButton(tr("About"));
+    m_aboutButton->setObjectName(QStringLiteral("link"));
+    connect(m_aboutButton, &QPushButton::clicked, this, &MainWindow::showAbout);
+    footer->addWidget(m_aboutButton);
     root->addLayout(footer);
 
     // In-window message. Not in a layout: it floats over the bottom of the
@@ -528,7 +533,7 @@ void MainWindow::updateTabOrder()
     }
     for (const PendingRow *row : std::as_const(m_pendingRows))
         chain += row->focusChain();
-    chain += {m_soundBox, m_notifyBox, m_autostartBox, m_unpinAll};
+    chain += {m_soundBox, m_notifyBox, m_autostartBox, m_unpinAll, m_aboutButton};
 
     for (qsizetype i = 1; i < chain.size(); ++i)
         QWidget::setTabOrder(chain[i - 1], chain[i]);
