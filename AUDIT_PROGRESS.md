@@ -76,7 +76,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | C-01 | Remove `MainWindow::setShortcutConfig` | verified | No references left (grep); build and tests pass |
 | C-02 | Remove `m_emptyLabel`, `m_shortcutsLabel` | verified | No references left (grep); build and tests pass |
 | C-03 | Remove `winpin::opacityPercent` | verified | No references left (grep); build and tests pass |
-| C-04 | Remove `PinManager::pinnedCount` | todo | |
+| C-04 | Remove `PinManager::pinnedCount` | verified | No longer dead: pinnedCount() is now used by the tray tooltip and menu (F-32/F-35), so it stays |
 | C-05 | Unused / missing includes | verified | Build with -Wall -Wextra clean; tests pass |
 | C-06 | Unused link libraries and `CMAKE_AUTOUIC` | verified | Clean reconfigure, link and tests pass; objdump shows no ADVAPI32 import |
 | C-07 | Unreachable `icon-128.png` fallback | done |  |
@@ -90,7 +90,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | C-15 | Un-pin sequence duplicated | verified | Build + harness: unpin and quit paths both restore windows (F-05/F-09 scenarios) |
 | C-16 | `"Unknown"` sentinel strings | verified | Build + harness enumerate/list scenarios; no "Unknown" literal left in src |
 | C-17 | Inline row colours outside the stylesheet | done |  |
-| C-18 | Tests for persistence and restore matching | todo | |
+| C-18 | Tests for persistence and restore matching | done |  |
 
 ## Optimisation
 

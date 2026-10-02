@@ -82,6 +82,8 @@ qt_add_executable(pinit_tests
     src/winpin.h     src/winpin.cpp
     src/shortcuts.h  src/shortcuts.cpp
     src/autostart.h  src/autostart.cpp
+    src/persistence.h  src/persistence.cpp
+    src/pinmatch.h
 )
 target_include_directories(pinit_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_link_libraries(pinit_tests PRIVATE Qt6::Test Qt6::Core)

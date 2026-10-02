@@ -3,6 +3,9 @@
 //  - opacity percent <-> alpha conversion is lossless (regression guard:
 //    the Rust port had a bug where opacity drifted ~1% on every restart)
 //  - the Tauri-style shortcut parser maps keys/modifiers correctly
+//  - which saved pin belongs to which window, and which windows may be pinned
+//  - pinned.json round-trips, reads older files and survives a corrupt one
+//  - autostart follows the registry (using a scratch key)
 //
 #include <QtTest>
 
@@ -13,7 +16,9 @@
 #include "pinmatch.h"
 #include "autostart.h"
 
+#include <QFile>
 #include <QSettings>
+#include <QTemporaryDir>
 
 class TestPinIt : public QObject
 {
@@ -33,6 +38,9 @@ private slots:
     void savedPinMatchesOnlySameAppAndTitle();
     void shellWindowClassesAreNotPinnable();
     void autostartFollowsTheRegistry();
+    void persistenceRoundTrips();
+    void persistenceReadsOlderFiles();
+    void persistenceBacksUpACorruptFile();
 };
 
 void TestPinIt::opacityRoundTripIsLossless()
@@ -241,6 +249,141 @@ void TestPinIt::autostartFollowsTheRegistry()
 
     QSettings(QStringLiteral("HKEY_CURRENT_USER\\Software"), QSettings::NativeFormat)
         .remove(QStringLiteral("PinIt-Tests"));
+}
+
+namespace {
+
+// Point persistence at an empty scratch folder instead of the real
+// %LOCALAPPDATA%\\PinIt for the lifetime of a test.
+struct ScratchDataDir {
+    ScratchDataDir()
+    {
+        qputenv("LOCALAPPDATA", dir.path().toLocal8Bit());
+    }
+    ~ScratchDataDir() { qputenv("LOCALAPPDATA", previous); }
+
+    QString file() const { return dir.filePath(QStringLiteral("PinIt/pinned.json")); }
+    void write(const QByteArray &content) const
+    {
+        QDir().mkpath(dir.filePath(QStringLiteral("PinIt")));
+        QFile f(file());
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write(content);
+    }
+
+    QTemporaryDir dir;
+    QByteArray previous = qgetenv("LOCALAPPDATA");
+};
+
+} // namespace
+
+void TestPinIt::persistenceRoundTrips()
+{
+    const ScratchDataDir scratch;
+    QVERIFY(scratch.dir.isValid());
+    QCOMPARE(QDir::cleanPath(persistence::dataDir()),
+             QDir::cleanPath(scratch.dir.filePath(QStringLiteral("PinIt"))));
+
+    // No file yet: defaults.
+    persistence::SavedState state = persistence::load();
+    QVERIFY(state.pins.isEmpty());
+    QVERIFY(state.settings.enableSound);
+    QVERIFY(!state.settings.showNotifications);
+    QCOMPARE(state.settings.shortcuts.togglePin, QStringLiteral("super+ctrl+KeyT"));
+
+    persistence::SavedPin a;
+    a.processName = QStringLiteral("notepad.exe");
+    a.title = QStringLiteral("notes.txt - Notepad");
+    a.opacity = 153;
+    a.clickThrough = true;
+    a.wasLayered = false;
+    a.wasTopmost = false;
+    a.wasClickThrough = false;
+    persistence::SavedPin b;
+    b.processName = QStringLiteral("chrome.exe");
+    b.title = QStringLiteral("R&D \u2014 \u00fcber");   // non-ASCII survives
+    persistence::savePins({a, b});
+
+    // Saving settings must not lose the pins, and the other way round.
+    persistence::UserSettings settings;
+    settings.enableSound = false;
+    settings.showNotifications = true;
+    settings.startWithWindows = true;
+    settings.hasSeenTrayNotice = true;
+    settings.shortcuts.togglePin = QStringLiteral("ctrl+alt+F9");
+    persistence::saveSettings(settings);
+    persistence::savePins({a, b});
+
+    state = persistence::load();
+    QCOMPARE(state.pins.size(), 2);
+    // The file keys pins by "<process>:<index>", so they come back sorted by key.
+    const persistence::SavedPin &chrome = state.pins[0];
+    const persistence::SavedPin &notepad = state.pins[1];
+    QCOMPARE(chrome.processName, b.processName);
+    QCOMPARE(chrome.title, b.title);
+    QCOMPARE(chrome.opacity, 255);
+    QVERIFY(!chrome.clickThrough);
+    QVERIFY(chrome.wasLayered && chrome.wasTopmost && chrome.wasClickThrough);
+    QCOMPARE(notepad.processName, a.processName);
+    QCOMPARE(notepad.title, a.title);
+    QCOMPARE(notepad.opacity, 153);
+    QVERIFY(notepad.clickThrough);
+    QVERIFY(!notepad.wasLayered && !notepad.wasTopmost && !notepad.wasClickThrough);
+
+    QVERIFY(!state.settings.enableSound);
+    QVERIFY(state.settings.showNotifications);
+    QVERIFY(state.settings.startWithWindows);
+    QVERIFY(state.settings.hasSeenTrayNotice);
+    QCOMPARE(state.settings.shortcuts.togglePin, QStringLiteral("ctrl+alt+F9"));
+    QCOMPARE(state.settings.shortcuts.opacityUp, QStringLiteral("super+ctrl+Equal"));
+
+    persistence::savePins({});
+    QVERIFY(persistence::load().pins.isEmpty());
+    QVERIFY(!persistence::load().settings.enableSound);   // settings untouched
+}
+
+// A file written by PinIt 2.1 / the Tauri versions has none of the newer keys.
+void TestPinIt::persistenceReadsOlderFiles()
+{
+    const ScratchDataDir scratch;
+    scratch.write(R"({
+        "pins": { "notepad.exe:0": { "process_name": "notepad.exe", "title": "a.txt - Notepad", "opacity": 204 },
+                  ":1": { "process_name": "", "title": "no process", "opacity": 255 } },
+        "settings": { "enable_sound": false,
+                      "shortcuts": { "toggle_pin": "super+shift+KeyP" } } })");
+
+    const persistence::SavedState state = persistence::load();
+    QCOMPARE(state.pins.size(), 1);                 // the entry without a process is dropped
+    QCOMPARE(state.pins[0].title, QStringLiteral("a.txt - Notepad"));
+    QCOMPARE(state.pins[0].opacity, 204);
+    QVERIFY(!state.pins[0].clickThrough);
+    QVERIFY(state.pins[0].wasLayered && state.pins[0].wasTopmost);   // "unknown" defaults
+    QVERIFY(!state.settings.enableSound);
+    QVERIFY(!state.settings.showNotifications);     // new setting: off unless asked for
+    QCOMPARE(state.settings.shortcuts.togglePin, QStringLiteral("super+shift+KeyP"));
+    QCOMPARE(state.settings.shortcuts.toggleWindow, QStringLiteral("super+ctrl+KeyP"));
+}
+
+void TestPinIt::persistenceBacksUpACorruptFile()
+{
+    const ScratchDataDir scratch;
+    scratch.write("{ \"pins\": { oops");
+
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(QStringLiteral("pinned.json is corrupt")));
+    const persistence::SavedState state = persistence::load();
+    QVERIFY(state.pins.isEmpty());
+    QVERIFY(state.settings.enableSound);
+
+    QFile backup(scratch.file() + QStringLiteral(".corrupt"));
+    QVERIFY(backup.open(QIODevice::ReadOnly));
+    QCOMPARE(backup.readAll(), QByteArray("{ \"pins\": { oops"));
+
+    // The next save replaces the broken file with a valid one.
+    persistence::saveSettings(state.settings);
+    QVERIFY(persistence::load().settings.enableSound);
+    QFile f(scratch.file());
+    QVERIFY(f.open(QIODevice::ReadOnly));
+    QVERIFY(f.readAll().contains("\"settings\""));
 }
 
 QTEST_MAIN(TestPinIt)
