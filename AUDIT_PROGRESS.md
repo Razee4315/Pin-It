@@ -29,9 +29,9 @@ and the affected flow has been exercised (the "How verified" column says how).
 | F-18 | 2 | P2 | Opacity hotkeys do not repeat | verified | Harness with injected held keys: pin hotkey fired once, opacity hotkey fired 4 times |
 | F-19 | 2 | P2 | List order is hash order | verified | Harness: 6 pins listed in pin order; order kept after an unpin |
 | F-20 | 2 | P2 | List rebuilt from scratch on every change | verified | Harness: first row object identical before/after 4 more pins and an unpin; removed row disappears |
-| F-21 | 2 | P2 | Picker lists shell / cloaked windows | done |  |
-| F-22 | 2 | P2 | Picker: no search, icons, empty state; dead-end OK | done |  |
-| F-23 | 2 | P2 | Accessible names and contrast | done |  |
+| F-21 | 2 | P2 | Picker lists shell / cloaked windows | verified | Harness on this desktop: 12 windows offered vs 16 under the old rule; no shell, cloaked, untitled or own windows; Program Manager gone |
+| F-22 | 2 | P2 | Picker: no search, icons, empty state; dead-end OK | verified | Harness: icons shown (13/13), search filters case-insensitively and keeps a row selected, empty states for no match / no windows, Pin disabled when nothing is selectable, Up/Down/Enter from the search box work; screenshot checked |
+| F-23 | 2 | P2 | Accessible names and contrast | verified | Harness: accessible names reach QAccessible and follow retitling; rendered contrast primary 4.98, separators 5.06, avatar 10.5, muted 4.93; unpin colour pairs 5.76 / 4.92; Tab order top to bottom; focus visibly changes primary, slider, checkbox without resizing; Space/arrow keys work |
 | F-24 | 2 | P3 | Layered style left behind after crash re-pin | verified | Harness: instance destroyed without cleanup leaves the window topmost+layered; next instance restores it and unpin removes both |
 | F-25 | 3 | P2 | Shift-only shortcuts accepted | verified | Unit test shortcutNeedsWinCtrlOrAlt + harness: Shift+A from config is refused at registration |
 | F-26 | 3 | P2 | Shortcuts saved before registration is tested | todo | |
@@ -88,7 +88,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | C-13 | Chip-row builder duplicated three times | todo | |
 | C-14 | Hotkey-result messages duplicated | todo | |
 | C-15 | Un-pin sequence duplicated | verified | Build + harness: unpin and quit paths both restore windows (F-05/F-09 scenarios) |
-| C-16 | `"Unknown"` sentinel strings | done |  |
+| C-16 | `"Unknown"` sentinel strings | verified | Build + harness enumerate/list scenarios; no "Unknown" literal left in src |
 | C-17 | Inline row colours outside the stylesheet | todo | |
 | C-18 | Tests for persistence and restore matching | todo | |
 
