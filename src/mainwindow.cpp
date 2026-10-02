@@ -96,6 +96,46 @@ QString avatarInitial(const QString &name)
     return n.isEmpty() ? QStringLiteral("?") : QString(n.at(0).toUpper());
 }
 
+// A single-line label that elides its text to whatever width the layout gives
+// it. A plain QLabel reports its full text width as its minimum, which made a
+// long window title push the slider and unpin button out of the list.
+class ElidedLabel : public QLabel
+{
+public:
+    explicit ElidedLabel(const QString &text, QWidget *parent = nullptr)
+        : QLabel(parent)
+    {
+        setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+        setFullText(text);
+    }
+
+    void setFullText(const QString &text)
+    {
+        m_fullText = text;
+        updateElision();
+    }
+
+    QSize minimumSizeHint() const override
+    {
+        return QSize(0, QLabel::minimumSizeHint().height());
+    }
+
+protected:
+    void resizeEvent(QResizeEvent *event) override
+    {
+        QLabel::resizeEvent(event);
+        updateElision();
+    }
+
+private:
+    void updateElision()
+    {
+        setText(fontMetrics().elidedText(m_fullText, Qt::ElideRight, width()));
+    }
+
+    QString m_fullText;
+};
+
 } // namespace
 
 MainWindow::MainWindow(PinManager *manager, QWidget *parent)
@@ -360,13 +400,10 @@ void MainWindow::rebuildList()
         // Title + process name stacked tightly; takes the leftover width.
         auto *info = new QVBoxLayout;
         info->setSpacing(0);
-        auto *name = new QLabel;
+        auto *name = new ElidedLabel(displayTitle(w.title));
         name->setStyleSheet(QStringLiteral("font-weight: 600;"));
-        // Elide so a long title never widens the card or forces a scrollbar.
-        name->setText(name->fontMetrics().elidedText(
-            displayTitle(w.title), Qt::ElideRight, 150));
         name->setToolTip(w.title);   // full title on hover
-        auto *proc = new QLabel(w.processName);
+        auto *proc = new ElidedLabel(w.processName);
         proc->setProperty("role", "muted");
         info->addWidget(name);
         info->addWidget(proc);

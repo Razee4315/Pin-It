@@ -22,7 +22,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | F-11 | 2 | P0 | Restart fix is unreleased | todo | |
 | F-12 | 2 | P1 | Restore is one-shot and erases unmatched pins | todo | |
 | F-13 | 2 | P1 | Restore fallback pins the wrong window | todo | |
-| F-14 | 2 | P1 | Pinned row clips its unpin button | todo | |
+| F-14 | 2 | P1 | Pinned row clips its unpin button | verified | Rendered 4 pins incl. a 90-char title: content width == viewport (315 px), every unpin button inside it |
 | F-15 | 2 | P2 | Pinned list is only 98 px tall | todo | |
 | F-16 | 2 | P2 | Slider not synced with opacity hotkeys | todo | |
 | F-17 | 2 | P2 | Opacity hotkey silent on unpinned window | todo | |
