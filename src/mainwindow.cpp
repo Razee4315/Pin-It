@@ -233,14 +233,9 @@ void MainWindow::buildUi()
     emptyText->setProperty("role", "muted");
     emptyText->setAlignment(Qt::AlignCenter);
     ec->addWidget(emptyText);
-    auto *hintRow = new QHBoxLayout;
-    hintRow->addStretch();
-    auto *use = new QLabel(tr("Use"));
-    use->setProperty("role", "muted");
-    hintRow->addWidget(use);
-    addKeyChips(hintRow, shortcuts::displayTokens(m_settings.shortcuts.togglePin));
-    hintRow->addStretch();
-    ec->addLayout(hintRow);
+    m_emptyHint = new QHBoxLayout;
+    fillEmptyHint();
+    ec->addLayout(m_emptyHint);
     m_listLayout->insertWidget(0, m_emptyCard);   // lives in the list region
 
     // --- Settings (compact, at the bottom) -----------------------------------
@@ -391,6 +386,17 @@ void MainWindow::fillShortcutRows(QVBoxLayout *scv)
     addRow(shortcuts::displayTokens(sc.toggleWindow), tr("Show / hide PinIt"));
 }
 
+void MainWindow::fillEmptyHint()
+{
+    clearLayout(m_emptyHint);
+    m_emptyHint->addStretch();
+    auto *use = new QLabel(tr("Use"));
+    use->setProperty("role", "muted");
+    m_emptyHint->addWidget(use);
+    addKeyChips(m_emptyHint, shortcuts::displayTokens(m_settings.shortcuts.togglePin));
+    m_emptyHint->addStretch();
+}
+
 void MainWindow::openShortcutsDialog()
 {
     // The dialog only closes with OK once Windows has accepted the new set.
@@ -413,6 +419,7 @@ void MainWindow::openShortcutsDialog()
     persistence::saveSettings(m_settings);
     if (m_shortcutsLayout)
         fillShortcutRows(m_shortcutsLayout);
+    fillEmptyHint();   // the "Use [Win]+[Ctrl]+[T]" hint shows the pin shortcut too
     setHotkeyProblems({});
     notify(tr("Shortcuts updated."));
 }

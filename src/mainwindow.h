@@ -16,6 +16,7 @@ class PinRow;
 class PendingRow;
 class QPushButton;
 class QVBoxLayout;
+class QHBoxLayout;
 class QWidget;
 class QSystemTrayIcon;
 class QCheckBox;
@@ -68,6 +69,7 @@ private:
     void buildTray();
     void applyAutostart(bool enabled);
     void fillShortcutRows(QVBoxLayout *scv);   // (re)builds the SHORTCUTS chips
+    void fillEmptyHint();                      // (re)builds the empty-state hotkey hint
     void showStatus(const QString &message);   // in-window message, fades by itself
     void placeStatus();
     void updateTrayToolTip();
@@ -89,6 +91,7 @@ private:
     QStringList      m_hotkeyProblems;
     QWidget         *m_emptyCard = nullptr;
     QVBoxLayout     *m_shortcutsLayout = nullptr;
+    QHBoxLayout     *m_emptyHint = nullptr;
     QCheckBox       *m_soundBox = nullptr;
     QCheckBox       *m_notifyBox = nullptr;
     QCheckBox       *m_autostartBox = nullptr;
