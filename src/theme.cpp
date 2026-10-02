@@ -106,6 +106,18 @@ QPushButton#primary {
 QPushButton#primary:hover { background: $accentHover$; border-color: $accentHover$; }
 QPushButton#primary:focus { border-color: $text$; }
 
+QPushButton#rowToggle {
+    background: transparent; border: 1px solid $border$;
+    border-radius: 5px; color: $textSubtle$; font-weight: 700; font-size: 12px;
+    padding: 0;
+}
+QPushButton#rowToggle:hover { background: $keyBg$; color: $text$; }
+QPushButton#rowToggle:focus { border-color: $accentStrong$; color: $text$; }
+QPushButton#rowToggle:checked {
+    background: $accentStrong$; border-color: $accentStrong$; color: $onAccent$;
+}
+QPushButton#rowToggle:checked:focus { border-color: $text$; }
+
 QPushButton#unpin {
     background: transparent; border: 1px solid $border$;
     border-radius: 5px; color: $textSubtle$; font-weight: 700; font-size: 12px;

@@ -102,6 +102,7 @@ SavedState load()
         sp.processName = p.value("process_name").toString();
         sp.title       = p.value("title").toString();
         sp.opacity     = p.value("opacity").toInt(255);
+        sp.clickThrough = p.value("click_through").toBool(false);
         sp.wasLayered  = p.value("was_layered").toBool(true);
         sp.wasTopmost  = p.value("was_topmost").toBool(true);
         if (!sp.processName.isEmpty())
@@ -124,6 +125,7 @@ void save(const SavedState &state)
         p["process_name"] = sp.processName;
         p["title"]        = sp.title;
         p["opacity"]      = sp.opacity;
+        p["click_through"] = sp.clickThrough;
         p["was_layered"]  = sp.wasLayered;
         p["was_topmost"]  = sp.wasTopmost;
         // Key matches the Rust format: "<process>:<index>" keeps it unique.

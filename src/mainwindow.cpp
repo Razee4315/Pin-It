@@ -100,7 +100,7 @@ MainWindow::MainWindow(PinManager *manager, QWidget *parent)
     // Fixed width, free height: the layout is a single column, so only the
     // pinned list benefits from more room — and it takes all the extra height
     // the user gives the window. No maximize button.
-    constexpr int kWidth = 360;
+    constexpr int kWidth = 380;
     constexpr int kMinHeight = 500;
     constexpr int kDefaultHeight = 600;
     setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::WindowSystemMenuHint
@@ -121,6 +121,11 @@ MainWindow::MainWindow(PinManager *manager, QWidget *parent)
             [this](intptr_t hwnd, const QString &title) {
                 if (PinRow *row = m_rows.value(hwnd))
                     row->setTitle(title);
+            });
+    connect(m_manager, &PinManager::clickThroughChanged, this,
+            [this](intptr_t hwnd, bool enabled) {
+                if (PinRow *row = m_rows.value(hwnd))
+                    row->setClickThrough(enabled);
             });
     connect(m_manager, &PinManager::opacityChanged, this, [this](intptr_t hwnd, int percent) {
         if (PinRow *row = m_rows.value(hwnd))
@@ -475,6 +480,11 @@ void MainWindow::syncList()
         auto *row = new PinRow(w);
         connect(row, &PinRow::opacityRequested, this,
                 [this, hwnd](int percent) { m_manager->setOpacity(hwnd, percent); });
+        connect(row, &PinRow::clickThroughRequested, this, [this, hwnd, row](bool enabled) {
+            // If Windows refuses, put the button back to the real state.
+            if (!m_manager->setClickThrough(hwnd, enabled))
+                row->setClickThrough(!enabled);
+        });
         connect(row, &PinRow::unpinRequested, this,
                 [this, hwnd]() { m_manager->unpin(hwnd); });
         connect(row, &PinRow::locateRequested, this,

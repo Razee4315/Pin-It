@@ -62,6 +62,12 @@ int  opacityPercent(void *hwnd);     // 100 if the window isn't layered
 // strip a style the app relies on for its own transparency.
 bool restoreOpacity(void *hwnd, bool keepLayered = false);
 
+// --- Click-through --------------------------------------------------------
+// A click-through window ignores the mouse: clicks land on whatever is behind
+// it (WS_EX_TRANSPARENT). Useful with a faded window kept over one's work.
+bool isClickThrough(void *hwnd);
+bool setClickThrough(void *hwnd, bool enabled);
+
 // Percent <-> 8-bit alpha, rounded so the round-trip is lossless (no drift).
 int percentToAlpha(int percent);
 int alphaToPercent(int alpha);

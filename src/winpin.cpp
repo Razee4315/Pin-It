@@ -171,6 +171,21 @@ bool setOpacityPercent(void *hwnd, int percent)
     return SetLayeredWindowAttributes(H(hwnd), RGB(0, 0, 0), alpha, LWA_ALPHA) != FALSE;
 }
 
+bool isClickThrough(void *hwnd)
+{
+    const LONG ex = GetWindowLongW(H(hwnd), GWL_EXSTYLE);
+    return (static_cast<DWORD>(ex) & WS_EX_TRANSPARENT) != 0;
+}
+
+bool setClickThrough(void *hwnd, bool enabled)
+{
+    const LONG ex = GetWindowLongW(H(hwnd), GWL_EXSTYLE);
+    const LONG wanted = enabled ? (ex | WS_EX_TRANSPARENT) : (ex & ~WS_EX_TRANSPARENT);
+    if (wanted != ex)
+        SetWindowLongW(H(hwnd), GWL_EXSTYLE, wanted);
+    return isClickThrough(hwnd) == enabled;
+}
+
 int opacityPercent(void *hwnd)
 {
     const LONG ex = GetWindowLongW(H(hwnd), GWL_EXSTYLE);

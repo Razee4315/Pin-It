@@ -22,6 +22,8 @@ struct PinnedWindow {
     bool     wasLayered = false;   // window had WS_EX_LAYERED before we pinned it
     bool     wasTopmost = false;   // window was already always-on-top before we pinned it
     bool     opacityChanged = false;  // we changed its opacity, so undo it on unpin
+    bool     clickThrough = false;    // mouse clicks pass through it
+    bool     wasClickThrough = false; // ...and it already did before we pinned it
 };
 
 class PinManager : public QObject
@@ -48,6 +50,8 @@ public:
     void adjustForegroundOpacity(int deltaPercent);
 
     bool setOpacity(intptr_t hwnd, int percent);
+    // Let mouse clicks pass through a pinned window (or stop doing so).
+    bool setClickThrough(intptr_t hwnd, bool enabled);
 
     // In the order the windows were pinned.
     QVector<PinnedWindow> pinnedWindows() const { return m_pinned; }
@@ -84,6 +88,7 @@ signals:
     void pinRestored(intptr_t hwnd);   // a pending pin found its window
     void opacityChanged(intptr_t hwnd, int percent);
     void titleChanged(intptr_t hwnd, const QString &title);
+    void clickThroughChanged(intptr_t hwnd, bool enabled);
     void errorOccurred(const QString &message);
 
 private slots:

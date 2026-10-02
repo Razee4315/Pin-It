@@ -17,6 +17,7 @@ struct SavedPin {
     QString processName;
     QString title;
     int     opacity = 255;   // alpha
+    bool    clickThrough = false;
     // What the window looked like before PinIt first touched it. Saved so that
     // re-pinning after a crash (when the window still carries our changes)
     // doesn't mistake them for the app's own. Default true = "unknown, trust

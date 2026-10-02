@@ -120,6 +120,8 @@ bool PinManager::pin(intptr_t hwnd, bool announce)
     w.opacity = 100;
     w.wasLayered = winpin::isLayered(H(hwnd));   // remember its original style
     w.wasTopmost = wasTopmost;
+    w.wasClickThrough = winpin::isClickThrough(H(hwnd));
+    w.clickThrough = w.wasClickThrough;
     m_pinned.push_back(w);
 
     // This window is no longer being waited for (whether a pending pin was
@@ -149,6 +151,8 @@ bool PinManager::release(const PinnedWindow &window)
 
     // Only undo opacity if we actually changed it — otherwise we'd reset an
     // app that manages its own transparency. keepLayered preserves its style.
+    if (window.clickThrough && !window.wasClickThrough)
+        winpin::setClickThrough(H(window.hwnd), false);
     if (window.opacityChanged)
         winpin::restoreOpacity(H(window.hwnd), window.wasLayered);
     if (!window.wasTopmost)
@@ -238,6 +242,26 @@ bool PinManager::setOpacity(intptr_t hwnd, int percent)
     return true;
 }
 
+bool PinManager::setClickThrough(intptr_t hwnd, bool enabled)
+{
+    PinnedWindow *w = find(hwnd);
+    if (!w)
+        return false;
+
+    // Windows only honours click-through on layered windows, and a layered
+    // window needs an alpha set to be drawn at all — which is exactly what
+    // setting the opacity does.
+    if (enabled && !winpin::isLayered(H(hwnd)) && !setOpacity(hwnd, w->opacity))
+        return false;
+    if (!winpin::setClickThrough(H(hwnd), enabled))
+        return false;
+
+    w->clickThrough = enabled;
+    schedulePersist();
+    emit clickThroughChanged(hwnd, enabled);
+    return true;
+}
+
 void PinManager::reenforce()
 {
     const qsizetype before = m_pinned.size();
@@ -306,6 +330,8 @@ bool PinManager::applySaved(intptr_t hwnd, const persistence::SavedPin &saved)
     const int percent = winpin::alphaToPercent(saved.opacity);
     if (percent < 100)
         setOpacity(hwnd, percent);
+    if (saved.clickThrough)
+        setClickThrough(hwnd, true);
     return true;
 }
 
@@ -362,6 +388,7 @@ void PinManager::persist() const
         sp.processName = w.processName;
         sp.title       = w.title;
         sp.opacity     = winpin::percentToAlpha(w.opacity);
+        sp.clickThrough = w.clickThrough;
         sp.wasLayered  = w.wasLayered;
         sp.wasTopmost  = w.wasTopmost;
         pins.push_back(sp);

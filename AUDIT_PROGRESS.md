@@ -64,7 +64,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | M-05 | Tray menu lists pinned windows + "Pin a window…" | verified | Harness: tray menu lists each pinned window (ampersands escaped); choosing one unpins only that window; 'Pin a window…' present |
 | M-06 | Notifications on/off | verified | Harness: setting defaults to off, checkbox unchecked, ticking it writes show_notifications=true |
 | M-07 | Reset shortcuts to defaults | verified | Harness: Restore Defaults fills in the default set and clears the error; nothing applied until OK |
-| M-08 | Click-through for pinned windows | todo | |
+| M-08 | Click-through for pinned windows | done |  |
 | M-09 | "Check for updates" link | verified | Harness: tray has 'Check for updates…'; About box links to /releases/latest. Opening the browser itself was not triggered |
 | M-10 | Dark theme | todo | |
 | M-11 | winget / Scoop package | todo | |

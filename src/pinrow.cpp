@@ -143,7 +143,7 @@ PinRow::PinRow(const PinnedWindow &window, QWidget *parent)
     m_slider = new QSlider(Qt::Horizontal);
     m_slider->setRange(winpin::kMinOpacity, winpin::kMaxOpacity);
     m_slider->setValue(window.opacity);
-    m_slider->setFixedWidth(76);
+    m_slider->setFixedWidth(64);
     // The round handle is pulled out over the thin groove (margin:-6px in
     // the QSS); without enough vertical room it gets clipped at the top.
     m_slider->setMinimumHeight(20);
@@ -159,6 +159,19 @@ PinRow::PinRow(const PinnedWindow &window, QWidget *parent)
         m_percent->setText(QStringLiteral("%1%").arg(v));
         emit opacityRequested(v);
     });
+
+    // Click-through toggle. The glyph is an arrow in the shape of a pointer;
+    // the tooltip and accessible name carry the meaning.
+    m_clickThrough = new QPushButton(QString::fromUtf8("\xE2\x86\x96"));   // ↖
+    m_clickThrough->setObjectName(QStringLiteral("rowToggle"));
+    m_clickThrough->setCheckable(true);
+    m_clickThrough->setChecked(window.clickThrough);
+    m_clickThrough->setFixedSize(24, 24);
+    m_clickThrough->setToolTip(
+        tr("Click-through: mouse clicks pass through this window to whatever is behind it"));
+    m_clickThrough->setCursor(Qt::PointingHandCursor);
+    connect(m_clickThrough, &QPushButton::toggled, this, &PinRow::clickThroughRequested);
+    row->addWidget(m_clickThrough);
 
     // Compact unpin button (full label still available as a tooltip).
     auto *unpinBtn = new QPushButton(QString::fromUtf8("\xE2\x9C\x95"));   // ✕
@@ -194,13 +207,14 @@ void PinRow::leaveEvent(QEvent *event)
 
 QList<QWidget *> PinRow::focusChain() const
 {
-    return {m_slider, m_unpin};
+    return {m_slider, m_clickThrough, m_unpin};
 }
 
 void PinRow::nameControls(const QString &title)
 {
     const QString shown = displayTitle(title);
     m_slider->setAccessibleName(tr("Opacity of %1").arg(shown));
+    m_clickThrough->setAccessibleName(tr("Click-through for %1").arg(shown));
     m_unpin->setAccessibleName(tr("Unpin %1").arg(shown));
 }
 
@@ -209,6 +223,12 @@ void PinRow::setTitle(const QString &title)
     static_cast<ElidedLabel *>(m_title)->setFullText(displayTitle(title));
     m_title->setToolTip(title);
     nameControls(title);
+}
+
+void PinRow::setClickThrough(bool enabled)
+{
+    const QSignalBlocker blocker(m_clickThrough);
+    m_clickThrough->setChecked(enabled);
 }
 
 void PinRow::setOpacity(int percent)

@@ -1,7 +1,7 @@
 #pragma once
 //
 // PinRow — one pinned window in the main list:
-//   [avatar] [title / process] [opacity slider] [%] [unpin]
+//   [avatar] [title / process] [opacity slider] [%] [click-through] [unpin]
 //
 // Rows are kept alive and updated in place while their window stays pinned,
 // so a slider drag or keyboard focus survives other pins coming and going.
@@ -48,12 +48,14 @@ public:
     // it back as a request.
     void setOpacity(int percent);
     void setTitle(const QString &title);
+    void setClickThrough(bool enabled);
 
     // The row's keyboard-reachable controls, in order (for the tab chain).
     QList<QWidget *> focusChain() const;
 
 signals:
     void opacityRequested(int percent);
+    void clickThroughRequested(bool enabled);
     void unpinRequested();
     // The pointer has rested on the row: point out its window on screen.
     void locateRequested();
@@ -70,6 +72,7 @@ private:
     QLabel      *m_title = nullptr;
     QSlider     *m_slider = nullptr;
     QLabel      *m_percent = nullptr;
+    QPushButton *m_clickThrough = nullptr;
     QPushButton *m_unpin = nullptr;
     QTimer      *m_hoverTimer = nullptr;
 };
