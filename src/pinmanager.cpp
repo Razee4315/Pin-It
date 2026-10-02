@@ -86,6 +86,9 @@ bool PinManager::pin(intptr_t hwnd, bool announce)
 
     const QString title = winpin::windowTitle(H(hwnd));
     const QString proc  = winpin::processName(H(hwnd));
+    // Some apps keep themselves on top (Task Manager's "Always on top", media
+    // players). Remember that so unpinning doesn't take it away from them.
+    const bool wasTopmost = winpin::isTopmost(H(hwnd));
 
     if (!winpin::applyTopmost(H(hwnd)) || !winpin::isTopmost(H(hwnd))) {
         // UIPI silently blocks SetWindowPos on elevated windows; verifying the
@@ -102,6 +105,7 @@ bool PinManager::pin(intptr_t hwnd, bool announce)
     w.processName = proc;
     w.opacity = 100;
     w.wasLayered = winpin::isLayered(H(hwnd));   // remember its original style
+    w.wasTopmost = wasTopmost;
     m_pinned.push_back(w);
 
     persist();
@@ -124,7 +128,8 @@ bool PinManager::release(const PinnedWindow &window)
     // app that manages its own transparency. keepLayered preserves its style.
     if (window.opacityChanged)
         winpin::restoreOpacity(H(window.hwnd), window.wasLayered);
-    winpin::removeTopmost(H(window.hwnd));
+    if (!window.wasTopmost)
+        winpin::removeTopmost(H(window.hwnd));
     return true;
 }
 

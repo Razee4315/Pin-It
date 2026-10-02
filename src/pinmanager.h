@@ -18,6 +18,7 @@ struct PinnedWindow {
     QString  processName;
     int      opacity = 100;        // percent
     bool     wasLayered = false;   // window had WS_EX_LAYERED before we pinned it
+    bool     wasTopmost = false;   // window was already always-on-top before we pinned it
     bool     opacityChanged = false;  // we changed its opacity, so undo it on unpin
 };
 
