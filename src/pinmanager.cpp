@@ -279,6 +279,14 @@ bool PinManager::applySaved(intptr_t hwnd, const persistence::SavedPin &saved)
 {
     if (!pin(hwnd, /*announce=*/false))
         return false;
+
+    // After a crash the window is still topmost / layered from our previous
+    // run, which pin() has just recorded as the app's own doing. The saved
+    // flags know better. (After a normal restart both agree.)
+    if (PinnedWindow *w = find(hwnd)) {
+        w->wasLayered = w->wasLayered && saved.wasLayered;
+        w->wasTopmost = w->wasTopmost && saved.wasTopmost;
+    }
     const int percent = winpin::alphaToPercent(saved.opacity);
     if (percent < 100)
         setOpacity(hwnd, percent);
@@ -338,6 +346,8 @@ void PinManager::persist() const
         sp.processName = w.processName;
         sp.title       = w.title;
         sp.opacity     = winpin::percentToAlpha(w.opacity);
+        sp.wasLayered  = w.wasLayered;
+        sp.wasTopmost  = w.wasTopmost;
         pins.push_back(sp);
     }
     // Pins still waiting for their window stay saved until the user quits or

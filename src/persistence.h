@@ -17,6 +17,12 @@ struct SavedPin {
     QString processName;
     QString title;
     int     opacity = 255;   // alpha
+    // What the window looked like before PinIt first touched it. Saved so that
+    // re-pinning after a crash (when the window still carries our changes)
+    // doesn't mistake them for the app's own. Default true = "unknown, trust
+    // what the window looks like now", which is right for older files.
+    bool    wasLayered = true;
+    bool    wasTopmost = true;
 };
 
 // Configurable global shortcuts, stored in Tauri's string syntax
