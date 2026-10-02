@@ -5,8 +5,9 @@
 #include <QLabel>
 #include <QResizeEvent>
 
-// Elides its text to whatever width the layout gives it. A plain QLabel reports its full text width as its minimum, which made a
-// long window title push the slider and unpin button out of the list.
+// Elides its text to whatever width the layout gives it. A plain QLabel
+// reports its full text width as its minimum, which made a long window title
+// push the slider and unpin button out of the list.
 class ElidedLabel : public QLabel
 {
 public:

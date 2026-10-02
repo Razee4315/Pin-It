@@ -34,12 +34,12 @@ and the affected flow has been exercised (the "How verified" column says how).
 | F-23 | 2 | P2 | Accessible names and contrast | verified | Harness: accessible names reach QAccessible and follow retitling; rendered contrast primary 4.98, separators 5.06, avatar 10.5, muted 4.93; unpin colour pairs 5.76 / 4.92; Tab order top to bottom; focus visibly changes primary, slider, checkbox without resizing; Space/arrow keys work |
 | F-24 | 2 | P3 | Layered style left behind after crash re-pin | verified | Harness: instance destroyed without cleanup leaves the window topmost+layered; next instance restores it and unpin removes both |
 | F-25 | 3 | P2 | Shift-only shortcuts accepted | verified | Unit test shortcutNeedsWinCtrlOrAlt + harness: Shift+A from config is refused at registration |
-| F-26 | 3 | P2 | Shortcuts saved before registration is tested | done |  |
+| F-26 | 3 | P2 | Shortcuts saved before registration is tested | verified | Harness: with Win+Ctrl+T held by the running PinIt, OK keeps the dialog open, names Pin/Unpin, restores the previous hotkeys and saves nothing; a free set is registered, saved and clears the standing warning |
 | F-27 | 3 | P2 | Autostart checkbox ignores the registry | todo | |
-| F-28 | 3 | P3 | Empty-state hint chips go stale | done |  |
-| F-29 | 3 | P3 | Opacity cheat-sheet row assumes shared modifiers | done |  |
-| F-30 | 3 | P3 | Unsupported keys shown as "A" | done |  |
-| F-31 | 3 | P3 | Shortcuts dialog accessibility | done |  |
+| F-28 | 3 | P3 | Empty-state hint chips go stale | verified | Harness: after rebinding, the empty-state hint shows the new pin shortcut (screenshot checked) |
+| F-29 | 3 | P3 | Opacity cheat-sheet row assumes shared modifiers | verified | Harness: opacity shortcuts with different modifiers render as Increase/Decrease rows; same modifiers keep the combined row; long shortcuts elide the description |
+| F-30 | 3 | P3 | Unsupported keys shown as "A" | verified | Unit tests (named/function keys, every offered key round-trips, unknown key preserved) + harness: F13–F17 register and display; NumpadAdd is shown as written, reported unavailable, not rewritten |
+| F-31 | 3 | P3 | Shortcuts dialog accessibility | verified | Harness: all 16 checkboxes and 4 key lists carry '<action>: <part>' accessible names; errors are an inline label with an accessibility alert, no message boxes |
 | F-32 | 3 | P3 | Quit forgets pins with no hint | todo | |
 | F-33 | 3 | P3 | Uninstaller leaves Run key; no AppMutex | todo | |
 | F-34 | 3 | P3 | Second launch only flashes the taskbar | todo | |
@@ -63,7 +63,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | M-04 | "Unpin all" | todo | |
 | M-05 | Tray menu lists pinned windows + "Pin a window…" | todo | |
 | M-06 | Notifications on/off | verified | Harness: setting defaults to off, checkbox unchecked, ticking it writes show_notifications=true |
-| M-07 | Reset shortcuts to defaults | done |  |
+| M-07 | Reset shortcuts to defaults | verified | Harness: Restore Defaults fills in the default set and clears the error; nothing applied until OK |
 | M-08 | Click-through for pinned windows | todo | |
 | M-09 | "Check for updates" link | todo | |
 | M-10 | Dark theme | todo | |
@@ -85,8 +85,8 @@ and the affected flow has been exercised (the "How verified" column says how).
 | C-10 | Stale / wrong comments | todo | |
 | C-11 | One window-handle type, one cast helper | todo | |
 | C-12 | Shared app-data directory helper | todo | |
-| C-13 | Chip-row builder duplicated three times | done |  |
-| C-14 | Hotkey-result messages duplicated | done |  |
+| C-13 | Chip-row builder duplicated three times | verified | Build + harness screenshots: cheat-sheet and empty-state chips render from the shared helper |
+| C-14 | Hotkey-result messages duplicated | verified | main.cpp has one applyShortcuts path for startup and edits; harness shortcuts scenario |
 | C-15 | Un-pin sequence duplicated | verified | Build + harness: unpin and quit paths both restore windows (F-05/F-09 scenarios) |
 | C-16 | `"Unknown"` sentinel strings | verified | Build + harness enumerate/list scenarios; no "Unknown" literal left in src |
 | C-17 | Inline row colours outside the stylesheet | todo | |
