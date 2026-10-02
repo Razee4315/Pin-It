@@ -40,7 +40,7 @@ Press `Win+Ctrl+T` and the focused window stays on top of everything else. Slide
 
 - **Global hotkey pinning** — `Win+Ctrl+T` pins/unpins the focused window. No clicking through menus.
 - **Per-window transparency** — make any pinned window see-through with `Win+Ctrl+=` / `Win+Ctrl+-` or a slider. Great for reference docs, video calls, or notes over your work.
-- **Pins survive restarts** — PinIt remembers what you pinned (and its opacity) and re-pins it when you log back in.
+- **Pins survive restarts** — PinIt remembers what you pinned (and its opacity). After a restart it pins each window again as soon as that window is open.
 - **Windows 11 topmost re-enforcement** — Win11's compositor sometimes strips the always-on-top flag; PinIt re-applies it automatically.
 - **System tray app** — closes to the tray and stays out of your way. Optional start-with-Windows.
 - **Tiny and fast** — native C++/Qt talking directly to the Windows API. Minimal RAM, instant response.
@@ -87,7 +87,7 @@ Yes — pin a window with PinIt, then press `Win+Ctrl+-` to fade it (down to 20%
 
 ### Do my pinned windows stay on top after I restart?
 
-Yes. PinIt saves your pins (per app, with their opacity) to `%LOCALAPPDATA%\PinIt` and re-pins matching windows on the next launch — something neither PowerToys nor DeskPins does.
+Yes. PinIt saves your pins (app, window title and opacity) to `%LOCALAPPDATA%\PinIt`. After a restart, each saved window is pinned again as soon as it is open with the same title — windows that aren't open yet are listed as "Waiting" in PinIt until they are. Quitting PinIt yourself (tray → Quit) unpins everything and clears the list. Neither PowerToys nor DeskPins remembers pins at all.
 
 ### Does it work with apps running as administrator?
 

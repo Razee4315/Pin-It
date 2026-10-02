@@ -51,7 +51,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | F-40 | 4 | P3 | Autoplay video without controls | done |  |
 | F-41 | 4 | P3 | Failed save is ignored | done |  |
 | F-42 | 4 | P3 | CI permissions / pinning / checksums | blocked | Implemented: read-only token by default, write only in a tag-gated release job; actions pinned to commit SHAs; SHA256SUMS.txt and a stable-named installer published. YAML parses, but the workflow can only be proven by a CI run, which needs the branch pushed. clang-format check deliberately not added (see report) |
-| F-43 | 4 | P3 | Docs drift (size, version, restore promise) | todo | |
+| F-43 | 4 | P3 | Docs drift (size, version, restore promise) | done |  |
 
 ## Missing must-haves
 
