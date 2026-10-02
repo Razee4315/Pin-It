@@ -48,7 +48,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | F-37 | 4 | P2 | Window titles written to the log | verified | Harness: pinit.log has 'Pinned a window of dummywin.exe' and not the window title |
 | F-38 | 4 | P2 | Site invisible without JavaScript | verified | Browser: with the js class removed every .reveal computes to opacity 1; class is now set in head before first paint |
 | F-39 | 4 | P2 | Site does not mention SmartScreen | verified | Browser: SmartScreen note renders under the hero CTA and in the download band; portable link returns 302 to the asset (direct installer link deferred, see report) |
-| F-40 | 4 | P3 | Autoplay video without controls | todo | |
+| F-40 | 4 | P3 | Autoplay video without controls | done |  |
 | F-41 | 4 | P3 | Failed save is ignored | done |  |
 | F-42 | 4 | P3 | CI permissions / pinning / checksums | blocked | Implemented: read-only token by default, write only in a tag-gated release job; actions pinned to commit SHAs; SHA256SUMS.txt and a stable-named installer published. YAML parses, but the workflow can only be proven by a CI run, which needs the branch pushed. clang-format check deliberately not added (see report) |
 | F-43 | 4 | P3 | Docs drift (size, version, restore promise) | todo | |

@@ -297,7 +297,9 @@
       </div>
       <div class="demo-stage reveal">
         <div class="demo-frame">
-          <video autoplay loop muted playsinline preload="metadata"
+          <!-- No autoplay attribute: the script below starts it, unless the
+               visitor asked for reduced motion. Controls let anyone pause. -->
+          <video id="demo-video" controls loop muted playsinline preload="metadata"
                  poster="assets/pin-it-poster.jpg"
                  width="1280" height="718"
                  aria-label="Screen recording of PinIt pinning a Notepad window on top and fading its opacity to see through it">
@@ -404,6 +406,12 @@
   (function () {
     "use strict";
     document.body.classList.remove('no-js');
+    var demo = document.getElementById('demo-video');
+    var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (demo && !calm) {
+      var started = demo.play();
+      if (started && started.catch) { started.catch(function () { /* autoplay blocked: the controls remain */ }); }
+    }
     var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if ('IntersectionObserver' in window && !reduce) {
       var io = new IntersectionObserver(function (entries) {
