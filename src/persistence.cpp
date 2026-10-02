@@ -105,6 +105,7 @@ SavedState load()
         sp.clickThrough = p.value("click_through").toBool(false);
         sp.wasLayered  = p.value("was_layered").toBool(true);
         sp.wasTopmost  = p.value("was_topmost").toBool(true);
+        sp.wasClickThrough = p.value("was_click_through").toBool(true);
         if (!sp.processName.isEmpty())
             state.pins.push_back(sp);
     }
@@ -128,6 +129,7 @@ void save(const SavedState &state)
         p["click_through"] = sp.clickThrough;
         p["was_layered"]  = sp.wasLayered;
         p["was_topmost"]  = sp.wasTopmost;
+        p["was_click_through"] = sp.wasClickThrough;
         // Key matches the Rust format: "<process>:<index>" keeps it unique.
         pins[QStringLiteral("%1:%2").arg(sp.processName).arg(i)] = p;
     }

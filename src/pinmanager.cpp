@@ -320,12 +320,13 @@ bool PinManager::applySaved(intptr_t hwnd, const persistence::SavedPin &saved)
     if (!pin(hwnd, /*announce=*/false))
         return false;
 
-    // After a crash the window is still topmost / layered from our previous
-    // run, which pin() has just recorded as the app's own doing. The saved
-    // flags know better. (After a normal restart both agree.)
+    // After a crash the window is still topmost / layered / click-through from
+    // our previous run, which pin() has just recorded as the app's own doing.
+    // The saved flags know better. (After a normal restart both agree.)
     if (PinnedWindow *w = find(hwnd)) {
         w->wasLayered = w->wasLayered && saved.wasLayered;
         w->wasTopmost = w->wasTopmost && saved.wasTopmost;
+        w->wasClickThrough = w->wasClickThrough && saved.wasClickThrough;
     }
     const int percent = winpin::alphaToPercent(saved.opacity);
     if (percent < 100)
@@ -391,6 +392,7 @@ void PinManager::persist() const
         sp.clickThrough = w.clickThrough;
         sp.wasLayered  = w.wasLayered;
         sp.wasTopmost  = w.wasTopmost;
+        sp.wasClickThrough = w.wasClickThrough;
         pins.push_back(sp);
     }
     // Pins still waiting for their window stay saved until the user quits or

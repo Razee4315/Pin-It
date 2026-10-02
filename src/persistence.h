@@ -24,6 +24,7 @@ struct SavedPin {
     // what the window looks like now", which is right for older files.
     bool    wasLayered = true;
     bool    wasTopmost = true;
+    bool    wasClickThrough = true;
 };
 
 // Configurable global shortcuts, stored in Tauri's string syntax
