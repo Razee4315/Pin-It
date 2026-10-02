@@ -197,10 +197,10 @@ void TestPinIt::shellWindowClassesAreNotPinnable()
     QVERIFY(!winpin::isShellClass(QString()));
 
     // The live desktop and taskbar, and a window of this very process.
-    QVERIFY(!winpin::isPinnable(GetShellWindow()));
+    QVERIFY(!winpin::isPinnable(reinterpret_cast<winpin::WindowId>(GetShellWindow())));
     if (HWND taskbar = FindWindowW(L"Shell_TrayWnd", nullptr))
-        QVERIFY(!winpin::isPinnable(taskbar));
-    QVERIFY(!winpin::isPinnable(nullptr));
+        QVERIFY(!winpin::isPinnable(reinterpret_cast<winpin::WindowId>(taskbar)));
+    QVERIFY(!winpin::isPinnable(0));
 }
 
 // Uses a scratch key, never the real Run key.

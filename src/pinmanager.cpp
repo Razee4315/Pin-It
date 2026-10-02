@@ -8,10 +8,6 @@
 
 #include <utility>
 
-namespace {
-inline void *H(intptr_t h) { return reinterpret_cast<void *>(h); }
-} // namespace
-
 PinManager::PinManager(QObject *parent)
     : QObject(parent)
 {
@@ -83,26 +79,26 @@ bool PinManager::pin(intptr_t hwnd, bool announce)
     if (isPinned(hwnd))
         return true;
 
-    if (!winpin::isValidWindow(H(hwnd))) {
+    if (!winpin::isValidWindow(hwnd)) {
         if (announce)
             emit errorOccurred(tr("That window no longer exists."));
         return false;
     }
 
-    if (!winpin::isPinnable(H(hwnd))) {
+    if (!winpin::isPinnable(hwnd)) {
         // The desktop, the taskbar, Start… or PinIt itself.
         if (announce)
             emit errorOccurred(tr("That window can't be pinned."));
         return false;
     }
 
-    const QString title = winpin::windowTitle(H(hwnd));
-    const QString proc  = winpin::processName(H(hwnd));
+    const QString title = winpin::windowTitle(hwnd);
+    const QString proc  = winpin::processName(hwnd);
     // Some apps keep themselves on top (Task Manager's "Always on top", media
     // players). Remember that so unpinning doesn't take it away from them.
-    const bool wasTopmost = winpin::isTopmost(H(hwnd));
+    const bool wasTopmost = winpin::isTopmost(hwnd);
 
-    if (!winpin::applyTopmost(H(hwnd)) || !winpin::isTopmost(H(hwnd))) {
+    if (!winpin::applyTopmost(hwnd) || !winpin::isTopmost(hwnd)) {
         // UIPI silently blocks SetWindowPos on elevated windows; verifying the
         // style actually took is how we detect that (same as the Rust port).
         if (announce) {
@@ -118,9 +114,9 @@ bool PinManager::pin(intptr_t hwnd, bool announce)
     w.title = title;
     w.processName = proc;
     w.opacity = 100;
-    w.wasLayered = winpin::isLayered(H(hwnd));   // remember its original style
+    w.wasLayered = winpin::isLayered(hwnd);   // remember its original style
     w.wasTopmost = wasTopmost;
-    w.wasClickThrough = winpin::isClickThrough(H(hwnd));
+    w.wasClickThrough = winpin::isClickThrough(hwnd);
     w.clickThrough = w.wasClickThrough;
     m_pinned.push_back(w);
 
@@ -146,17 +142,17 @@ bool PinManager::pin(intptr_t hwnd, bool announce)
 
 bool PinManager::release(const PinnedWindow &window)
 {
-    if (!winpin::isValidWindow(H(window.hwnd)))
+    if (!winpin::isValidWindow(window.hwnd))
         return false;
 
     // Only undo opacity if we actually changed it — otherwise we'd reset an
     // app that manages its own transparency. keepLayered preserves its style.
     if (window.clickThrough && !window.wasClickThrough)
-        winpin::setClickThrough(H(window.hwnd), false);
+        winpin::setClickThrough(window.hwnd, false);
     if (window.opacityChanged)
-        winpin::restoreOpacity(H(window.hwnd), window.wasLayered);
+        winpin::restoreOpacity(window.hwnd, window.wasLayered);
     if (!window.wasTopmost)
-        winpin::removeTopmost(H(window.hwnd));
+        winpin::removeTopmost(window.hwnd);
     return true;
 }
 
@@ -200,20 +196,19 @@ bool PinManager::toggle(intptr_t hwnd)
 
 void PinManager::toggleForeground()
 {
-    void *fg = winpin::foregroundWindow();
+    const intptr_t fg = winpin::foregroundWindow();
     if (!fg) {
         emit errorOccurred(tr("No window to pin — click a window first."));
         return;
     }
-    toggle(reinterpret_cast<intptr_t>(fg));
+    toggle(fg);
 }
 
 void PinManager::adjustForegroundOpacity(int deltaPercent)
 {
-    void *fg = winpin::foregroundWindow();
-    if (!fg)
+    const intptr_t hwnd = winpin::foregroundWindow();
+    if (!hwnd)
         return;
-    const intptr_t hwnd = reinterpret_cast<intptr_t>(fg);
     const PinnedWindow *w = find(hwnd);
     if (!w) {
         // Only pinned windows can be faded; say so instead of doing nothing.
@@ -232,7 +227,7 @@ bool PinManager::setOpacity(intptr_t hwnd, int percent)
     if (percent < winpin::kMinOpacity) percent = winpin::kMinOpacity;
     if (percent > winpin::kMaxOpacity) percent = winpin::kMaxOpacity;
 
-    if (!winpin::setOpacityPercent(H(hwnd), percent))
+    if (!winpin::setOpacityPercent(hwnd, percent))
         return false;
 
     w->opacity = percent;
@@ -251,9 +246,9 @@ bool PinManager::setClickThrough(intptr_t hwnd, bool enabled)
     // Windows only honours click-through on layered windows, and a layered
     // window needs an alpha set to be drawn at all — which is exactly what
     // setting the opacity does.
-    if (enabled && !winpin::isLayered(H(hwnd)) && !setOpacity(hwnd, w->opacity))
+    if (enabled && !winpin::isLayered(hwnd) && !setOpacity(hwnd, w->opacity))
         return false;
-    if (!winpin::setClickThrough(H(hwnd), enabled))
+    if (!winpin::setClickThrough(hwnd, enabled))
         return false;
 
     w->clickThrough = enabled;
@@ -265,15 +260,15 @@ bool PinManager::setClickThrough(intptr_t hwnd, bool enabled)
 void PinManager::reenforce()
 {
     const qsizetype before = m_pinned.size();
-    m_pinned.removeIf([](const PinnedWindow &w) { return !winpin::isValidWindow(H(w.hwnd)); });
+    m_pinned.removeIf([](const PinnedWindow &w) { return !winpin::isValidWindow(w.hwnd); });
 
     for (PinnedWindow &w : m_pinned) {
-        if (!winpin::isTopmost(H(w.hwnd)))
-            winpin::applyTopmost(H(w.hwnd));
+        if (!winpin::isTopmost(w.hwnd))
+            winpin::applyTopmost(w.hwnd);
 
         // Browsers and editors retitle their window all the time. Keep the
         // list — and the title saved for the next restore — current.
-        const QString title = winpin::windowTitle(H(w.hwnd));
+        const QString title = winpin::windowTitle(w.hwnd);
         if (title != w.title && !title.isEmpty()) {
             w.title = title;
             schedulePersist();
@@ -298,13 +293,12 @@ void PinManager::restorePending()
     // Only the window in front is checked: a window that has just opened is
     // the foreground window, and looking at one window costs next to nothing
     // (no enumeration of every window on each tick).
-    void *fg = winpin::foregroundWindow();
-    const intptr_t hwnd = reinterpret_cast<intptr_t>(fg);
-    if (!fg || isPinned(hwnd) || !winpin::isPinnable(fg))
+    const intptr_t hwnd = winpin::foregroundWindow();
+    if (!hwnd || isPinned(hwnd) || !winpin::isPinnable(hwnd))
         return;
 
-    const QString title = winpin::windowTitle(fg);
-    const QString proc = winpin::processName(fg);
+    const QString title = winpin::windowTitle(hwnd);
+    const QString proc = winpin::processName(hwnd);
     for (const persistence::SavedPin &pending : std::as_const(m_pending)) {
         if (!pinmatch::matches(pending, proc, title))
             continue;

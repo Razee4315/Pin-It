@@ -94,7 +94,7 @@ namespace pinflash {
 
 void show(intptr_t hwnd, Kind kind)
 {
-    const QRect geometry = toLogical(winpin::frameRect(reinterpret_cast<void *>(hwnd)));
+    const QRect geometry = toLogical(winpin::frameRect(hwnd));
     if (geometry.isEmpty())
         return;
 

@@ -10,7 +10,9 @@
 #include <algorithm>
 
 namespace {
-inline HWND H(void *hwnd) { return reinterpret_cast<HWND>(hwnd); }
+// The one place a WindowId becomes an HWND again (and back).
+inline HWND H(winpin::WindowId hwnd) { return reinterpret_cast<HWND>(hwnd); }
+inline winpin::WindowId Id(HWND hwnd) { return reinterpret_cast<winpin::WindowId>(hwnd); }
 
 HWINEVENTHOOK g_foregroundHook = nullptr;
 winpin::ForegroundCallback g_foregroundCallback = nullptr;
@@ -37,7 +39,7 @@ int alphaToPercent(int alpha)
     return (alpha * 100 + 127) / 255;           // rounded
 }
 
-QString windowTitle(void *hwnd)
+QString windowTitle(WindowId hwnd)
 {
     const int len = GetWindowTextLengthW(H(hwnd));
     if (len <= 0)
@@ -51,7 +53,7 @@ QString windowTitle(void *hwnd)
     return QString::fromWCharArray(buf.data(), copied);
 }
 
-QString processName(void *hwnd)
+QString processName(WindowId hwnd)
 {
     DWORD pid = 0;
     GetWindowThreadProcessId(H(hwnd), &pid);
@@ -74,36 +76,36 @@ QString processName(void *hwnd)
     return result;
 }
 
-void *foregroundWindow()
+WindowId foregroundWindow()
 {
-    return reinterpret_cast<void *>(GetForegroundWindow());
+    return Id(GetForegroundWindow());
 }
 
-bool isValidWindow(void *hwnd)
+bool isValidWindow(WindowId hwnd)
 {
     return IsWindow(H(hwnd)) != FALSE;
 }
 
-bool isTopmost(void *hwnd)
+bool isTopmost(WindowId hwnd)
 {
     const LONG ex = GetWindowLongW(H(hwnd), GWL_EXSTYLE);
     return (static_cast<DWORD>(ex) & WS_EX_TOPMOST) != 0;
 }
 
-bool isLayered(void *hwnd)
+bool isLayered(WindowId hwnd)
 {
     const LONG ex = GetWindowLongW(H(hwnd), GWL_EXSTYLE);
     return (static_cast<DWORD>(ex) & WS_EX_LAYERED) != 0;
 }
 
-QString className(void *hwnd)
+QString className(WindowId hwnd)
 {
     wchar_t buf[256] = {0};
     const int len = GetClassNameW(H(hwnd), buf, 256);
     return QString::fromWCharArray(buf, len);
 }
 
-QRect frameRect(void *hwnd)
+QRect frameRect(WindowId hwnd)
 {
     RECT r = {};
     if (FAILED(DwmGetWindowAttribute(H(hwnd), DWMWA_EXTENDED_FRAME_BOUNDS, &r, sizeof(r)))
@@ -134,7 +136,7 @@ bool isShellClass(const QString &className)
     return false;
 }
 
-bool isPinnable(void *hwnd)
+bool isPinnable(WindowId hwnd)
 {
     if (!isValidWindow(hwnd))
         return false;
@@ -147,19 +149,19 @@ bool isPinnable(void *hwnd)
     return !isShellClass(className(hwnd));
 }
 
-bool applyTopmost(void *hwnd)
+bool applyTopmost(WindowId hwnd)
 {
     return SetWindowPos(H(hwnd), HWND_TOPMOST, 0, 0, 0, 0,
                         SWP_NOMOVE | SWP_NOSIZE) != FALSE;
 }
 
-bool removeTopmost(void *hwnd)
+bool removeTopmost(WindowId hwnd)
 {
     return SetWindowPos(H(hwnd), HWND_NOTOPMOST, 0, 0, 0, 0,
                         SWP_NOMOVE | SWP_NOSIZE) != FALSE;
 }
 
-bool setOpacityPercent(void *hwnd, int percent)
+bool setOpacityPercent(WindowId hwnd, int percent)
 {
     percent = std::clamp(percent, kMinOpacity, kMaxOpacity);
 
@@ -171,13 +173,13 @@ bool setOpacityPercent(void *hwnd, int percent)
     return SetLayeredWindowAttributes(H(hwnd), RGB(0, 0, 0), alpha, LWA_ALPHA) != FALSE;
 }
 
-bool isClickThrough(void *hwnd)
+bool isClickThrough(WindowId hwnd)
 {
     const LONG ex = GetWindowLongW(H(hwnd), GWL_EXSTYLE);
     return (static_cast<DWORD>(ex) & WS_EX_TRANSPARENT) != 0;
 }
 
-bool setClickThrough(void *hwnd, bool enabled)
+bool setClickThrough(WindowId hwnd, bool enabled)
 {
     const LONG ex = GetWindowLongW(H(hwnd), GWL_EXSTYLE);
     const LONG wanted = enabled ? (ex | WS_EX_TRANSPARENT) : (ex & ~WS_EX_TRANSPARENT);
@@ -186,7 +188,7 @@ bool setClickThrough(void *hwnd, bool enabled)
     return isClickThrough(hwnd) == enabled;
 }
 
-int opacityPercent(void *hwnd)
+int opacityPercent(WindowId hwnd)
 {
     const LONG ex = GetWindowLongW(H(hwnd), GWL_EXSTYLE);
     if ((static_cast<DWORD>(ex) & WS_EX_LAYERED) == 0)
@@ -200,7 +202,7 @@ int opacityPercent(void *hwnd)
     return 100;
 }
 
-bool restoreOpacity(void *hwnd, bool keepLayered)
+bool restoreOpacity(WindowId hwnd, bool keepLayered)
 {
     SetLayeredWindowAttributes(H(hwnd), RGB(0, 0, 0), 255, LWA_ALPHA);
 
@@ -233,7 +235,7 @@ QVector<PinnableWindow> enumerateWindows()
         if (SUCCEEDED(DwmGetWindowAttribute(hwnd, DWMWA_CLOAKED, &cloaked, sizeof(cloaked)))
             && cloaked)
             return TRUE;
-        if (isPinnable(hwnd))
+        if (isPinnable(Id(hwnd)))
             out->push_back(hwnd);
         return TRUE;
     };
@@ -243,11 +245,11 @@ QVector<PinnableWindow> enumerateWindows()
     result.reserve(handles.size());
     for (HWND h : handles) {
         PinnableWindow w;
-        w.hwnd = reinterpret_cast<intptr_t>(h);
-        w.title = windowTitle(h);
+        w.hwnd = Id(h);
+        w.title = windowTitle(w.hwnd);
         if (w.title.isEmpty())
             continue;
-        w.processName = processName(h);
+        w.processName = processName(w.hwnd);
         result.push_back(w);
     }
     return result;
