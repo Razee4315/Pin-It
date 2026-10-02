@@ -79,7 +79,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | C-04 | Remove `PinManager::pinnedCount` | todo | |
 | C-05 | Unused / missing includes | verified | Build with -Wall -Wextra clean; tests pass |
 | C-06 | Unused link libraries and `CMAKE_AUTOUIC` | verified | Clean reconfigure, link and tests pass; objdump shows no ADVAPI32 import |
-| C-07 | Unreachable `icon-128.png` fallback | todo | |
+| C-07 | Unreachable `icon-128.png` fallback | done |  |
 | C-08 | `resources/logo.svg` unreferenced | todo | |
 | C-09 | Stale remote branches | todo | |
 | C-10 | Stale / wrong comments | verified | Build passes; installer and CMake comments corrected in their own commits (F-33, O-01) |
@@ -98,7 +98,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 |----|---------|--------|----------------------------|
 | O-01 | Drop Qt Network (mutex + window message for single instance) | verified | Harness: second process finds the primary, one show request, hidden and minimised windows are shown and take the foreground; PinIt.exe no longer imports Qt6Network.dll (objdump) |
 | O-02 | Trim unneeded Qt plugins from the bundle | todo | |
-| O-03 | Embed the small icon instead of the 141 KB one | todo | |
+| O-03 | Embed the small icon instead of the 141 KB one | done |  |
 | O-04 | In-place list updates (same work as F-20) | verified | Same change and check as F-20 |
 | O-05 | Cache settings in memory instead of re-reading the file | todo | |
 | O-06 | Smaller README demo GIF | todo | |

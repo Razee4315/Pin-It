@@ -37,8 +37,7 @@ namespace {
 
 QIcon appIcon()
 {
-    QIcon ic(QStringLiteral(":/icon.png"));
-    return ic.isNull() ? QIcon(QStringLiteral(":/icon-128.png")) : ic;
+    return QIcon(QStringLiteral(":/icon.png"));
 }
 
 // A single keyboard-key chip, e.g. [ Win ].
