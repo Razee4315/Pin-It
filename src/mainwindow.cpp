@@ -83,6 +83,11 @@ MainWindow::MainWindow(PinManager *manager, QWidget *parent)
 
     connect(m_manager, &PinManager::pinsChanged, this, &MainWindow::syncList);
     connect(m_manager, &PinManager::errorOccurred, this, &MainWindow::notify);
+    connect(m_manager, &PinManager::titleChanged, this,
+            [this](intptr_t hwnd, const QString &title) {
+                if (PinRow *row = m_rows.value(hwnd))
+                    row->setTitle(title);
+            });
     connect(m_manager, &PinManager::opacityChanged, this, [this](intptr_t hwnd, int percent) {
         if (PinRow *row = m_rows.value(hwnd))
             row->setOpacity(percent);

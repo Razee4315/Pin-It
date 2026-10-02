@@ -26,12 +26,14 @@ public:
     // Reflect an opacity change made elsewhere (the hotkeys) without echoing
     // it back as a request.
     void setOpacity(int percent);
+    void setTitle(const QString &title);
 
 signals:
     void opacityRequested(int percent);
     void unpinRequested();
 
 private:
+    QLabel  *m_title = nullptr;
     QSlider *m_slider = nullptr;
     QLabel  *m_percent = nullptr;
 };

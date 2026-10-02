@@ -110,6 +110,7 @@ PinRow::PinRow(const PinnedWindow &window, QWidget *parent)
     auto *name = new ElidedLabel(displayTitle(window.title));
     name->setStyleSheet(QStringLiteral("font-weight: 600;"));
     name->setToolTip(window.title);   // full title on hover
+    m_title = name;
     auto *proc = new ElidedLabel(window.processName);
     proc->setProperty("role", "muted");
     info->addWidget(name);
@@ -145,6 +146,12 @@ PinRow::PinRow(const PinnedWindow &window, QWidget *parent)
     unpinBtn->setCursor(Qt::PointingHandCursor);
     connect(unpinBtn, &QPushButton::clicked, this, &PinRow::unpinRequested);
     row->addWidget(unpinBtn);
+}
+
+void PinRow::setTitle(const QString &title)
+{
+    static_cast<ElidedLabel *>(m_title)->setFullText(displayTitle(title));
+    m_title->setToolTip(title);
 }
 
 void PinRow::setOpacity(int percent)

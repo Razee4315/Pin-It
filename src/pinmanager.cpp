@@ -204,9 +204,18 @@ void PinManager::reenforce()
     const qsizetype before = m_pinned.size();
     m_pinned.removeIf([](const PinnedWindow &w) { return !winpin::isValidWindow(H(w.hwnd)); });
 
-    for (const PinnedWindow &w : m_pinned) {
+    for (PinnedWindow &w : m_pinned) {
         if (!winpin::isTopmost(H(w.hwnd)))
             winpin::applyTopmost(H(w.hwnd));
+
+        // Browsers and editors retitle their window all the time. Keep the
+        // list — and the title saved for the next restore — current.
+        const QString title = winpin::windowTitle(H(w.hwnd));
+        if (title != w.title && title != QLatin1String("Unknown")) {
+            w.title = title;
+            schedulePersist();
+            emit titleChanged(w.hwnd, title);
+        }
     }
 
     if (m_pinned.size() != before) {

@@ -66,10 +66,11 @@ signals:
     void pinsChanged();
     void pinToggled(bool isPinned, const QString &title, const QString &process);
     void opacityChanged(intptr_t hwnd, int percent);
+    void titleChanged(intptr_t hwnd, const QString &title);
     void errorOccurred(const QString &message);
 
 private slots:
-    void reenforce();          // periodic: re-apply topmost, drop dead windows
+    void reenforce();          // periodic: re-apply topmost, drop dead windows, refresh titles
 
 private:
     // Give a window back the way we found it. Returns false if it is gone.
