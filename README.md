@@ -38,11 +38,13 @@ Press `Win+Ctrl+T` and the focused window stays on top of everything else. Slide
 
 ## Features
 
-- **Global hotkey pinning** — `Win+Ctrl+T` pins/unpins the focused window. No clicking through menus.
+- **Global hotkey pinning** — `Win+Ctrl+T` pins/unpins the focused window, with a brief outline around it so you see it happen. No clicking through menus.
 - **Per-window transparency** — make any pinned window see-through with `Win+Ctrl+=` / `Win+Ctrl+-` or a slider. Great for reference docs, video calls, or notes over your work.
 - **Pins survive restarts** — PinIt remembers what you pinned (and its opacity). After a restart it pins each window again as soon as that window is open.
 - **Windows 11 topmost re-enforcement** — Win11's compositor sometimes strips the always-on-top flag; PinIt re-applies it automatically.
-- **System tray app** — closes to the tray and stays out of your way. Optional start-with-Windows.
+- **Click-through** — let mouse clicks pass through a faded window to whatever is behind it.
+- **System tray app** — closes to the tray and stays out of your way; the tray menu lists your pinned windows. Optional start-with-Windows.
+- **Light and dark** — follows your Windows colour mode.
 - **Tiny and fast** — native C++/Qt talking directly to the Windows API. Minimal RAM, instant response.
 
 ## Keyboard Shortcuts

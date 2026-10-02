@@ -19,7 +19,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | F-08 | 1 | P3 | 2 s polling only | verified | Harness: topmost stripped right after a timer tick was restored within 0.6 s of another window coming to the front |
 | F-09 | 1 | P3 | Session-ending flag sticks after cancelled shutdown | verified | Harness: WM_QUERYENDSESSION then WM_ENDSESSION(FALSE) → quit clears pins; without the cancel they are kept |
 | F-10 | 1 | P3 | Messages vanish without a tray | verified | Harness: notify() with the window focused shows the in-window message; list geometry unchanged (screenshot checked) |
-| F-11 | 2 | P0 | Restart fix is unreleased | todo | |
+| F-11 | 2 | P0 | Restart fix is unreleased | blocked | Prepared: version 2.2.0, changelog, README and site metadata; the P1 restore/list fixes it depended on are in. Publishing means pushing a v2.2.0 tag, which creates a public release — needs your go-ahead after you merge |
 | F-12 | 2 | P1 | Restore is one-shot and erases unmatched pins | verified | Harness: 4 saved pins, 1 open at start → 1 pinned at saved opacity, 3 waiting rows; file keeps all 4 after an unrelated pin; awaited window pinned and outlined within 0.8 s of opening; late-titled window pinned once the title matches; another window of the same app ignored; forget/quit/session-end all checked |
 | F-13 | 2 | P1 | Restore fallback pins the wrong window | verified |  |
 | F-14 | 2 | P1 | Pinned row clips its unpin button | verified |  |
