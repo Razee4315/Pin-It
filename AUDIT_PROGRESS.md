@@ -101,6 +101,6 @@ and the affected flow has been exercised (the "How verified" column says how).
 | O-03 | Embed the small icon instead of the 141 KB one | verified | PinIt.exe 753,576 → 610,572 bytes; icon renders in header, tray, About (screenshots) |
 | O-04 | In-place list updates (same work as F-20) | verified | Same change and check as F-20 |
 | O-05 | Cache settings in memory instead of re-reading the file | verified | Unit tests (file contents checked after dropCache) + harness restore/crash/save/tray/shortcuts/autostart scenarios |
-| O-06 | Smaller README demo GIF | todo | |
+| O-06 | Smaller README demo GIF | verified | Re-encoded from the MP4 at 720 px / 10 fps / 128 colours: 6,510,997 → 3,449,566 bytes (−47%); frame checked, README shows it at 720 px. Note: the recording itself still shows the old UI (see report) |
 | O-07 | Compress `og-image.png` | todo | |
 | O-08 | Drop the Google Fonts request on the site | todo | |
