@@ -88,7 +88,6 @@ private:
     QPushButton     *m_addButton = nullptr;
     QPushButton     *m_unpinAll = nullptr;
     QPushButton     *m_aboutButton = nullptr;
-    QLabel          *m_emptyLabel = nullptr;
     QLabel          *m_pinnedHeader = nullptr;
     QLabel          *m_hotkeyWarning = nullptr;
     QStringList      m_hotkeyProblems;
@@ -98,7 +97,6 @@ private:
     QCheckBox       *m_soundBox = nullptr;
     QCheckBox       *m_notifyBox = nullptr;
     QCheckBox       *m_autostartBox = nullptr;
-    QLabel          *m_shortcutsLabel = nullptr;
 
     // Running since the window last lost focus (see toggleVisibility).
     QElapsedTimer m_sinceDeactivated;
