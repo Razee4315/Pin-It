@@ -16,7 +16,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | F-05 | 1 | P2 | Unpin strips an app's own always-on-top | done |  |
 | F-06 | 1 | P2 | Titles never refreshed | done |  |
 | F-07 | 1 | P3 | Buried window is hidden instead of raised | done |  |
-| F-08 | 1 | P3 | 2 s polling only | todo | |
+| F-08 | 1 | P3 | 2 s polling only | done |  |
 | F-09 | 1 | P3 | Session-ending flag sticks after cancelled shutdown | done |  |
 | F-10 | 1 | P3 | Messages vanish without a tray | done |  |
 | F-11 | 2 | P0 | Restart fix is unreleased | todo | |

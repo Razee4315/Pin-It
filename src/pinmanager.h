@@ -27,6 +27,7 @@ class PinManager : public QObject
     Q_OBJECT
 public:
     explicit PinManager(QObject *parent = nullptr);
+    ~PinManager() override;
 
     // High-level actions (hwnd as intptr_t for Qt-friendliness).
     // announce=false suppresses the pin chime + tray balloon (used when
@@ -80,7 +81,7 @@ private:
     static bool release(const PinnedWindow &window);
     void persist() const;
     void schedulePersist();    // coalesce rapid writes (opacity slider drags)
-    void updateTimer();        // run the re-enforce timer only while pins exist
+    void updateTimer();        // watch (timer + foreground events) only while pins exist
 
     PinnedWindow *find(intptr_t hwnd);
     const PinnedWindow *find(intptr_t hwnd) const;

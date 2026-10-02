@@ -14,11 +14,11 @@ inline void *H(intptr_t h) { return reinterpret_cast<void *>(h); }
 PinManager::PinManager(QObject *parent)
     : QObject(parent)
 {
-    // Windows 11's compositor occasionally strips the topmost flag. Rather
-    // than wiring a SetWinEventHook callback, we re-assert it on a timer and
-    // sweep out windows that have since closed. Cheap and robust.
-    // The timer only runs while at least one window is pinned (see updateTimer)
-    // so an idle PinIt uses zero CPU.
+    // Windows 11's compositor occasionally strips the topmost flag. We put it
+    // back — and sweep out windows that have since closed — whenever another
+    // window comes to the front (the moment it matters), with a slow timer as
+    // a safety net. Both only run while at least one window is pinned (see
+    // updateTimer) so an idle PinIt uses zero CPU.
     m_timer = new QTimer(this);
     m_timer->setInterval(2000);
     connect(m_timer, &QTimer::timeout, this, &PinManager::reenforce);
@@ -32,6 +32,11 @@ PinManager::PinManager(QObject *parent)
     connect(m_persistTimer, &QTimer::timeout, this, [this]() { persist(); });
 }
 
+PinManager::~PinManager()
+{
+    winpin::stopWatchingForeground();
+}
+
 void PinManager::schedulePersist()
 {
     m_persistTimer->start();   // (re)start; a write fires once the burst settles
@@ -39,10 +44,14 @@ void PinManager::schedulePersist()
 
 void PinManager::updateTimer()
 {
-    if (m_pinned.isEmpty())
+    if (m_pinned.isEmpty()) {
         m_timer->stop();
-    else if (!m_timer->isActive())
+        winpin::stopWatchingForeground();
+    } else if (!m_timer->isActive()) {
         m_timer->start();
+        winpin::watchForeground(
+            [](void *self) { static_cast<PinManager *>(self)->reenforce(); }, this);
+    }
 }
 
 PinnedWindow *PinManager::find(intptr_t hwnd)

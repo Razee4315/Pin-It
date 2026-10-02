@@ -70,6 +70,14 @@ int alphaToPercent(int alpha);
 // Every visible, non-tool top-level window.
 QVector<PinnableWindow> enumerateWindows();
 
+// --- Foreground changes ---------------------------------------------------
+// Calls `callback(context)` on this thread's event loop whenever another
+// application's window comes to the front. One watcher at a time; watching
+// again replaces the previous one.
+using ForegroundCallback = void (*)(void *context);
+bool watchForeground(ForegroundCallback callback, void *context);
+void stopWatchingForeground();
+
 // --- Misc -----------------------------------------------------------------
 // False when the user turned off "Animation effects" in Windows settings.
 bool animationsEnabled();

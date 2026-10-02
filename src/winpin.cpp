@@ -11,6 +11,16 @@
 
 namespace {
 inline HWND H(void *hwnd) { return reinterpret_cast<HWND>(hwnd); }
+
+HWINEVENTHOOK g_foregroundHook = nullptr;
+winpin::ForegroundCallback g_foregroundCallback = nullptr;
+void *g_foregroundContext = nullptr;
+
+void CALLBACK onForegroundEvent(HWINEVENTHOOK, DWORD event, HWND, LONG, LONG, DWORD, DWORD)
+{
+    if (event == EVENT_SYSTEM_FOREGROUND && g_foregroundCallback)
+        g_foregroundCallback(g_foregroundContext);
+}
 } // namespace
 
 namespace winpin {
@@ -218,6 +228,28 @@ QVector<PinnableWindow> enumerateWindows()
         result.push_back(w);
     }
     return result;
+}
+
+bool watchForeground(ForegroundCallback callback, void *context)
+{
+    stopWatchingForeground();
+    g_foregroundCallback = callback;
+    g_foregroundContext = context;
+    // Out-of-context: Windows queues the event to this thread, so the callback
+    // runs from our own message loop — nothing is injected into other apps.
+    g_foregroundHook = SetWinEventHook(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND,
+                                       nullptr, onForegroundEvent, 0, 0,
+                                       WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
+    return g_foregroundHook != nullptr;
+}
+
+void stopWatchingForeground()
+{
+    if (g_foregroundHook)
+        UnhookWinEvent(g_foregroundHook);
+    g_foregroundHook = nullptr;
+    g_foregroundCallback = nullptr;
+    g_foregroundContext = nullptr;
 }
 
 bool animationsEnabled()
