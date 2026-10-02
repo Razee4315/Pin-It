@@ -5,6 +5,7 @@
 #include "shortcutsdialog.h"
 #include "pinrow.h"
 #include "pinflash.h"
+#include "windowpicker.h"
 
 #include <QApplication>
 #include <QVBoxLayout>
@@ -17,8 +18,6 @@
 #include <QSystemTrayIcon>
 #include <QMenu>
 #include <QDialog>
-#include <QListWidget>
-#include <QDialogButtonBox>
 #include <QCloseEvent>
 #include <QPixmap>
 #include <QIcon>
@@ -465,39 +464,17 @@ void MainWindow::syncList()
 
 void MainWindow::addWindowDialog()
 {
-    QDialog dlg(this);
-    dlg.setWindowTitle(tr("Pin a window"));
-    dlg.setWindowIcon(appIcon());
-    dlg.resize(400, 440);
-    auto *l = new QVBoxLayout(&dlg);
-    auto *prompt = new QLabel(tr("Choose a window to keep on top:"), &dlg);
-    l->addWidget(prompt);
-
-    auto *list = new QListWidget(&dlg);
+    QVector<winpin::PinnableWindow> candidates;
     for (const winpin::PinnableWindow &w : winpin::enumerateWindows()) {
-        if (m_manager->isPinned(w.hwnd))
-            continue;
-        auto *item = new QListWidgetItem(
-            QStringLiteral("%1   —   %2").arg(displayTitle(w.title), w.processName), list);
-        item->setToolTip(w.title);
-        item->setData(Qt::UserRole, QVariant::fromValue<qlonglong>(w.hwnd));
+        if (!m_manager->isPinned(w.hwnd))
+            candidates.push_back(w);
     }
-    l->addWidget(list, 1);
 
-    auto *buttons = new QDialogButtonBox(
-        QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dlg);
-    l->addWidget(buttons);
-    connect(buttons, &QDialogButtonBox::accepted, &dlg, &QDialog::accept);
-    connect(buttons, &QDialogButtonBox::rejected, &dlg, &QDialog::reject);
-    connect(list, &QListWidget::itemDoubleClicked, &dlg, &QDialog::accept);
-
-    if (dlg.exec() == QDialog::Accepted) {
-        if (QListWidgetItem *sel = list->currentItem()) {
-            const intptr_t hwnd =
-                static_cast<intptr_t>(sel->data(Qt::UserRole).toLongLong());
-            m_manager->pin(hwnd);
-        }
-    }
+    WindowPicker picker(candidates, this);
+    if (picker.exec() != QDialog::Accepted)
+        return;
+    if (const intptr_t hwnd = picker.selectedWindow())
+        m_manager->pin(hwnd);
 }
 
 void MainWindow::showAbout()

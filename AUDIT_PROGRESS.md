@@ -30,7 +30,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | F-19 | 2 | P2 | List order is hash order | verified | Harness: 6 pins listed in pin order; order kept after an unpin |
 | F-20 | 2 | P2 | List rebuilt from scratch on every change | verified | Harness: first row object identical before/after 4 more pins and an unpin; removed row disappears |
 | F-21 | 2 | P2 | Picker lists shell / cloaked windows | done |  |
-| F-22 | 2 | P2 | Picker: no search, icons, empty state; dead-end OK | todo | |
+| F-22 | 2 | P2 | Picker: no search, icons, empty state; dead-end OK | done |  |
 | F-23 | 2 | P2 | Accessible names and contrast | todo | |
 | F-24 | 2 | P3 | Layered style left behind after crash re-pin | verified | Harness: instance destroyed without cleanup leaves the window topmost+layered; next instance restores it and unpin removes both |
 | F-25 | 3 | P2 | Shift-only shortcuts accepted | verified | Unit test shortcutNeedsWinCtrlOrAlt + harness: Shift+A from config is refused at registration |
