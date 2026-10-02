@@ -7,7 +7,6 @@
 //   MainWindow           -> UI + system tray
 //
 #include <QApplication>
-#include <QMessageBox>
 #include <QIcon>
 #include <QSystemTrayIcon>
 #include <QSessionManager>

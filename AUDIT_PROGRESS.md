@@ -77,7 +77,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | C-02 | Remove `m_emptyLabel`, `m_shortcutsLabel` | verified | No references left (grep); build and tests pass |
 | C-03 | Remove `winpin::opacityPercent` | verified | No references left (grep); build and tests pass |
 | C-04 | Remove `PinManager::pinnedCount` | todo | |
-| C-05 | Unused / missing includes | todo | |
+| C-05 | Unused / missing includes | verified | Build with -Wall -Wextra clean; tests pass |
 | C-06 | Unused link libraries and `CMAKE_AUTOUIC` | todo | |
 | C-07 | Unreachable `icon-128.png` fallback | todo | |
 | C-08 | `resources/logo.svg` unreferenced | todo | |

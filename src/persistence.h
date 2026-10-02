@@ -6,7 +6,6 @@
 // install's pins and settings carry straight over to this C++ build.
 //
 #include <QString>
-#include <QHash>
 #include <QVector>
 
 namespace persistence {
