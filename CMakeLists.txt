@@ -45,6 +45,7 @@ qt_add_executable(PinIt WIN32
     src/pinmanager.h        src/pinmanager.cpp
     src/pinmatch.h
     src/globalhotkey.h      src/globalhotkey.cpp
+    src/sessionwatcher.h    src/sessionwatcher.cpp
     src/mainwindow.h        src/mainwindow.cpp
     src/pinrow.h            src/pinrow.cpp
     src/logging.h           src/logging.cpp

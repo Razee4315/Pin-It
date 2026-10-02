@@ -61,6 +61,9 @@ public:
     // in main). Makes the next restoreAllWindows() keep the saved pins so the
     // advertised "pins come back after a restart" behaviour works.
     void markSessionEnding() { m_sessionEnding = true; }
+    // The shutdown was called off (another app blocked it, or the user
+    // cancelled): a later Quit is a manual quit again.
+    void clearSessionEnding() { m_sessionEnding = false; }
 
 signals:
     void pinsChanged();

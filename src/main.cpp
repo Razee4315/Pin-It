@@ -16,6 +16,7 @@
 
 #include "pinmanager.h"
 #include "globalhotkey.h"
+#include "sessionwatcher.h"
 #include "mainwindow.h"
 #include "persistence.h"
 #include "logging.h"
@@ -118,6 +119,12 @@ int main(int argc, char *argv[])
     // manual quit we forget them. commitDataRequest fires before aboutToQuit.
     QObject::connect(&app, &QGuiApplication::commitDataRequest, &manager,
                      [&manager](QSessionManager &) { manager.markSessionEnding(); });
+    // ...and notice when that shutdown is cancelled, so the flag doesn't stick
+    // and make a later manual quit keep the pins.
+    SessionWatcher sessionWatcher;
+    app.installNativeEventFilter(&sessionWatcher);
+    QObject::connect(&sessionWatcher, &SessionWatcher::sessionEndCancelled, &manager,
+                     &PinManager::clearSessionEnding);
 
     // Listen for later launches; each connection means "show the window".
     QLocalServer::removeServer(kInstanceServer);   // clear a stale socket from a crash
