@@ -303,6 +303,7 @@ void MainWindow::syncList()
             ++it;
         } else {
             m_listLayout->removeWidget(it.value());
+            it.value()->hide();
             it.value()->deleteLater();
             it = m_rows.erase(it);
         }

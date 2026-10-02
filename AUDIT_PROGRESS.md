@@ -9,10 +9,10 @@ and the affected flow has been exercised (the "How verified" column says how).
 
 | ID | Tier | Sev | Summary | Status | How verified / why blocked |
 |----|------|-----|---------|--------|----------------------------|
-| F-01 | 1 | P1 | Hotkey pins shell windows / PinIt itself | verified | Unit test shellWindowClassesAreNotPinnable + harness: desktop, taskbar and own window refused with an error; foreign window still pins/unpins |
+| F-01 | 1 | P1 | Hotkey pins shell windows / PinIt itself | verified |  |
 | F-02 | 1 | P1 | Toast on every pin/unpin, no setting | todo | |
 | F-03 | 1 | P2 | Hotkey registration failure is only a toast | todo | |
-| F-04 | 1 | P2 | Tray double-click opens then hides | done |  |
+| F-04 | 1 | P2 | Tray double-click opens then hides | verified |  |
 | F-05 | 1 | P2 | Unpin strips an app's own always-on-top | todo | |
 | F-06 | 1 | P2 | Titles never refreshed | todo | |
 | F-07 | 1 | P3 | Buried window is hidden instead of raised | todo | |
@@ -21,19 +21,19 @@ and the affected flow has been exercised (the "How verified" column says how).
 | F-10 | 1 | P3 | Messages vanish without a tray | todo | |
 | F-11 | 2 | P0 | Restart fix is unreleased | todo | |
 | F-12 | 2 | P1 | Restore is one-shot and erases unmatched pins | todo | |
-| F-13 | 2 | P1 | Restore fallback pins the wrong window | verified | Unit test savedPinMatchesOnlySameAppAndTitle; restoreSaved no longer has a process-only fallback |
-| F-14 | 2 | P1 | Pinned row clips its unpin button | verified | Rendered 4 pins incl. a 90-char title: content width == viewport (315 px), every unpin button inside it |
+| F-13 | 2 | P1 | Restore fallback pins the wrong window | verified |  |
+| F-14 | 2 | P1 | Pinned row clips its unpin button | verified |  |
 | F-15 | 2 | P2 | Pinned list is only 98 px tall | todo | |
-| F-16 | 2 | P2 | Slider not synced with opacity hotkeys | done |  |
-| F-17 | 2 | P2 | Opacity hotkey silent on unpinned window | done |  |
-| F-18 | 2 | P2 | Opacity hotkeys do not repeat | done |  |
-| F-19 | 2 | P2 | List order is hash order | done |  |
-| F-20 | 2 | P2 | List rebuilt from scratch on every change | done |  |
+| F-16 | 2 | P2 | Slider not synced with opacity hotkeys | verified |  |
+| F-17 | 2 | P2 | Opacity hotkey silent on unpinned window | verified |  |
+| F-18 | 2 | P2 | Opacity hotkeys do not repeat | verified |  |
+| F-19 | 2 | P2 | List order is hash order | verified |  |
+| F-20 | 2 | P2 | List rebuilt from scratch on every change | verified |  |
 | F-21 | 2 | P2 | Picker lists shell / cloaked windows | todo | |
 | F-22 | 2 | P2 | Picker: no search, icons, empty state; dead-end OK | todo | |
 | F-23 | 2 | P2 | Accessible names and contrast | todo | |
 | F-24 | 2 | P3 | Layered style left behind after crash re-pin | todo | |
-| F-25 | 3 | P2 | Shift-only shortcuts accepted | done |  |
+| F-25 | 3 | P2 | Shift-only shortcuts accepted | verified |  |
 | F-26 | 3 | P2 | Shortcuts saved before registration is tested | todo | |
 | F-27 | 3 | P2 | Autostart checkbox ignores the registry | todo | |
 | F-28 | 3 | P3 | Empty-state hint chips go stale | todo | |
@@ -45,7 +45,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | F-34 | 3 | P3 | Second launch only flashes the taskbar | todo | |
 | F-35 | 3 | P3 | "window(s)" tooltip | todo | |
 | F-36 | 3 | P3 | About only in tray; CONTRIBUTING wrong | todo | |
-| F-37 | 4 | P2 | Window titles written to the log | done |  |
+| F-37 | 4 | P2 | Window titles written to the log | verified |  |
 | F-38 | 4 | P2 | Site invisible without JavaScript | todo | |
 | F-39 | 4 | P2 | Site does not mention SmartScreen | todo | |
 | F-40 | 4 | P3 | Autoplay video without controls | todo | |
@@ -99,7 +99,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | O-01 | Drop Qt Network (mutex + window message for single instance) | todo | |
 | O-02 | Trim unneeded Qt plugins from the bundle | todo | |
 | O-03 | Embed the small icon instead of the 141 KB one | todo | |
-| O-04 | In-place list updates (same work as F-20) | done |  |
+| O-04 | In-place list updates (same work as F-20) | verified |  |
 | O-05 | Cache settings in memory instead of re-reading the file | todo | |
 | O-06 | Smaller README demo GIF | todo | |
 | O-07 | Compress `og-image.png` | todo | |
