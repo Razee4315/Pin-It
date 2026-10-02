@@ -50,7 +50,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | F-39 | 4 | P2 | Site does not mention SmartScreen | verified | Browser: SmartScreen note renders under the hero CTA and in the download band; portable link returns 302 to the asset (direct installer link deferred, see report) |
 | F-40 | 4 | P3 | Autoplay video without controls | todo | |
 | F-41 | 4 | P3 | Failed save is ignored | todo | |
-| F-42 | 4 | P3 | CI permissions / pinning / checksums | todo | |
+| F-42 | 4 | P3 | CI permissions / pinning / checksums | blocked | Implemented: read-only token by default, write only in a tag-gated release job; actions pinned to commit SHAs; SHA256SUMS.txt and a stable-named installer published. YAML parses, but the workflow can only be proven by a CI run, which needs the branch pushed. clang-format check deliberately not added (see report) |
 | F-43 | 4 | P3 | Docs drift (size, version, restore promise) | todo | |
 
 ## Missing must-haves
