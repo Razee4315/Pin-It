@@ -60,6 +60,12 @@ bool PinManager::pin(intptr_t hwnd, bool announce)
         return false;
     }
 
+    if (!winpin::isPinnable(H(hwnd))) {
+        // The desktop, the taskbar, Start… or PinIt itself.
+        emit errorOccurred(tr("That window can't be pinned."));
+        return false;
+    }
+
     const QString title = winpin::windowTitle(H(hwnd));
     const QString proc  = winpin::processName(H(hwnd));
 

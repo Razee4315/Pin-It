@@ -24,6 +24,7 @@ private slots:
     void shortcutBuildRoundTrips();
     void shortcutBuildDisplayTokens();
     void savedPinMatchesOnlySameAppAndTitle();
+    void shellWindowClassesAreNotPinnable();
 };
 
 void TestPinIt::opacityRoundTripIsLossless()
@@ -116,6 +117,22 @@ void TestPinIt::savedPinMatchesOnlySameAppAndTitle()
 
     saved.title.clear();   // legacy entries without a title match nothing
     QVERIFY(!pinmatch::matches(saved, QStringLiteral("notepad.exe"), QString()));
+}
+
+void TestPinIt::shellWindowClassesAreNotPinnable()
+{
+    QVERIFY(winpin::isShellClass(QStringLiteral("Progman")));
+    QVERIFY(winpin::isShellClass(QStringLiteral("Shell_TrayWnd")));
+    QVERIFY(winpin::isShellClass(QStringLiteral("Windows.UI.Core.CoreWindow")));
+    QVERIFY(!winpin::isShellClass(QStringLiteral("Notepad")));
+    QVERIFY(!winpin::isShellClass(QStringLiteral("ApplicationFrameWindow")));   // UWP apps
+    QVERIFY(!winpin::isShellClass(QString()));
+
+    // The live desktop and taskbar, and a window of this very process.
+    QVERIFY(!winpin::isPinnable(GetShellWindow()));
+    if (HWND taskbar = FindWindowW(L"Shell_TrayWnd", nullptr))
+        QVERIFY(!winpin::isPinnable(taskbar));
+    QVERIFY(!winpin::isPinnable(nullptr));
 }
 
 QTEST_MAIN(TestPinIt)

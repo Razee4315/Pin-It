@@ -85,6 +85,48 @@ bool isLayered(void *hwnd)
     return (static_cast<DWORD>(ex) & WS_EX_LAYERED) != 0;
 }
 
+QString className(void *hwnd)
+{
+    wchar_t buf[256] = {0};
+    const int len = GetClassNameW(H(hwnd), buf, 256);
+    return QString::fromWCharArray(buf, len);
+}
+
+bool isShellClass(const QString &className)
+{
+    static const char *const kShellClasses[] = {
+        "Progman",                              // desktop
+        "WorkerW",                              // desktop (wallpaper host)
+        "Shell_TrayWnd",                        // taskbar
+        "Shell_SecondaryTrayWnd",               // taskbar on other monitors
+        "NotifyIconOverflowWindow",             // tray overflow (Windows 10)
+        "TopLevelWindowForOverflowXamlIsland",  // tray overflow (Windows 11)
+        "Windows.UI.Core.CoreWindow",           // Start, Search, Action Center
+        "XamlExplorerHostIslandWindow",         // Task View / Alt+Tab (Windows 11)
+        "MultitaskingViewFrame",                // Task View / Alt+Tab (Windows 10)
+        "TaskListThumbnailWnd",                 // taskbar thumbnails
+        "ForegroundStaging",                    // shell focus hand-off helper
+    };
+    for (const char *shellClass : kShellClasses) {
+        if (className == QLatin1String(shellClass))
+            return true;
+    }
+    return false;
+}
+
+bool isPinnable(void *hwnd)
+{
+    if (!isValidWindow(hwnd))
+        return false;
+
+    DWORD pid = 0;
+    GetWindowThreadProcessId(H(hwnd), &pid);
+    if (pid == GetCurrentProcessId())
+        return false;   // PinIt's own windows
+
+    return !isShellClass(className(hwnd));
+}
+
 bool applyTopmost(void *hwnd)
 {
     return SetWindowPos(H(hwnd), HWND_TOPMOST, 0, 0, 0, 0,

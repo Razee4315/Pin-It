@@ -34,6 +34,16 @@ void   *foregroundWindow();          // nullptr if none
 bool    isValidWindow(void *hwnd);
 bool    isTopmost(void *hwnd);
 bool    isLayered(void *hwnd);        // window already has WS_EX_LAYERED
+QString className(void *hwnd);        // Win32 window class, e.g. "Notepad"
+
+// --- What may be pinned ---------------------------------------------------
+// True for the window classes that make up the Windows shell itself (desktop,
+// taskbar, Start, Task View…). Pinning those makes no sense and can cover
+// everything else, so they are never offered or accepted.
+bool isShellClass(const QString &className);
+// A real, foreign application window: valid, not part of the shell and not one
+// of PinIt's own windows.
+bool isPinnable(void *hwnd);
 
 // --- Always-on-top --------------------------------------------------------
 bool applyTopmost(void *hwnd);       // HWND_TOPMOST
