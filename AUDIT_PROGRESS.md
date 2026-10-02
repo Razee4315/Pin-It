@@ -12,7 +12,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | F-01 | 1 | P1 | Hotkey pins shell windows / PinIt itself | verified | Unit test shellWindowClassesAreNotPinnable + harness: desktop, taskbar and own window refused with an error; foreign window still pins/unpins |
 | F-02 | 1 | P1 | Toast on every pin/unpin, no setting | todo | |
 | F-03 | 1 | P2 | Hotkey registration failure is only a toast | todo | |
-| F-04 | 1 | P2 | Tray double-click opens then hides | todo | |
+| F-04 | 1 | P2 | Tray double-click opens then hides | done |  |
 | F-05 | 1 | P2 | Unpin strips an app's own always-on-top | todo | |
 | F-06 | 1 | P2 | Titles never refreshed | todo | |
 | F-07 | 1 | P3 | Buried window is hidden instead of raised | todo | |

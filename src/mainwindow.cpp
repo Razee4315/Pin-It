@@ -420,8 +420,9 @@ void MainWindow::buildTray()
     m_tray->setToolTip(QStringLiteral("PinIt"));
     connect(m_tray, &QSystemTrayIcon::activated, this,
             [this](QSystemTrayIcon::ActivationReason reason) {
-                if (reason == QSystemTrayIcon::Trigger ||
-                    reason == QSystemTrayIcon::DoubleClick)
+                // Trigger only: a double-click also delivers a Trigger first,
+                // so reacting to both opened the window and hid it again.
+                if (reason == QSystemTrayIcon::Trigger)
                     toggleVisibility();
             });
     m_tray->show();
