@@ -57,16 +57,16 @@ and the affected flow has been exercised (the "How verified" column says how).
 
 | ID | Summary | Status | How verified / why blocked |
 |----|---------|--------|----------------------------|
-| M-01 | Visible "this is pinned" indicator | done |  |
+| M-01 | Visible "this is pinned" indicator | verified | Harness: outline on pin/unpin/restore (F-02, F-12); resting the pointer on a row outlines its window after 350 ms, a passing pointer does not; tray menu lists pinned windows (M-05) |
 | M-02 | Pending restore for apps opened later (same work as F-12) | verified | Harness: 4 saved pins, 1 open at start → 1 pinned at saved opacity, 3 waiting rows; file keeps all 4 after an unrelated pin; awaited window pinned and outlined within 0.8 s of opening; late-titled window pinned once the title matches; another window of the same app ignored; forget/quit/session-end all checked |
 | M-03 | Code-signed installer | todo | |
 | M-04 | "Unpin all" | verified | Harness: Unpin all (window button and tray item) releases every window incl. opacity, clears waiting pins and the saved file, then disables itself |
 | M-05 | Tray menu lists pinned windows + "Pin a window…" | verified | Harness: tray menu lists each pinned window (ampersands escaped); choosing one unpins only that window; 'Pin a window…' present |
 | M-06 | Notifications on/off | verified | Harness: setting defaults to off, checkbox unchecked, ticking it writes show_notifications=true |
 | M-07 | Reset shortcuts to defaults | verified | Harness: Restore Defaults fills in the default set and clears the error; nothing applied until OK |
-| M-08 | Click-through for pinned windows | done |  |
+| M-08 | Click-through for pinned windows | verified | Harness: toggle sets WS_EX_TRANSPARENT and WindowFromPoint no longer hits the window; off/unpin restore a normal clickable unlayered window; saved; undone correctly after a simulated crash |
 | M-09 | "Check for updates" link | verified | Harness: tray has 'Check for updates…'; About box links to /releases/latest. Opening the browser itself was not triggered |
-| M-10 | Dark theme | done |  |
+| M-10 | Dark theme | verified | Harness: every screen rendered in both variants and reviewed (main, picker, shortcuts, About, tray menu); rendered contrast >= 4.5 for all text pairs in both; a colour-scheme change at run time re-themes without restart. Real Windows setting toggle not exercised |
 | M-11 | winget / Scoop package | todo | |
 
 ## Cleanup
