@@ -72,11 +72,17 @@ MainWindow::MainWindow(PinManager *manager, QWidget *parent)
     setWindowTitle(QStringLiteral("PinIt"));
     setWindowIcon(appIcon());
 
-    // Fixed-size window: drop the maximize button and lock the dimensions.
-    setWindowFlags(Qt::Window | Qt::MSWindowsFixedSizeDialogHint
-                   | Qt::WindowTitleHint | Qt::WindowSystemMenuHint
+    // Fixed width, free height: the layout is a single column, so only the
+    // pinned list benefits from more room — and it takes all the extra height
+    // the user gives the window. No maximize button.
+    constexpr int kWidth = 360;
+    constexpr int kMinHeight = 500;
+    constexpr int kDefaultHeight = 600;
+    setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::WindowSystemMenuHint
                    | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint);
-    setFixedSize(360, 470);
+    setFixedWidth(kWidth);
+    setMinimumHeight(kMinHeight);
+    resize(kWidth, kDefaultHeight);
 
     m_settings = persistence::loadSettings();
 
@@ -134,6 +140,11 @@ void MainWindow::buildUi()
     titleBox->addWidget(tagline);
     header->addLayout(titleBox);
     header->addStretch();
+    // Lives in the header rather than on a row of its own, which leaves that
+    // height to the pinned list.
+    auto *editShortcuts = new QPushButton(tr("Edit shortcuts…"));
+    connect(editShortcuts, &QPushButton::clicked, this, &MainWindow::openShortcutsDialog);
+    header->addWidget(editShortcuts, 0, Qt::AlignVCenter);
     root->addLayout(header);
 
     // --- Pin button ----------------------------------------------------------
@@ -148,9 +159,11 @@ void MainWindow::buildUi()
     root->addWidget(scLabel);
 
     auto *scCard = makeCard();
+    // Never squeezed: when space is short it is the list that scrolls.
+    scCard->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     auto *scv = new QVBoxLayout(scCard);
-    scv->setContentsMargins(12, 10, 12, 10);
-    scv->setSpacing(9);
+    scv->setContentsMargins(12, 8, 12, 8);
+    scv->setSpacing(6);
     m_shortcutsLayout = scv;
     fillShortcutRows(scv);
     root->addWidget(scCard);
@@ -160,10 +173,6 @@ void MainWindow::buildUi()
     m_hotkeyWarning->setWordWrap(true);
     m_hotkeyWarning->hide();
     root->addWidget(m_hotkeyWarning);
-
-    auto *editShortcuts = new QPushButton(tr("Edit shortcuts…"));
-    connect(editShortcuts, &QPushButton::clicked, this, &MainWindow::openShortcutsDialog);
-    root->addWidget(editShortcuts, 0, Qt::AlignLeft);
 
     // --- PINNED (n) ----------------------------------------------------------
     m_pinnedHeader = new QLabel(tr("PINNED (0)"));
@@ -175,6 +184,7 @@ void MainWindow::buildUi()
     scroll->setWidgetResizable(true);
     scroll->setFrameShape(QFrame::NoFrame);
     scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    scroll->setMinimumHeight(108);   // two rows, even with the hotkey warning showing
     auto *listContainer = new QWidget(scroll);
     m_listLayout = new QVBoxLayout(listContainer);
     m_listLayout->setContentsMargins(0, 0, 0, 0);

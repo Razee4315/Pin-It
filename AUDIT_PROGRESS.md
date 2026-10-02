@@ -23,7 +23,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | F-12 | 2 | P1 | Restore is one-shot and erases unmatched pins | todo | |
 | F-13 | 2 | P1 | Restore fallback pins the wrong window | verified |  |
 | F-14 | 2 | P1 | Pinned row clips its unpin button | verified |  |
-| F-15 | 2 | P2 | Pinned list is only 98 px tall | todo | |
+| F-15 | 2 | P2 | Pinned list is only 98 px tall | verified | Measured in harness: list area 254 px at the default size (was 98), 108 px at minimum height with the hotkey warning showing, grows with the window; screenshots checked |
 | F-16 | 2 | P2 | Slider not synced with opacity hotkeys | verified | Harness: setOpacity(60) outside the UI moves the row slider and label to 60%; dragging the slider still sets opacity |
 | F-17 | 2 | P2 | Opacity hotkey silent on unpinned window | verified | Harness: adjustForegroundOpacity on an unpinned window emits 'Pin this window first…' |
 | F-18 | 2 | P2 | Opacity hotkeys do not repeat | verified | Harness with injected held keys: pin hotkey fired once, opacity hotkey fired 4 times |
