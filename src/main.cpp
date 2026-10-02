@@ -9,7 +9,6 @@
 #include <QApplication>
 #include <QIcon>
 #include <QSystemTrayIcon>
-#include <QSessionManager>
 
 #include "pinmanager.h"
 #include "globalhotkey.h"
@@ -56,13 +55,11 @@ int main(int argc, char *argv[])
 
     // Distinguish a manual quit from Windows logging off / shutting down. On a
     // session end we keep the saved pins so they're re-pinned next login; on a
-    // manual quit we forget them. commitDataRequest fires before aboutToQuit.
-    QObject::connect(&app, &QGuiApplication::commitDataRequest, &manager,
-                     [&manager](QSessionManager &) { manager.markSessionEnding(); });
-    // ...and notice when that shutdown is cancelled, so the flag doesn't stick
-    // and make a later manual quit keep the pins.
+    // manual quit we forget them. And notice when a shutdown is cancelled, so
+    // the flag doesn't stick and make a later manual quit keep the pins.
     SessionWatcher sessionWatcher;
-    app.installNativeEventFilter(&sessionWatcher);
+    QObject::connect(&sessionWatcher, &SessionWatcher::sessionEnding, &manager,
+                     &PinManager::markSessionEnding);
     QObject::connect(&sessionWatcher, &SessionWatcher::sessionEndCancelled, &manager,
                      &PinManager::clearSessionEnding);
 

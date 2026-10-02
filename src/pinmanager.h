@@ -74,9 +74,11 @@ public:
     // pins are kept so they're re-pinned on the next login.
     void restoreAllWindows();
 
-    // Called when Windows signals a logoff/shutdown/restart (see commitDataRequest
-    // in main). Makes the next restoreAllWindows() keep the saved pins so the
-    // advertised "pins come back after a restart" behaviour works.
+    // Called when Windows signals a logoff/shutdown/restart (see SessionWatcher).
+    // From then on the pin list is frozen: the other apps are closing, and a
+    // window disappearing must not be mistaken for the user closing it.
+    // restoreAllWindows() then keeps the saved pins so the advertised "pins
+    // come back after a restart" behaviour works.
     void markSessionEnding() { m_sessionEnding = true; }
     // The shutdown was called off (another app blocked it, or the user
     // cancelled): a later Quit is a manual quit again.

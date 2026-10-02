@@ -1,23 +1,27 @@
 #pragma once
 //
-// SessionWatcher — notices when Windows calls off a logoff / shutdown.
+// SessionWatcher — tells PinIt when Windows starts to log off / shut down /
+// restart, and when that is called off again.
 //
-// Qt reports the *start* of a session end (QGuiApplication::commitDataRequest)
-// but not its cancellation. Windows announces that with WM_ENDSESSION carrying
-// wParam == FALSE, which this native event filter turns into a signal.
+// It owns a hidden top-level window of its own, so it works even when PinIt
+// sits in the tray and has never shown a window (which is how it starts at
+// login). Windows sends every top-level window WM_QUERYENDSESSION when a
+// session end begins, and WM_ENDSESSION with wParam == FALSE if it is
+// cancelled (another app blocked it, or the user changed their mind).
 //
 #include <QObject>
-#include <QAbstractNativeEventFilter>
 
-class SessionWatcher : public QObject, public QAbstractNativeEventFilter
+class SessionWatcher : public QObject
 {
     Q_OBJECT
 public:
     explicit SessionWatcher(QObject *parent = nullptr);
-
-    bool nativeEventFilter(const QByteArray &eventType, void *message,
-                           qintptr *result) override;
+    ~SessionWatcher() override;
 
 signals:
+    void sessionEnding();
     void sessionEndCancelled();
+
+private:
+    void *m_window = nullptr;   // HWND
 };

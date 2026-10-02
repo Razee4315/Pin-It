@@ -259,6 +259,12 @@ bool PinManager::setClickThrough(intptr_t hwnd, bool enabled)
 
 void PinManager::reenforce()
 {
+    // Windows is shutting down and closing the other apps. Dropping their
+    // pins now, as if the user had closed those windows, would lose exactly
+    // what must survive the restart.
+    if (m_sessionEnding)
+        return;
+
     const qsizetype before = m_pinned.size();
     m_pinned.removeIf([](const PinnedWindow &w) { return !winpin::isValidWindow(w.hwnd); });
 
