@@ -103,8 +103,9 @@ MainWindow::MainWindow(PinManager *manager, QWidget *parent)
                 // instant, and exactly where the user is looking.
                 pinflash::show(hwnd, pinned ? pinflash::Kind::Pinned
                                             : pinflash::Kind::Unpinned);
-                notify(pinned ? tr("Pinned: %1").arg(title)
-                              : tr("Unpinned: %1").arg(title));
+                if (m_settings.showNotifications)
+                    notify(pinned ? tr("Pinned: %1").arg(title)
+                                  : tr("Unpinned: %1").arg(title));
             });
 }
 
@@ -214,6 +215,14 @@ void MainWindow::buildUi()
         persistence::saveSettings(m_settings);
     });
     root->addWidget(m_soundBox);
+
+    m_notifyBox = new QCheckBox(tr("Show a notification when pinning"));
+    m_notifyBox->setChecked(m_settings.showNotifications);
+    connect(m_notifyBox, &QCheckBox::toggled, this, [this](bool on) {
+        m_settings.showNotifications = on;
+        persistence::saveSettings(m_settings);
+    });
+    root->addWidget(m_notifyBox);
 
     m_autostartBox = new QCheckBox(tr("Start PinIt with Windows"));
     m_autostartBox->setChecked(m_settings.startWithWindows);

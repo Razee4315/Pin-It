@@ -62,7 +62,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | M-03 | Code-signed installer | todo | |
 | M-04 | "Unpin all" | todo | |
 | M-05 | Tray menu lists pinned windows + "Pin a window…" | todo | |
-| M-06 | Notifications on/off | todo | |
+| M-06 | Notifications on/off | done |  |
 | M-07 | Reset shortcuts to defaults | todo | |
 | M-08 | Click-through for pinned windows | todo | |
 | M-09 | "Check for updates" link | todo | |

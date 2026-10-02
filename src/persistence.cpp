@@ -42,6 +42,7 @@ persistence::UserSettings readSettings(const QJsonObject &o)
 {
     persistence::UserSettings s;
     s.enableSound       = o.value("enable_sound").toBool(true);
+    s.showNotifications = o.value("show_notifications").toBool(false);
     s.hasSeenTrayNotice = o.value("has_seen_tray_notice").toBool(false);
     s.startWithWindows  = o.value("start_with_windows").toBool(false);
     s.shortcuts         = readShortcuts(o.value("shortcuts").toObject());
@@ -52,6 +53,7 @@ QJsonObject writeSettings(const persistence::UserSettings &s)
 {
     QJsonObject o;
     o["enable_sound"]         = s.enableSound;
+    o["show_notifications"]   = s.showNotifications;
     o["has_seen_tray_notice"] = s.hasSeenTrayNotice;
     o["start_with_windows"]   = s.startWithWindows;
     o["shortcuts"]            = writeShortcuts(s.shortcuts);

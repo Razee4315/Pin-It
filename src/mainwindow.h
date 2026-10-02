@@ -80,6 +80,7 @@ private:
     QWidget         *m_emptyCard = nullptr;
     QVBoxLayout     *m_shortcutsLayout = nullptr;
     QCheckBox       *m_soundBox = nullptr;
+    QCheckBox       *m_notifyBox = nullptr;
     QCheckBox       *m_autostartBox = nullptr;
     QLabel          *m_shortcutsLabel = nullptr;
 

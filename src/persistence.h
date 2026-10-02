@@ -30,6 +30,10 @@ struct ShortcutConfig {
 
 struct UserSettings {
     bool           enableSound      = true;
+    // System notification on every pin/unpin. Off by default: the outline
+    // around the window already confirms it, and notifications pile up in the
+    // Notification Center. Errors are always shown.
+    bool           showNotifications = false;
     bool           hasSeenTrayNotice = false;
     bool           startWithWindows = false;
     ShortcutConfig shortcuts;
