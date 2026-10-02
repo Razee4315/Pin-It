@@ -21,7 +21,6 @@ struct Colors {
     const char *text;
     const char *textMuted;     // secondary text
     const char *textSubtle;    // "+" separators, the unpin glyph
-    const char *textControl;   // checkbox labels
     const char *keyBg;         // key chips, button hover
     const char *accent;        // slider, non-text accents (3:1 against the card)
     const char *accentStrong;  // primary button, focus rings (4.5:1 with onAccent)
@@ -46,7 +45,6 @@ constexpr Colors kLight = {
     "#2a2622",              // text
     "#6b6760",              // textMuted
     "#6b655d",              // textSubtle
-    "#5a564e",              // textControl
     "#f0ede6",              // keyBg
     "#b07c4a",              // accent
     "#96653a",              // accentStrong
@@ -71,7 +69,6 @@ constexpr Colors kDark = {
     "#f1ede6",              // text
     "#b8b1a6",              // textMuted
     "#aba498",              // textSubtle
-    "#d6d0c6",              // textControl
     "#38342f",              // keyBg
     "#d0a06c",              // accent
     "#d9a871",              // accentStrong
@@ -161,14 +158,14 @@ QPushButton#unpin:focus { background: $dangerHoverBg$; color: $accentHover$; bor
 /* Low-key text buttons in the footer. */
 QPushButton#link {
     background: transparent; border: 1px solid transparent; border-radius: 6px;
-    padding: 3px 6px; color: $accentStrong$; font-size: 12px;
+    padding: 3px 6px; color: $accentHover$; font-size: 12px;
 }
 QPushButton#link:hover { background: $keyBg$; }
 QPushButton#link:focus { background: $keyBg$; border-color: $accentStrong$; }
 QPushButton#link:disabled { color: $textSubtle$; }
 
-QCheckBox { color: $textControl$; font-size: 12px; spacing: 7px; }
-QCheckBox:focus { color: $text$; text-decoration: underline; }
+/* Check boxes have no rules on purpose: the Fusion style draws them — box,
+   tick and focus frame — from the palette, in both variants. */
 
 QSlider::groove:horizontal { height: 4px; background: $track$; border-radius: 2px; }
 QSlider::sub-page:horizontal { background: $accent$; border-radius: 2px; }
@@ -192,7 +189,6 @@ QString build(const Colors &c)
         {"$text$", c.text},
         {"$textMuted$", c.textMuted},
         {"$textSubtle$", c.textSubtle},
-        {"$textControl$", c.textControl},
         {"$keyBg$", c.keyBg},
         {"$accent$", c.accent},
         {"$accentStrong$", c.accentStrong},
