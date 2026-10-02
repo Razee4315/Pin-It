@@ -130,7 +130,7 @@ PinRow::PinRow(const PinnedWindow &window, QWidget *parent)
     auto *info = new QVBoxLayout;
     info->setSpacing(0);
     auto *name = new ElidedLabel(displayTitle(window.title));
-    name->setStyleSheet(QStringLiteral("font-weight: 600;"));
+    name->setProperty("role", "pinTitle");
     name->setToolTip(window.title);   // full title on hover
     m_title = name;
     auto *proc = new ElidedLabel(displayProcess(window.processName));

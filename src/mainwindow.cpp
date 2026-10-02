@@ -574,7 +574,7 @@ void MainWindow::showAbout()
         "<p>Built with C++ &amp; Qt %4.</p>"
         "<p>By %5<br><a href=\"%6\">%6</a></p>"
         "<p><a href=\"%6/releases/latest\">%8</a></p>"
-        "<p style='color:gray'>%7</p>")
+        "<p>%7</p>")
         .arg(QStringLiteral(PINIT_PRODUCT),
              QStringLiteral(PINIT_VERSION_STR),
              tr("Keep any window always on top — with a global hotkey."),

@@ -89,7 +89,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | C-14 | Hotkey-result messages duplicated | verified | main.cpp has one applyShortcuts path for startup and edits; harness shortcuts scenario |
 | C-15 | Un-pin sequence duplicated | verified | Build + harness: unpin and quit paths both restore windows (F-05/F-09 scenarios) |
 | C-16 | `"Unknown"` sentinel strings | verified | Build + harness enumerate/list scenarios; no "Unknown" literal left in src |
-| C-17 | Inline row colours outside the stylesheet | todo | |
+| C-17 | Inline row colours outside the stylesheet | done |  |
 | C-18 | Tests for persistence and restore matching | todo | |
 
 ## Optimisation

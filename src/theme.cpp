@@ -105,6 +105,7 @@ QLabel[role="key"] {
     border-radius: 5px; padding: 3px 9px;
     color: $text$; font-weight: 700; font-size: 11px;
 }
+QLabel[role="pinTitle"] { font-weight: 600; }
 QLabel[role="plus"] { color: $textSubtle$; font-size: 12px; }
 QLabel[role="avatar"] {
     border-radius: 6px; color: $onAvatar$; font-weight: 700; font-size: 12px;
