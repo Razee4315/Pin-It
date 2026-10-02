@@ -2,6 +2,7 @@
 
 #include <windows.h>
 #include <psapi.h>
+#include <dwmapi.h>
 #include <mmsystem.h>
 
 #include <QFile>
@@ -90,6 +91,15 @@ QString className(void *hwnd)
     wchar_t buf[256] = {0};
     const int len = GetClassNameW(H(hwnd), buf, 256);
     return QString::fromWCharArray(buf, len);
+}
+
+QRect frameRect(void *hwnd)
+{
+    RECT r = {};
+    if (FAILED(DwmGetWindowAttribute(H(hwnd), DWMWA_EXTENDED_FRAME_BOUNDS, &r, sizeof(r)))
+        && !GetWindowRect(H(hwnd), &r))
+        return QRect();
+    return QRect(QPoint(r.left, r.top), QPoint(r.right - 1, r.bottom - 1));
 }
 
 bool isShellClass(const QString &className)
@@ -208,6 +218,13 @@ QVector<PinnableWindow> enumerateWindows()
         result.push_back(w);
     }
     return result;
+}
+
+bool animationsEnabled()
+{
+    BOOL enabled = TRUE;
+    SystemParametersInfoW(SPI_GETCLIENTAREAANIMATION, 0, &enabled, 0);
+    return enabled != FALSE;
 }
 
 void beep()

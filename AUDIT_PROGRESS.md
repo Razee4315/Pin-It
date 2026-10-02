@@ -10,7 +10,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | ID | Tier | Sev | Summary | Status | How verified / why blocked |
 |----|------|-----|---------|--------|----------------------------|
 | F-01 | 1 | P1 | Hotkey pins shell windows / PinIt itself | verified |  |
-| F-02 | 1 | P1 | Toast on every pin/unpin, no setting | todo | |
+| F-02 | 1 | P1 | Toast on every pin/unpin, no setting | in-progress |  |
 | F-03 | 1 | P2 | Hotkey registration failure is only a toast | done |  |
 | F-04 | 1 | P2 | Tray double-click opens then hides | verified | Harness: tray Trigger shows the window, the following DoubleClick leaves it shown |
 | F-05 | 1 | P2 | Unpin strips an app's own always-on-top | done |  |
@@ -57,7 +57,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 
 | ID | Summary | Status | How verified / why blocked |
 |----|---------|--------|----------------------------|
-| M-01 | Visible "this is pinned" indicator | todo | |
+| M-01 | Visible "this is pinned" indicator | in-progress |  |
 | M-02 | Pending restore for apps opened later (same work as F-12) | todo | |
 | M-03 | Code-signed installer | todo | |
 | M-04 | "Unpin all" | todo | |

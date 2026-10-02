@@ -67,7 +67,7 @@ public:
 
 signals:
     void pinsChanged();
-    void pinToggled(bool isPinned, const QString &title, const QString &process);
+    void pinToggled(intptr_t hwnd, bool isPinned, const QString &title);
     void opacityChanged(intptr_t hwnd, int percent);
     void titleChanged(intptr_t hwnd, const QString &title);
     void errorOccurred(const QString &message);

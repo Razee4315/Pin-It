@@ -48,6 +48,7 @@ qt_add_executable(PinIt WIN32
     src/sessionwatcher.h    src/sessionwatcher.cpp
     src/mainwindow.h        src/mainwindow.cpp
     src/pinrow.h            src/pinrow.cpp
+    src/pinflash.h          src/pinflash.cpp
     src/logging.h           src/logging.cpp
     src/shortcuts.h         src/shortcuts.cpp
     src/shortcutsdialog.h   src/shortcutsdialog.cpp
@@ -82,6 +83,6 @@ qt_add_executable(pinit_tests
 target_include_directories(pinit_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_link_libraries(pinit_tests PRIVATE Qt6::Test Qt6::Core)
 if(WIN32)
-    target_link_libraries(pinit_tests PRIVATE user32 winmm)
+    target_link_libraries(pinit_tests PRIVATE user32 dwmapi winmm)
 endif()
 add_test(NAME pinit_tests COMMAND pinit_tests)

@@ -4,6 +4,7 @@
 #include "shortcuts.h"
 #include "shortcutsdialog.h"
 #include "pinrow.h"
+#include "pinflash.h"
 
 #include <QApplication>
 #include <QVBoxLayout>
@@ -95,9 +96,13 @@ MainWindow::MainWindow(PinManager *manager, QWidget *parent)
             row->setOpacity(percent);
     });
     connect(m_manager, &PinManager::pinToggled, this,
-            [this](bool pinned, const QString &title, const QString &) {
+            [this](intptr_t hwnd, bool pinned, const QString &title) {
                 if (pinned && m_settings.enableSound)
                     winpin::beep();
+                // The outline around the window itself is the primary feedback:
+                // instant, and exactly where the user is looking.
+                pinflash::show(hwnd, pinned ? pinflash::Kind::Pinned
+                                            : pinflash::Kind::Unpinned);
                 notify(pinned ? tr("Pinned: %1").arg(title)
                               : tr("Unpinned: %1").arg(title));
             });

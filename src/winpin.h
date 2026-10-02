@@ -9,6 +9,7 @@
 // HWNDs are passed around as void* so this header doesn't drag <windows.h>
 // into the rest of the app. The .cpp casts them back to HWND.
 //
+#include <QRect>
 #include <QString>
 #include <QVector>
 #include <cstdint>
@@ -35,6 +36,9 @@ bool    isValidWindow(void *hwnd);
 bool    isTopmost(void *hwnd);
 bool    isLayered(void *hwnd);        // window already has WS_EX_LAYERED
 QString className(void *hwnd);        // Win32 window class, e.g. "Notepad"
+// The window's visible frame in physical screen pixels (without the invisible
+// resize border Windows 10/11 add around it). Empty if it can't be read.
+QRect   frameRect(void *hwnd);
 
 // --- What may be pinned ---------------------------------------------------
 // True for the window classes that make up the Windows shell itself (desktop,
@@ -67,6 +71,9 @@ int alphaToPercent(int alpha);
 QVector<PinnableWindow> enumerateWindows();
 
 // --- Misc -----------------------------------------------------------------
+// False when the user turned off "Animation effects" in Windows settings.
+bool animationsEnabled();
+
 // Play the system default notification sound (used for the pin chime).
 void beep();
 

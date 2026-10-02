@@ -114,7 +114,7 @@ bool PinManager::pin(intptr_t hwnd, bool announce)
     // message subjects, and users are asked to attach this log to bug reports.
     qInfo("Pinned a window of %s", qUtf8Printable(proc));
     if (announce)
-        emit pinToggled(true, title, proc);
+        emit pinToggled(hwnd, true, title);
     emit pinsChanged();
     return true;
 }
@@ -145,7 +145,7 @@ bool PinManager::unpin(intptr_t hwnd)
     m_pinned.removeIf([hwnd](const PinnedWindow &w) { return w.hwnd == hwnd; });
     persist();
     updateTimer();
-    emit pinToggled(false, window.title, window.processName);
+    emit pinToggled(hwnd, false, window.title);
     emit pinsChanged();
     return true;
 }
