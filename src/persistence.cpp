@@ -2,20 +2,19 @@
 
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QSaveFile>
 
+#include <optional>
+
 namespace {
 
 QString savePath()
 {
-    // dirs::data_local_dir() in the Rust app == %LOCALAPPDATA%.
-    QString base = qEnvironmentVariable("LOCALAPPDATA");
-    if (base.isEmpty())
-        base = QDir::homePath();
-    return QDir(base).filePath(QStringLiteral("PinIt/pinned.json"));
+    return QDir(persistence::dataDir()).filePath(QStringLiteral("pinned.json"));
 }
 
 persistence::ShortcutConfig readShortcuts(const QJsonObject &o)
@@ -42,6 +41,7 @@ persistence::UserSettings readSettings(const QJsonObject &o)
 {
     persistence::UserSettings s;
     s.enableSound       = o.value("enable_sound").toBool(true);
+    s.showNotifications = o.value("show_notifications").toBool(false);
     s.hasSeenTrayNotice = o.value("has_seen_tray_notice").toBool(false);
     s.startWithWindows  = o.value("start_with_windows").toBool(false);
     s.shortcuts         = readShortcuts(o.value("shortcuts").toObject());
@@ -52,19 +52,17 @@ QJsonObject writeSettings(const persistence::UserSettings &s)
 {
     QJsonObject o;
     o["enable_sound"]         = s.enableSound;
+    o["show_notifications"]   = s.showNotifications;
     o["has_seen_tray_notice"] = s.hasSeenTrayNotice;
     o["start_with_windows"]   = s.startWithWindows;
     o["shortcuts"]            = writeShortcuts(s.shortcuts);
     return o;
 }
 
-} // namespace
-
-namespace persistence {
-
-SavedState load()
+persistence::SavedState readFile()
 {
-    SavedState state;
+    using persistence::SavedPin;
+    persistence::SavedState state;
 
     const QString path = savePath();
     QFile f(path);
@@ -100,6 +98,10 @@ SavedState load()
         sp.processName = p.value("process_name").toString();
         sp.title       = p.value("title").toString();
         sp.opacity     = p.value("opacity").toInt(255);
+        sp.clickThrough = p.value("click_through").toBool(false);
+        sp.wasLayered  = p.value("was_layered").toBool(true);
+        sp.wasTopmost  = p.value("was_topmost").toBool(true);
+        sp.wasClickThrough = p.value("was_click_through").toBool(true);
         if (!sp.processName.isEmpty())
             state.pins.push_back(sp);
     }
@@ -108,8 +110,40 @@ SavedState load()
     return state;
 }
 
+// What is on disk, as last loaded or saved. PinIt is the only writer, so
+// re-reading and re-parsing the file before every single save is unnecessary.
+std::optional<persistence::SavedState> g_cache;
+
+} // namespace
+
+namespace persistence {
+
+QString dataDir()
+{
+    // dirs::data_local_dir() in the Rust app == %LOCALAPPDATA%.
+    QString base = qEnvironmentVariable("LOCALAPPDATA");
+    if (base.isEmpty())
+        base = QDir::homePath();
+    return QDir(base).filePath(QStringLiteral("PinIt"));
+}
+
+void dropCache()
+{
+    g_cache.reset();
+}
+
+SavedState load()
+{
+    if (g_cache)
+        return *g_cache;
+    g_cache = readFile();
+    return *g_cache;
+}
+
 void save(const SavedState &state)
 {
+    g_cache = state;
+
     const QString path = savePath();
     QDir().mkpath(QFileInfo(path).absolutePath());
 
@@ -120,6 +154,10 @@ void save(const SavedState &state)
         p["process_name"] = sp.processName;
         p["title"]        = sp.title;
         p["opacity"]      = sp.opacity;
+        p["click_through"] = sp.clickThrough;
+        p["was_layered"]  = sp.wasLayered;
+        p["was_topmost"]  = sp.wasTopmost;
+        p["was_click_through"] = sp.wasClickThrough;
         // Key matches the Rust format: "<process>:<index>" keeps it unique.
         pins[QStringLiteral("%1:%2").arg(sp.processName).arg(i)] = p;
     }
@@ -131,9 +169,15 @@ void save(const SavedState &state)
     // QSaveFile writes to a temp file then atomically renames — same crash
     // safety the Rust version got from its tmp+rename dance.
     QSaveFile f(path);
-    if (f.open(QIODevice::WriteOnly)) {
-        f.write(QJsonDocument(root).toJson(QJsonDocument::Indented));
-        f.commit();
+    if (!f.open(QIODevice::WriteOnly)) {
+        qWarning("Could not save %s: %s", qUtf8Printable(QDir::toNativeSeparators(path)),
+                 qUtf8Printable(f.errorString()));
+        return;
+    }
+    f.write(QJsonDocument(root).toJson(QJsonDocument::Indented));
+    if (!f.commit()) {
+        qWarning("Could not save %s: %s", qUtf8Printable(QDir::toNativeSeparators(path)),
+                 qUtf8Printable(f.errorString()));
     }
 }
 

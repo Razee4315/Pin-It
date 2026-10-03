@@ -7,73 +7,18 @@
 //   MainWindow           -> UI + system tray
 //
 #include <QApplication>
-#include <QLocalServer>
-#include <QLocalSocket>
-#include <QMessageBox>
 #include <QIcon>
 #include <QSystemTrayIcon>
-#include <QSessionManager>
 
 #include "pinmanager.h"
 #include "globalhotkey.h"
+#include "sessionwatcher.h"
+#include "singleinstance.h"
 #include "mainwindow.h"
 #include "persistence.h"
 #include "logging.h"
+#include "theme.h"
 #include "version.h"
-
-// Warm "paper" theme — ported from the original PinIt CSS variables.
-static const char *kStyleSheet = R"qss(
-QWidget#central { background: #f8f6f2; }
-QDialog { background: #f8f6f2; }
-QLabel { color: #2a2622; font-family: "Segoe UI"; }
-
-QLabel[role="title"]   { font-size: 17px; font-weight: 700; color: #2a2622; }
-QLabel[role="section"] { font-size: 11px; font-weight: 700; color: #6b6760;
-                         letter-spacing: 1px; }
-QLabel[role="desc"]    { color: #6b6760; font-size: 12px; }
-QLabel[role="muted"]   { color: #6b6760; font-size: 12px; }
-
-QLabel[role="key"] {
-    background: #f0ede6; border: 1px solid rgba(0,0,0,0.12);
-    border-radius: 5px; padding: 3px 9px;
-    color: #2a2622; font-weight: 700; font-size: 11px;
-}
-QLabel[role="plus"] { color: #9a948a; font-size: 12px; }
-
-QFrame[role="card"] {
-    background: #ffffff; border: 1px solid rgba(0,0,0,0.08);
-    border-radius: 12px;
-}
-
-QPushButton {
-    background: #ffffff; border: 1px solid rgba(0,0,0,0.12);
-    border-radius: 8px; padding: 7px 14px; color: #2a2622; font-size: 12px;
-}
-QPushButton:hover { background: #f0ede6; }
-
-QPushButton#primary {
-    background: #c49464; border: none; color: #ffffff; font-weight: 700;
-    padding: 9px 14px;
-}
-QPushButton#primary:hover { background: #b6855a; }
-
-QPushButton#unpin {
-    background: transparent; border: 1px solid rgba(0,0,0,0.12);
-    border-radius: 5px; color: #9a948a; font-weight: 700; font-size: 12px;
-    padding: 0;
-}
-QPushButton#unpin:hover { background: #f6e3da; color: #b6855a; border-color: #c49464; }
-
-QCheckBox { color: #5a564e; font-size: 12px; spacing: 7px; }
-
-QSlider::groove:horizontal { height: 4px; background: #e6e2da; border-radius: 2px; }
-QSlider::sub-page:horizontal { background: #c49464; border-radius: 2px; }
-QSlider::handle:horizontal {
-    background: #ffffff; border: 1px solid #c49464; width: 14px; height: 14px;
-    margin: -6px 0; border-radius: 7px;
-}
-QScrollArea { background: transparent; border: none; }
-)qss";
 
 int main(int argc, char *argv[])
 {
@@ -82,24 +27,19 @@ int main(int argc, char *argv[])
     QCoreApplication::setOrganizationName(QStringLiteral("PinIt"));
     QApplication::setApplicationVersion(QStringLiteral(PINIT_VERSION_STR));
     QApplication::setWindowIcon(QIcon(QStringLiteral(":/icon.png")));
-    app.setStyleSheet(QString::fromUtf8(kStyleSheet));
+    theme::followSystem(app);
 
     logging::init();
     qInfo("PinIt %s starting", PINIT_VERSION_STR);
 
     // Single instance: if PinIt is already running, ask it to show its window
-    // (via a local socket) and exit — instead of dying silently.
-    const QString kInstanceServer = QStringLiteral("PinIt_SingleInstance_v2");
-    {
-        QLocalSocket probe;
-        probe.connectToServer(kInstanceServer);
-        if (probe.waitForConnected(200)) {
-            probe.write("show");
-            probe.flush();
-            probe.waitForBytesWritten(200);
-            qInfo("Another instance is running; asked it to show");
-            return 0;
-        }
+    // and exit — instead of dying silently. (The name is also the installer's
+    // AppMutex; keep the two in step.)
+    SingleInstance instance(QStringLiteral("PinIt_SingleInstance_v2"));
+    if (!instance.isPrimary()) {
+        instance.askPrimaryToShow();
+        qInfo("Another instance is running; asked it to show");
+        return 0;
     }
 
     // Keep running when the window closes to the tray.
@@ -115,19 +55,17 @@ int main(int argc, char *argv[])
 
     // Distinguish a manual quit from Windows logging off / shutting down. On a
     // session end we keep the saved pins so they're re-pinned next login; on a
-    // manual quit we forget them. commitDataRequest fires before aboutToQuit.
-    QObject::connect(&app, &QGuiApplication::commitDataRequest, &manager,
-                     [&manager](QSessionManager &) { manager.markSessionEnding(); });
+    // manual quit we forget them. And notice when a shutdown is cancelled, so
+    // the flag doesn't stick and make a later manual quit keep the pins.
+    SessionWatcher sessionWatcher;
+    QObject::connect(&sessionWatcher, &SessionWatcher::sessionEnding, &manager,
+                     &PinManager::markSessionEnding);
+    QObject::connect(&sessionWatcher, &SessionWatcher::sessionEndCancelled, &manager,
+                     &PinManager::clearSessionEnding);
 
-    // Listen for later launches; each connection means "show the window".
-    QLocalServer::removeServer(kInstanceServer);   // clear a stale socket from a crash
-    QLocalServer instanceServer;
-    instanceServer.listen(kInstanceServer);
-    QObject::connect(&instanceServer, &QLocalServer::newConnection, &window, [&]() {
-        while (QLocalSocket *c = instanceServer.nextPendingConnection())
-            c->deleteLater();
-        window.showFromTray();
-    });
+    // A later launch means "show the window".
+    QObject::connect(&instance, &SingleInstance::showRequested, &window,
+                     &MainWindow::showFromTray);
 
     GlobalHotkeyManager hotkeys;
     app.installNativeEventFilter(&hotkeys);
@@ -141,28 +79,21 @@ int main(int argc, char *argv[])
     QObject::connect(&hotkeys, &GlobalHotkeyManager::toggleWindow,
                      &window, &MainWindow::toggleVisibility);
 
-    // Re-register hotkeys when the user edits them in the Shortcuts dialog.
-    QObject::connect(&window, &MainWindow::shortcutsChanged, &window,
-                     [&](const persistence::ShortcutConfig &c) {
-                         if (!hotkeys.registerAll(c))
-                             window.notify(QObject::tr(
-                                 "Could not register the new hotkeys — another app may be using them."));
-                         else if (!hotkeys.failedActions().isEmpty())
-                             window.notify(QObject::tr("Some hotkeys are unavailable: %1")
-                                               .arg(hotkeys.failedActions().join(QStringLiteral(", "))));
-                         else
-                             window.notify(QObject::tr("Shortcuts updated."));
-                     });
+    // The one way hotkeys get (re)registered — at startup and whenever the
+    // Shortcuts dialog tries a new set. Returns the actions that failed.
+    const auto applyShortcuts = [&hotkeys](const persistence::ShortcutConfig &c) {
+        hotkeys.registerAll(c);
+        return hotkeys.failedActions();
+    };
+    window.setShortcutApplier(applyShortcuts);
 
-    if (!hotkeys.registerAll(window.shortcutConfig())) {
-        qWarning("No global hotkeys could be registered");
-        window.notify(QObject::tr(
-            "Could not register global hotkeys — another app may be using them."));
-    } else if (!hotkeys.failedActions().isEmpty()) {
-        qWarning("Some hotkeys unavailable: %s",
-                 qUtf8Printable(hotkeys.failedActions().join(QStringLiteral(", "))));
+    const QStringList failedHotkeys = applyShortcuts(window.shortcutConfig());
+    window.setHotkeyProblems(failedHotkeys);
+    if (!failedHotkeys.isEmpty()) {
+        qWarning("Hotkeys unavailable: %s",
+                 qUtf8Printable(failedHotkeys.join(QStringLiteral(", "))));
         window.notify(QObject::tr("Some hotkeys are unavailable: %1")
-                          .arg(hotkeys.failedActions().join(QStringLiteral(", "))));
+                          .arg(failedHotkeys.join(QStringLiteral(", "))));
     }
 
     // Re-pin whatever was pinned last session.

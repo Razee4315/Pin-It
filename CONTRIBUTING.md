@@ -11,14 +11,15 @@ participating, you agree to uphold it. Report unacceptable behaviour to
 
 Search the [existing issues](https://github.com/Razee4315/Pin-It/issues) first.
 If nothing matches, open a new one using the issue templates. For bugs, please
-include your Windows version, PinIt version (Help → About), steps to reproduce,
+include your Windows version, PinIt version (**About** at the bottom of the PinIt
+window, or tray icon → About PinIt), steps to reproduce,
 and — if possible — the log at `%LOCALAPPDATA%\PinIt\pinit.log`.
 
 ## Development setup
 
 **Prerequisites**
 
-- [Qt 6](https://www.qt.io/download-open-source) (Widgets) with a C++17 compiler
+- [Qt 6.5 or newer](https://www.qt.io/download-open-source) (Widgets) with a C++17 compiler
   (MinGW or MSVC)
 - [CMake](https://cmake.org/) 3.21+
 

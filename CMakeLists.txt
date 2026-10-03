@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 # RC enables compiling the Windows .rc (executable icon) via windres.
-project(PinIt VERSION 2.1.1 LANGUAGES CXX RC)
+project(PinIt VERSION 2.2.0 LANGUAGES CXX RC)
 
 # --- C++ / Qt setup -------------------------------------------------------
 set(CMAKE_CXX_STANDARD 17)
@@ -9,11 +9,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_AUTOMOC ON)   # process Q_OBJECT classes
 set(CMAKE_AUTORCC ON)   # compile .qrc resources
-set(CMAKE_AUTOUIC ON)   # compile .ui files (none yet, harmless)
 
-# Network is used only for QLocalServer/QLocalSocket (single-instance IPC);
-# windeployqt already bundles Qt6Network.dll transitively, so it adds no weight.
-find_package(Qt6 REQUIRED COMPONENTS Widgets Network)
+find_package(Qt6 REQUIRED COMPONENTS Widgets)
 qt_standard_project_setup()
 
 # Let the resource compiler find icon.ico (referenced relatively from app.rc).
@@ -43,21 +40,30 @@ qt_add_executable(PinIt WIN32
     src/winpin.h            src/winpin.cpp
     src/persistence.h       src/persistence.cpp
     src/pinmanager.h        src/pinmanager.cpp
+    src/pinmatch.h
     src/globalhotkey.h      src/globalhotkey.cpp
+    src/sessionwatcher.h    src/sessionwatcher.cpp
+    src/singleinstance.h    src/singleinstance.cpp
     src/mainwindow.h        src/mainwindow.cpp
+    src/pinrow.h            src/pinrow.cpp
+    src/elidedlabel.h
+    src/pinflash.h          src/pinflash.cpp
+    src/windowpicker.h      src/windowpicker.cpp
     src/logging.h           src/logging.cpp
+    src/autostart.h         src/autostart.cpp
+    src/theme.h             src/theme.cpp
     src/shortcuts.h         src/shortcuts.cpp
     src/shortcutsdialog.h   src/shortcutsdialog.cpp
     resources/resources.qrc
     resources/app.rc
 )
 
-target_link_libraries(PinIt PRIVATE Qt6::Widgets Qt6::Network)
+target_link_libraries(PinIt PRIVATE Qt6::Widgets)
 
-# Win32 APIs we call directly: window mgmt, DWM, registry (autostart),
-# winmm for PlaySound (the pin tick).
+# Win32 APIs we call directly: window management (user32), window frame
+# bounds and cloaking (dwmapi), PlaySound for the pin tick (winmm).
 if(WIN32)
-    target_link_libraries(PinIt PRIVATE user32 dwmapi advapi32 winmm)
+    target_link_libraries(PinIt PRIVATE user32 dwmapi winmm)
 endif()
 
 # Treat the compiler as a code reviewer: build with broad warnings on.
@@ -75,10 +81,13 @@ qt_add_executable(pinit_tests
     tests/test_pinit.cpp
     src/winpin.h     src/winpin.cpp
     src/shortcuts.h  src/shortcuts.cpp
+    src/autostart.h  src/autostart.cpp
+    src/persistence.h  src/persistence.cpp
+    src/pinmatch.h
 )
 target_include_directories(pinit_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_link_libraries(pinit_tests PRIVATE Qt6::Test Qt6::Core)
 if(WIN32)
-    target_link_libraries(pinit_tests PRIVATE user32 winmm)
+    target_link_libraries(pinit_tests PRIVATE user32 dwmapi winmm)
 endif()
 add_test(NAME pinit_tests COMMAND pinit_tests)

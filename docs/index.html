@@ -10,9 +10,6 @@
   <meta name="theme-color" content="#e9e2d6" />
   <meta name="color-scheme" content="light" />
   <link rel="icon" type="image/png" href="assets/logo.png" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
@@ -28,6 +25,11 @@
   <meta name="twitter:description" content="Pin any window so it stays on top. One shortcut. Free and tiny. Works on Windows 10 and 11." />
   <meta name="twitter:image" content="https://razee4315.github.io/Pin-It/assets/og-image.png" />
 
+  <!-- Mark the page as scripted before first paint. The entrance animations
+       below only hide content under .js, so without JavaScript everything
+       stays visible. -->
+  <script>document.documentElement.classList.add('js');</script>
+
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -39,7 +41,7 @@
     "description": "PinIt is a free, lightweight app that keeps any window on top in Windows. Pin with one shortcut and control per-window opacity.",
     "url": "https://razee4315.github.io/Pin-It/",
     "downloadUrl": "https://github.com/Razee4315/Pin-It/releases/latest",
-    "softwareVersion": "2.1.1",
+    "softwareVersion": "2.2.0",
     "screenshot": "https://razee4315.github.io/Pin-It/assets/screenshot.png",
     "image": "https://razee4315.github.io/Pin-It/assets/og-image.png",
     "license": "https://github.com/Razee4315/Pin-It/blob/main/LICENSE",
@@ -90,7 +92,7 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-padding-top: 88px; scroll-behavior: smooth; color-scheme: light; }
     @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
-    body { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+    body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
     .wrap { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
     a { color: var(--accent-deep); }
     :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 8px; }
@@ -144,6 +146,8 @@
     @media (max-width: 840px) { .cta-row { justify-content: center; } }
     .meta-line { font-size: 13px; color: var(--muted); margin-top: 18px; }
     .meta-line strong { color: var(--text2); font-weight: 600; }
+    .install-note { font-size: 13px; color: var(--muted); margin-top: 8px; max-width: 440px; line-height: 1.5; }
+    @media (max-width: 840px) { .install-note { margin-left: auto; margin-right: auto; } }
 
     /* ---- app shots ---- */
     .shot-stage { position: relative; width: 100%; max-width: 312px; justify-self: end; }
@@ -226,8 +230,8 @@
 
     /* ---- scroll reveal ---- */
     @media (prefers-reduced-motion: no-preference) {
-      .reveal { opacity: 0; transform: translateY(20px); transition: opacity .65s cubic-bezier(.2,.7,.2,1), transform .65s cubic-bezier(.2,.7,.2,1); }
-      .reveal.in { opacity: 1; transform: none; }
+      .js .reveal { opacity: 0; transform: translateY(20px); transition: opacity .65s cubic-bezier(.2,.7,.2,1), transform .65s cubic-bezier(.2,.7,.2,1); }
+      .js .reveal.in { opacity: 1; transform: none; }
       .reveal.d1 { transition-delay: .08s; } .reveal.d2 { transition-delay: .16s; }
       .js .hero-copy > * { opacity: 0; transform: translateY(16px); animation: rise .8s cubic-bezier(.2,.7,.2,1) forwards; }
       .js .hero-copy > :nth-child(1) { animation-delay: .05s; }
@@ -272,11 +276,12 @@
             </a>
           </div>
           <p class="meta-line"><strong>Free</strong> · No sign up · No ads · Windows 10 and 11</p>
+          <p class="install-note">The installer is not code-signed yet, so Windows may say “Windows protected your PC”. Choose <strong>More info</strong>, then <strong>Run anyway</strong>. Prefer no installer? Get the <a href="https://github.com/Razee4315/Pin-It/releases/latest/download/PinIt-portable-x64.zip">portable ZIP</a>.</p>
         </div>
 
         <div class="shot-stage">
           <div class="shot-frame">
-            <img src="assets/screenshot.png" alt="PinIt app keeping a Notepad window on top in Windows with an opacity slider and shortcut list" width="427" height="574" />
+            <img src="assets/screenshot.png" alt="PinIt window listing two pinned windows, each with an opacity slider, a click-through toggle and an unpin button, above the shortcut list" width="475" height="700" />
           </div>
         </div>
       </div>
@@ -289,7 +294,9 @@
       </div>
       <div class="demo-stage reveal">
         <div class="demo-frame">
-          <video autoplay loop muted playsinline preload="metadata"
+          <!-- No autoplay attribute: the script below starts it, unless the
+               visitor asked for reduced motion. Controls let anyone pause. -->
+          <video id="demo-video" controls loop muted playsinline preload="metadata"
                  poster="assets/pin-it-poster.jpg"
                  width="1280" height="718"
                  aria-label="Screen recording of PinIt pinning a Notepad window on top and fading its opacity to see through it">
@@ -319,7 +326,7 @@
         <div class="point reveal d2">
           <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg></div>
           <h3>It remembers</h3>
-          <p>Your pins come back on their own the next time you turn on your PC.</p>
+          <p>After a restart, PinIt pins each window again as soon as you open it.</p>
         </div>
       </div>
     </section>
@@ -328,7 +335,7 @@
       <div class="showcase">
         <div class="shot-stage reveal">
           <div class="shot-frame">
-            <img src="assets/shortcuts.png" alt="PinIt edit shortcuts panel where you can set your own keys for pin, opacity and show or hide" width="427" height="573" loading="lazy" />
+            <img src="assets/shortcuts.png" alt="PinIt edit shortcuts panel where you can set your own keys for pin, opacity and show or hide" width="371" height="293" loading="lazy" />
           </div>
         </div>
         <div class="showcase-copy reveal d1">
@@ -378,7 +385,7 @@
           </a>
           <a class="btn btn-ghost" href="https://github.com/Razee4315/Pin-It">GitHub</a>
         </div>
-        <p class="byte-cap">Free and open source · Windows 10 and 11</p>
+        <p class="byte-cap">Free and open source · Windows 10 and 11 · If Windows shows “Windows protected your PC”, choose More info, then Run anyway.</p>
       </div>
     </section>
     </main>
@@ -396,7 +403,12 @@
   (function () {
     "use strict";
     document.body.classList.remove('no-js');
-    document.documentElement.classList.add('js');
+    var demo = document.getElementById('demo-video');
+    var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (demo && !calm) {
+      var started = demo.play();
+      if (started && started.catch) { started.catch(function () { /* autoplay blocked: the controls remain */ }); }
+    }
     var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if ('IntersectionObserver' in window && !reduce) {
       var io = new IntersectionObserver(function (entries) {

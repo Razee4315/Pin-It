@@ -45,6 +45,10 @@ ArchitecturesInstallIn64BitMode=x64compatible
 ; Gracefully close a running PinIt before installing/uninstalling.
 CloseApplications=yes
 RestartApplications=no
+; The mutex PinIt holds while it runs (see SingleInstance in src/main.cpp).
+; Lets setup and the uninstaller notice a running PinIt and ask to close it,
+; instead of failing to replace or delete PinIt.exe.
+AppMutex=PinIt_SingleInstance_v2
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -63,9 +67,16 @@ Name: "{group}\Uninstall {#MyAppName}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Registry]
-; Optional autostart (the app's own setting writes the same key, so this stays in sync).
+; Optional autostart. PinIt's "Start PinIt with Windows" checkbox reads and
+; writes this same value, so the two always agree.
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; \
     ValueName: "PinIt"; ValueData: """{app}\{#MyAppExeName}"" --minimized"; Tasks: startupicon; Flags: uninsdeletevalue
+; Autostart may also have been switched on from inside the app, without the
+; task above. Remove the value on uninstall either way, so no Run entry is
+; left pointing at a deleted PinIt.exe. (ValueType none: nothing is written at
+; install time.)
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: none; \
+    ValueName: "PinIt"; Flags: dontcreatekey uninsdeletevalue
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall skipifsilent

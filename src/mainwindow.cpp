@@ -3,30 +3,33 @@
 #include "winpin.h"
 #include "shortcuts.h"
 #include "shortcutsdialog.h"
+#include "pinrow.h"
+#include "elidedlabel.h"
+#include "pinflash.h"
+#include "windowpicker.h"
+#include "autostart.h"
 
 #include <QApplication>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QPushButton>
 #include <QLabel>
-#include <QSlider>
 #include <QCheckBox>
 #include <QScrollArea>
 #include <QFrame>
 #include <QSystemTrayIcon>
 #include <QMenu>
 #include <QDialog>
-#include <QListWidget>
-#include <QDialogButtonBox>
 #include <QCloseEvent>
 #include <QPixmap>
 #include <QIcon>
-#include <QSettings>
 #include <QCoreApplication>
-#include <QDir>
 #include <QMessageBox>
-#include <QColor>
-#include <QCursor>
+#include <QSet>
+#include <QTimer>
+#include <QAccessible>
+#include <QDesktopServices>
+#include <QUrl>
 
 #include "version.h"
 
@@ -34,8 +37,7 @@ namespace {
 
 QIcon appIcon()
 {
-    QIcon ic(QStringLiteral(":/icon.png"));
-    return ic.isNull() ? QIcon(QStringLiteral(":/icon-128.png")) : ic;
+    return QIcon(QStringLiteral(":/icon.png"));
 }
 
 // A single keyboard-key chip, e.g. [ Win ].
@@ -54,46 +56,35 @@ QLabel *plusLabel(const QString &text = QStringLiteral("+"))
     return l;
 }
 
+// A shortcut as chips: [ Win ] + [ Ctrl ] + [ T ].
+void addKeyChips(QHBoxLayout *row, const QStringList &keys)
+{
+    for (int i = 0; i < keys.size(); ++i) {
+        if (i > 0)
+            row->addWidget(plusLabel());
+        row->addWidget(keyChip(keys[i]));
+    }
+}
+
+// Empty a layout, deleting its widgets and nested layouts.
+void clearLayout(QLayout *layout)
+{
+    while (QLayoutItem *item = layout->takeAt(0)) {
+        if (QLayout *child = item->layout())
+            clearLayout(child);
+        if (QWidget *widget = item->widget()) {
+            widget->hide();
+            widget->deleteLater();
+        }
+        delete item;
+    }
+}
+
 QFrame *makeCard()
 {
     auto *card = new QFrame;
     card->setProperty("role", "card");
     return card;
-}
-
-// Console apps (PowerShell, cmd) set their window title to a full path.
-// Show just the final component so the list stays readable.
-QString displayTitle(const QString &title)
-{
-    const int slash = title.lastIndexOf(QLatin1Char('\\'));
-    if (slash >= 0 && slash < title.size() - 1)
-        return title.mid(slash + 1);
-    return title;
-}
-
-// Deterministic avatar colour for a process name (ported from the original
-// PinIt frontend) so each pinned app gets a stable little badge.
-QColor avatarColor(const QString &name)
-{
-    static const char *kColors[] = {
-        "#e57373", "#f06292", "#ba68c8", "#9575cd", "#7986cb",
-        "#64b5f6", "#4fc3f7", "#4dd0e1", "#4db6ac", "#81c784",
-        "#aed581", "#ffd54f", "#ffb74d", "#ff8a65", "#a1887f",
-    };
-    constexpr int count = int(sizeof(kColors) / sizeof(kColors[0]));
-    quint32 hash = 0;
-    for (const QChar ch : name)
-        hash = ch.unicode() + (hash << 5) - hash;   // wraps mod 2^32 (well-defined)
-    return QColor(QString::fromLatin1(kColors[hash % count]));
-}
-
-// First letter of the process name (sans .exe) for the avatar badge.
-QString avatarInitial(const QString &name)
-{
-    QString n = name;
-    if (n.endsWith(QStringLiteral(".exe"), Qt::CaseInsensitive))
-        n.chop(4);
-    return n.isEmpty() ? QStringLiteral("?") : QString(n.at(0).toUpper());
 }
 
 } // namespace
@@ -105,26 +96,55 @@ MainWindow::MainWindow(PinManager *manager, QWidget *parent)
     setWindowTitle(QStringLiteral("PinIt"));
     setWindowIcon(appIcon());
 
-    // Fixed-size window: drop the maximize button and lock the dimensions.
-    setWindowFlags(Qt::Window | Qt::MSWindowsFixedSizeDialogHint
-                   | Qt::WindowTitleHint | Qt::WindowSystemMenuHint
+    // Fixed width, free height: the layout is a single column, so only the
+    // pinned list benefits from more room — and it takes all the extra height
+    // the user gives the window. No maximize button.
+    constexpr int kWidth = 380;
+    constexpr int kMinHeight = 500;
+    constexpr int kDefaultHeight = 600;
+    setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::WindowSystemMenuHint
                    | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint);
-    setFixedSize(360, 470);
+    setFixedWidth(kWidth);
+    setMinimumHeight(kMinHeight);
+    resize(kWidth, kDefaultHeight);
 
     m_settings = persistence::loadSettings();
 
     buildUi();
     buildTray();
-    rebuildList();
+    syncList();
 
-    connect(m_manager, &PinManager::pinsChanged, this, &MainWindow::rebuildList);
+    connect(m_manager, &PinManager::pinsChanged, this, &MainWindow::syncList);
     connect(m_manager, &PinManager::errorOccurred, this, &MainWindow::notify);
+    connect(m_manager, &PinManager::titleChanged, this,
+            [this](intptr_t hwnd, const QString &title) {
+                if (PinRow *row = m_rows.value(hwnd))
+                    row->setTitle(title);
+            });
+    connect(m_manager, &PinManager::clickThroughChanged, this,
+            [this](intptr_t hwnd, bool enabled) {
+                if (PinRow *row = m_rows.value(hwnd))
+                    row->setClickThrough(enabled);
+            });
+    connect(m_manager, &PinManager::opacityChanged, this, [this](intptr_t hwnd, int percent) {
+        if (PinRow *row = m_rows.value(hwnd))
+            row->setOpacity(percent);
+    });
+    // A saved pin found its window (which the user has just opened): outline
+    // it so the silent re-pin doesn't go unnoticed.
+    connect(m_manager, &PinManager::pinRestored, this,
+            [](intptr_t hwnd) { pinflash::show(hwnd, pinflash::Kind::Pinned); });
     connect(m_manager, &PinManager::pinToggled, this,
-            [this](bool pinned, const QString &title, const QString &) {
+            [this](intptr_t hwnd, bool pinned, const QString &title) {
                 if (pinned && m_settings.enableSound)
-                    winpin::beep();
-                notify(pinned ? tr("Pinned: %1").arg(title)
-                              : tr("Unpinned: %1").arg(title));
+                    winpin::playPinSound();
+                // The outline around the window itself is the primary feedback:
+                // instant, and exactly where the user is looking.
+                pinflash::show(hwnd, pinned ? pinflash::Kind::Pinned
+                                            : pinflash::Kind::Unpinned);
+                if (m_settings.showNotifications)
+                    notify(pinned ? tr("Pinned: %1").arg(displayTitle(title))
+                                  : tr("Unpinned: %1").arg(displayTitle(title)));
             });
 }
 
@@ -153,6 +173,12 @@ void MainWindow::buildUi()
     titleBox->addWidget(tagline);
     header->addLayout(titleBox);
     header->addStretch();
+    // Lives in the header rather than on a row of its own, which leaves that
+    // height to the pinned list.
+    auto *editShortcuts = new QPushButton(tr("Edit shortcuts…"));
+    connect(editShortcuts, &QPushButton::clicked, this, &MainWindow::openShortcutsDialog);
+    header->addWidget(editShortcuts, 0, Qt::AlignVCenter);
+    m_editShortcuts = editShortcuts;
     root->addLayout(header);
 
     // --- Pin button ----------------------------------------------------------
@@ -160,6 +186,7 @@ void MainWindow::buildUi()
     addBtn->setObjectName(QStringLiteral("primary"));
     connect(addBtn, &QPushButton::clicked, this, &MainWindow::addWindowDialog);
     root->addWidget(addBtn);
+    m_addButton = addBtn;
 
     // --- SHORTCUTS -----------------------------------------------------------
     auto *scLabel = new QLabel(tr("SHORTCUTS"));
@@ -167,16 +194,20 @@ void MainWindow::buildUi()
     root->addWidget(scLabel);
 
     auto *scCard = makeCard();
+    // Never squeezed: when space is short it is the list that scrolls.
+    scCard->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     auto *scv = new QVBoxLayout(scCard);
-    scv->setContentsMargins(12, 10, 12, 10);
-    scv->setSpacing(9);
+    scv->setContentsMargins(12, 8, 12, 8);
+    scv->setSpacing(6);
     m_shortcutsLayout = scv;
     fillShortcutRows(scv);
     root->addWidget(scCard);
 
-    auto *editShortcuts = new QPushButton(tr("Edit shortcuts…"));
-    connect(editShortcuts, &QPushButton::clicked, this, &MainWindow::openShortcutsDialog);
-    root->addWidget(editShortcuts, 0, Qt::AlignLeft);
+    m_hotkeyWarning = new QLabel;
+    m_hotkeyWarning->setProperty("role", "warning");
+    m_hotkeyWarning->setWordWrap(true);
+    m_hotkeyWarning->hide();
+    root->addWidget(m_hotkeyWarning);
 
     // --- PINNED (n) ----------------------------------------------------------
     m_pinnedHeader = new QLabel(tr("PINNED (0)"));
@@ -184,9 +215,13 @@ void MainWindow::buildUi()
     root->addWidget(m_pinnedHeader);
 
     auto *scroll = new QScrollArea(central);
+    m_scroll = scroll;
     scroll->setWidgetResizable(true);
     scroll->setFrameShape(QFrame::NoFrame);
     scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    // Not a tab stop itself: its rows are, and focusing one scrolls it into view.
+    scroll->setFocusPolicy(Qt::NoFocus);
+    scroll->setMinimumHeight(108);   // two rows, even with the hotkey warning showing
     auto *listContainer = new QWidget(scroll);
     m_listLayout = new QVBoxLayout(listContainer);
     m_listLayout->setContentsMargins(0, 0, 0, 0);
@@ -204,19 +239,9 @@ void MainWindow::buildUi()
     emptyText->setProperty("role", "muted");
     emptyText->setAlignment(Qt::AlignCenter);
     ec->addWidget(emptyText);
-    auto *hintRow = new QHBoxLayout;
-    hintRow->addStretch();
-    auto *use = new QLabel(tr("Use"));
-    use->setProperty("role", "muted");
-    hintRow->addWidget(use);
-    const QStringList toggleKeys = shortcuts::displayTokens(m_settings.shortcuts.togglePin);
-    for (int i = 0; i < toggleKeys.size(); ++i) {
-        if (i > 0)
-            hintRow->addWidget(plusLabel());
-        hintRow->addWidget(keyChip(toggleKeys[i]));
-    }
-    hintRow->addStretch();
-    ec->addLayout(hintRow);
+    m_emptyHint = new QHBoxLayout;
+    fillEmptyHint();
+    ec->addLayout(m_emptyHint);
     m_listLayout->insertWidget(0, m_emptyCard);   // lives in the list region
 
     // --- Settings (compact, at the bottom) -----------------------------------
@@ -228,231 +253,311 @@ void MainWindow::buildUi()
     });
     root->addWidget(m_soundBox);
 
+    m_notifyBox = new QCheckBox(tr("Show a notification when pinning"));
+    m_notifyBox->setChecked(m_settings.showNotifications);
+    connect(m_notifyBox, &QCheckBox::toggled, this, [this](bool on) {
+        m_settings.showNotifications = on;
+        persistence::saveSettings(m_settings);
+    });
+    root->addWidget(m_notifyBox);
+
     m_autostartBox = new QCheckBox(tr("Start PinIt with Windows"));
-    m_autostartBox->setChecked(m_settings.startWithWindows);
+    // The Run key is the truth (the installer can set it too); the copy in
+    // the settings file is only kept in step for older versions.
+    autostart::repairPath();
+    m_autostartBox->setChecked(autostart::isEnabled());
     connect(m_autostartBox, &QCheckBox::toggled, this, [this](bool on) {
+        autostart::setEnabled(on);
         m_settings.startWithWindows = on;
-        applyAutostart(on);
         persistence::saveSettings(m_settings);
     });
     root->addWidget(m_autostartBox);
 
+    // --- Footer -------------------------------------------------------------
+    auto *footer = new QHBoxLayout;
+    m_unpinAll = new QPushButton(tr("Unpin all"));
+    m_unpinAll->setObjectName(QStringLiteral("link"));
+    connect(m_unpinAll, &QPushButton::clicked, this, &MainWindow::unpinAll);
+    footer->addWidget(m_unpinAll);
+    footer->addStretch();
+    // Also reachable without the tray (version number for bug reports).
+    m_aboutButton = new QPushButton(tr("About"));
+    m_aboutButton->setObjectName(QStringLiteral("link"));
+    connect(m_aboutButton, &QPushButton::clicked, this, &MainWindow::showAbout);
+    footer->addWidget(m_aboutButton);
+    root->addLayout(footer);
+
+    // In-window message. Not in a layout: it floats over the bottom of the
+    // list so showing it never moves anything.
+    m_status = new QLabel(central);
+    m_status->setProperty("role", "status");
+    m_status->setWordWrap(true);
+    m_status->setAlignment(Qt::AlignCenter);
+    m_status->hide();
+    m_statusTimer = new QTimer(this);
+    m_statusTimer->setSingleShot(true);
+    m_statusTimer->setInterval(4000);
+    connect(m_statusTimer, &QTimer::timeout, m_status, &QWidget::hide);
+
     setCentralWidget(central);
 }
 
-void MainWindow::setShortcutConfig(const persistence::ShortcutConfig &cfg)
+void MainWindow::setHotkeyProblems(const QStringList &failedActions)
 {
-    m_settings.shortcuts = cfg;
-    if (m_shortcutsLayout)
-        fillShortcutRows(m_shortcutsLayout);
+    m_hotkeyProblems = failedActions;
+    m_hotkeyWarning->setVisible(!failedActions.isEmpty());
+    if (!failedActions.isEmpty()) {
+        m_hotkeyWarning->setText(
+            tr("Not working: %1. Another app is probably using the same keys — "
+               "pick different ones with “Edit shortcuts…”.")
+                .arg(failedActions.join(QStringLiteral(", "))));
+    }
+    updateTrayToolTip();
+}
+
+void MainWindow::updateTrayToolTip()
+{
+    if (!m_tray)
+        return;
+    const int n = m_manager->pinnedCount();
+    QString tip = n == 0 ? tr("PinIt — no windows pinned")
+                : n == 1 ? tr("PinIt — 1 window pinned")
+                         : tr("PinIt — %1 windows pinned").arg(n);
+    if (!m_hotkeyProblems.isEmpty())
+        tip += QLatin1Char('\n') + tr("Shortcut not working: %1")
+                                       .arg(m_hotkeyProblems.join(QStringLiteral(", ")));
+    m_tray->setToolTip(tip);
+}
+
+void MainWindow::showStatus(const QString &message)
+{
+    m_status->setText(message);
+    placeStatus();
+    m_status->show();
+    m_status->raise();
+    m_statusTimer->start();
+
+    // Screen readers don't notice a label appearing; announce it.
+    QAccessibleEvent alert(m_status, QAccessible::Alert);
+    QAccessible::updateAccessibility(&alert);
+}
+
+void MainWindow::placeStatus()
+{
+    if (!m_status || !m_scroll)
+        return;
+    constexpr int kInset = 6;
+    const QRect area = m_scroll->geometry();
+    const int width = area.width() - 2 * kInset;
+    const int height = m_status->heightForWidth(width);
+    m_status->setGeometry(area.left() + kInset, area.bottom() - kInset - height + 1,
+                          width, height);
+}
+
+void MainWindow::resizeEvent(QResizeEvent *event)
+{
+    QMainWindow::resizeEvent(event);
+    placeStatus();
 }
 
 void MainWindow::fillShortcutRows(QVBoxLayout *scv)
 {
-    // Clear any existing rows (each row is a nested QHBoxLayout of chips).
-    while (QLayoutItem *item = scv->takeAt(0)) {
-        if (QLayout *child = item->layout()) {
-            while (QLayoutItem *ci = child->takeAt(0)) {
-                if (ci->widget())
-                    ci->widget()->deleteLater();
-                delete ci;
-            }
-        }
-        if (item->widget())
-            item->widget()->deleteLater();
-        delete item;
-    }
+    clearLayout(scv);
 
     const persistence::ShortcutConfig &sc = m_settings.shortcuts;
 
-    auto addRow = [&](const QStringList &keys, const QString &desc) {
+    // One row: the shortcut's chips, optionally "/ [alternative key]", then
+    // what it does on the right.
+    auto addRow = [scv](const QStringList &keys, const QString &desc,
+                        const QString &alternativeKey = QString()) {
         auto *row = new QHBoxLayout;
         row->setSpacing(6);
-        for (int i = 0; i < keys.size(); ++i) {
-            if (i > 0)
-                row->addWidget(plusLabel());
-            row->addWidget(keyChip(keys[i]));
+        addKeyChips(row, keys);
+        if (!alternativeKey.isEmpty()) {
+            row->addWidget(plusLabel(QStringLiteral("/")));
+            row->addWidget(keyChip(alternativeKey));
         }
-        row->addStretch();
-        auto *d = new QLabel(desc);
+        // The description takes what is left and shortens itself if a long
+        // shortcut (three modifiers) leaves little room.
+        auto *d = new ElidedLabel(desc);
         d->setProperty("role", "desc");
-        row->addWidget(d);
+        d->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+        d->setToolTip(desc);
+        row->addWidget(d, 1);
         scv->addLayout(row);
     };
 
     addRow(shortcuts::displayTokens(sc.togglePin), tr("Pin / unpin window"));
 
-    {   // Opacity row shows both +/- keys sharing the same modifiers.
-        const QStringList up = shortcuts::displayTokens(sc.opacityUp);
-        const QStringList down = shortcuts::displayTokens(sc.opacityDown);
-        auto *row = new QHBoxLayout;
-        row->setSpacing(6);
-        for (int i = 0; i < up.size(); ++i) {
-            const bool isKey = (i == up.size() - 1);
-            if (i > 0)
-                row->addWidget(plusLabel());
-            if (isKey) {
-                row->addWidget(keyChip(up[i]));
-                row->addWidget(plusLabel(QStringLiteral("/")));
-                row->addWidget(keyChip(down.isEmpty() ? QStringLiteral("-") : down.last()));
-            } else {
-                row->addWidget(keyChip(up[i]));
-            }
-        }
-        row->addStretch();
-        auto *d = new QLabel(tr("Adjust opacity"));
-        d->setProperty("role", "desc");
-        row->addWidget(d);
-        scv->addLayout(row);
+    // The two opacity shortcuts share one row ("Win + Ctrl + = / -") only when
+    // they really differ in nothing but the key; otherwise each gets its own
+    // row so the modifiers shown are the ones that work.
+    const QStringList up = shortcuts::displayTokens(sc.opacityUp);
+    const QStringList down = shortcuts::displayTokens(sc.opacityDown);
+    const bool sameModifiers = !up.isEmpty() && !down.isEmpty()
+        && up.mid(0, up.size() - 1) == down.mid(0, down.size() - 1);
+    if (sameModifiers) {
+        addRow(up, tr("Adjust opacity"), down.last());
+    } else {
+        addRow(up, tr("Increase opacity"));
+        addRow(down, tr("Decrease opacity"));
     }
 
     addRow(shortcuts::displayTokens(sc.toggleWindow), tr("Show / hide PinIt"));
 }
 
+void MainWindow::fillEmptyHint()
+{
+    clearLayout(m_emptyHint);
+    m_emptyHint->addStretch();
+    auto *use = new QLabel(tr("Use"));
+    use->setProperty("role", "muted");
+    m_emptyHint->addWidget(use);
+    addKeyChips(m_emptyHint, shortcuts::displayTokens(m_settings.shortcuts.togglePin));
+    m_emptyHint->addStretch();
+}
+
 void MainWindow::openShortcutsDialog()
 {
-    ShortcutsDialog dlg(m_settings.shortcuts, this);
+    // The dialog only closes with OK once Windows has accepted the new set.
+    // If it is refused, the set that was working is put straight back.
+    const auto tryShortcuts = [this](const persistence::ShortcutConfig &candidate) {
+        if (!m_applyShortcuts)
+            return QStringList();
+        const QStringList refused = m_applyShortcuts(candidate);
+        if (!refused.isEmpty())
+            m_applyShortcuts(m_settings.shortcuts);
+        return refused;
+    };
+
+    ShortcutsDialog dlg(m_settings.shortcuts, tryShortcuts, this);
     if (dlg.exec() != QDialog::Accepted)
         return;
 
+    // Only a set that is live gets saved.
     m_settings.shortcuts = dlg.config();
     persistence::saveSettings(m_settings);
     if (m_shortcutsLayout)
         fillShortcutRows(m_shortcutsLayout);
-    emit shortcutsChanged(m_settings.shortcuts);
+    fillEmptyHint();   // the "Use [Win]+[Ctrl]+[T]" hint shows the pin shortcut too
+    setHotkeyProblems({});
+    notify(tr("Shortcuts updated."));
 }
 
-void MainWindow::rebuildList()
+void MainWindow::syncList()
 {
-    // Remove previously-built pin cards, keeping the empty card and the stretch.
-    for (int i = m_listLayout->count() - 1; i >= 0; --i) {
-        QWidget *w = m_listLayout->itemAt(i)->widget();
-        if (!w || w == m_emptyCard)
-            continue;
-        delete m_listLayout->takeAt(i);
-        w->deleteLater();
-    }
-
     const QVector<PinnedWindow> pinned = m_manager->pinnedWindows();
-    if (m_emptyCard)
-        m_emptyCard->setVisible(pinned.isEmpty());
-    if (m_pinnedHeader)
-        m_pinnedHeader->setText(tr("PINNED (%1)").arg(pinned.size()));
 
+    // Drop the rows of windows that are no longer pinned.
+    QSet<intptr_t> live;
+    for (const PinnedWindow &w : pinned)
+        live.insert(w.hwnd);
+    for (auto it = m_rows.begin(); it != m_rows.end();) {
+        if (live.contains(it.key())) {
+            ++it;
+        } else {
+            m_listLayout->removeWidget(it.value());
+            it.value()->hide();
+            it.value()->deleteLater();
+            it = m_rows.erase(it);
+        }
+    }
+
+    // Add rows for new pins. Existing rows are left alone, so a slider that is
+    // being dragged (or has keyboard focus) is not torn down under the user.
     for (const PinnedWindow &w : pinned) {
+        if (m_rows.contains(w.hwnd))
+            continue;
         const intptr_t hwnd = w.hwnd;
-
-        // One compact row per pin: [avatar] [title / process] [slider] [%] [x]
-        auto *card = makeCard();
-        auto *row = new QHBoxLayout(card);
-        row->setContentsMargins(10, 6, 8, 6);
-        row->setSpacing(8);
-
-        // Coloured badge with the process initial.
-        auto *avatar = new QLabel(avatarInitial(w.processName));
-        avatar->setFixedSize(28, 28);
-        avatar->setAlignment(Qt::AlignCenter);
-        avatar->setStyleSheet(QStringLiteral(
-            "background:%1; border-radius:6px; color:white;"
-            "font-weight:700; font-size:12px;").arg(avatarColor(w.processName).name()));
-        row->addWidget(avatar);
-
-        // Title + process name stacked tightly; takes the leftover width.
-        auto *info = new QVBoxLayout;
-        info->setSpacing(0);
-        auto *name = new QLabel;
-        name->setStyleSheet(QStringLiteral("font-weight: 600;"));
-        // Elide so a long title never widens the card or forces a scrollbar.
-        name->setText(name->fontMetrics().elidedText(
-            displayTitle(w.title), Qt::ElideRight, 150));
-        name->setToolTip(w.title);   // full title on hover
-        auto *proc = new QLabel(w.processName);
-        proc->setProperty("role", "muted");
-        info->addWidget(name);
-        info->addWidget(proc);
-        row->addLayout(info, 1);
-
-        // Opacity slider + percentage.
-        auto *slider = new QSlider(Qt::Horizontal);
-        slider->setRange(winpin::kMinOpacity, winpin::kMaxOpacity);
-        slider->setValue(w.opacity);
-        slider->setFixedWidth(76);
-        // The round handle is pulled out over the thin groove (margin:-6px in
-        // the QSS); without enough vertical room it gets clipped at the top.
-        slider->setMinimumHeight(20);
-        row->addWidget(slider);
-
-        auto *pct = new QLabel(QStringLiteral("%1%").arg(w.opacity));
-        pct->setProperty("role", "muted");
-        pct->setMinimumWidth(30);
-        pct->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-        row->addWidget(pct);
-
-        connect(slider, &QSlider::valueChanged, this, [this, hwnd, pct](int v) {
-            pct->setText(QStringLiteral("%1%").arg(v));
-            m_manager->setOpacity(hwnd, v);
+        auto *row = new PinRow(w);
+        connect(row, &PinRow::opacityRequested, this,
+                [this, hwnd](int percent) { m_manager->setOpacity(hwnd, percent); });
+        connect(row, &PinRow::clickThroughRequested, this, [this, hwnd, row](bool enabled) {
+            // If Windows refuses, put the button back to the real state.
+            if (!m_manager->setClickThrough(hwnd, enabled))
+                row->setClickThrough(!enabled);
         });
-
-        // Compact unpin button (full label still available as a tooltip).
-        auto *unpinBtn = new QPushButton(QString::fromUtf8("\xE2\x9C\x95"));   // ✕
-        unpinBtn->setObjectName(QStringLiteral("unpin"));
-        unpinBtn->setFixedSize(24, 24);
-        unpinBtn->setToolTip(tr("Unpin this window"));
-        unpinBtn->setCursor(Qt::PointingHandCursor);
-        connect(unpinBtn, &QPushButton::clicked, this,
+        connect(row, &PinRow::unpinRequested, this,
                 [this, hwnd]() { m_manager->unpin(hwnd); });
-        row->addWidget(unpinBtn);
-
-        m_listLayout->insertWidget(m_listLayout->count() - 1, card);
+        connect(row, &PinRow::locateRequested, this,
+                [hwnd]() { pinflash::show(hwnd, pinflash::Kind::Pinned); });
+        m_rows.insert(hwnd, row);
+        // After the last live row, ahead of the waiting rows and the stretch.
+        m_listLayout->insertWidget(m_listLayout->count() - 1 - m_pendingRows.size(), row);
     }
 
-    if (m_tray) {
-        const int n = pinned.size();
-        m_tray->setToolTip(n == 0 ? tr("PinIt — no windows pinned")
-                                  : tr("PinIt — %n window(s) pinned", "", n));
+    // Waiting rows are static, so simply rebuild them.
+    for (PendingRow *row : std::as_const(m_pendingRows)) {
+        m_listLayout->removeWidget(row);
+        row->hide();
+        row->deleteLater();
     }
+    m_pendingRows.clear();
+    const QVector<persistence::SavedPin> pending = m_manager->pendingPins();
+    for (int i = 0; i < pending.size(); ++i) {
+        auto *row = new PendingRow(pending[i]);
+        connect(row, &PendingRow::forgetRequested, this,
+                [this, i]() { m_manager->forgetPending(i); });
+        m_pendingRows.push_back(row);
+        m_listLayout->insertWidget(m_listLayout->count() - 1, row);   // before the stretch
+    }
+
+    if (m_emptyCard)
+        m_emptyCard->setVisible(pinned.isEmpty() && pending.isEmpty());
+    if (m_pinnedHeader) {
+        m_pinnedHeader->setText(pending.isEmpty()
+            ? tr("PINNED (%1)").arg(pinned.size())
+            : tr("PINNED (%1)  ·  WAITING (%2)").arg(pinned.size()).arg(pending.size()));
+    }
+
+    m_unpinAll->setEnabled(!pinned.isEmpty() || !pending.isEmpty());
+
+    updateTrayToolTip();
+    updateTabOrder();
+}
+
+void MainWindow::unpinAll()
+{
+    // Outline each window as it is let go, like a single unpin does.
+    const QVector<PinnedWindow> windows = m_manager->pinnedWindows();
+    for (const PinnedWindow &w : windows)
+        pinflash::show(w.hwnd, pinflash::Kind::Unpinned);
+
+    const int count = m_manager->unpinAll();
+    notify(count == 1 ? tr("Unpinned 1 window.") : tr("Unpinned %1 windows.").arg(count));
+}
+
+void MainWindow::updateTabOrder()
+{
+    // Rows are created long after the rest of the window, which would put
+    // them at the very end of the tab chain. Keep Tab moving top to bottom.
+    QList<QWidget *> chain = {m_editShortcuts, m_addButton};
+    const QVector<PinnedWindow> pinned = m_manager->pinnedWindows();
+    for (const PinnedWindow &w : pinned) {
+        if (const PinRow *row = m_rows.value(w.hwnd))
+            chain += row->focusChain();
+    }
+    for (const PendingRow *row : std::as_const(m_pendingRows))
+        chain += row->focusChain();
+    chain += {m_soundBox, m_notifyBox, m_autostartBox, m_unpinAll, m_aboutButton};
+
+    for (qsizetype i = 1; i < chain.size(); ++i)
+        QWidget::setTabOrder(chain[i - 1], chain[i]);
 }
 
 void MainWindow::addWindowDialog()
 {
-    QDialog dlg(this);
-    dlg.setWindowTitle(tr("Pin a window"));
-    dlg.setWindowIcon(appIcon());
-    dlg.resize(400, 440);
-    auto *l = new QVBoxLayout(&dlg);
-    auto *prompt = new QLabel(tr("Choose a window to keep on top:"), &dlg);
-    l->addWidget(prompt);
-
-    auto *list = new QListWidget(&dlg);
-    const QString self = windowTitle();
+    QVector<winpin::PinnableWindow> candidates;
     for (const winpin::PinnableWindow &w : winpin::enumerateWindows()) {
-        if (w.title.isEmpty() || w.title == QStringLiteral("Unknown"))
-            continue;
-        if (w.title == self)
-            continue;
-        if (m_manager->isPinned(w.hwnd))
-            continue;
-        auto *item = new QListWidgetItem(
-            QStringLiteral("%1   —   %2").arg(displayTitle(w.title), w.processName), list);
-        item->setToolTip(w.title);
-        item->setData(Qt::UserRole, QVariant::fromValue<qlonglong>(w.hwnd));
+        if (!m_manager->isPinned(w.hwnd))
+            candidates.push_back(w);
     }
-    l->addWidget(list, 1);
 
-    auto *buttons = new QDialogButtonBox(
-        QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dlg);
-    l->addWidget(buttons);
-    connect(buttons, &QDialogButtonBox::accepted, &dlg, &QDialog::accept);
-    connect(buttons, &QDialogButtonBox::rejected, &dlg, &QDialog::reject);
-    connect(list, &QListWidget::itemDoubleClicked, &dlg, &QDialog::accept);
-
-    if (dlg.exec() == QDialog::Accepted) {
-        if (QListWidgetItem *sel = list->currentItem()) {
-            const intptr_t hwnd =
-                static_cast<intptr_t>(sel->data(Qt::UserRole).toLongLong());
-            m_manager->pin(hwnd);
-        }
-    }
+    WindowPicker picker(candidates, this);
+    if (picker.exec() != QDialog::Accepted)
+        return;
+    if (const intptr_t hwnd = picker.selectedWindow())
+        m_manager->pin(hwnd);
 }
 
 void MainWindow::showAbout()
@@ -467,14 +572,16 @@ void MainWindow::showAbout()
         "<p>%3</p>"
         "<p>Built with C++ &amp; Qt %4.</p>"
         "<p>By %5<br><a href=\"%6\">%6</a></p>"
-        "<p style='color:gray'>%7</p>")
+        "<p><a href=\"%6/releases/latest\">%8</a></p>"
+        "<p>%7</p>")
         .arg(QStringLiteral(PINIT_PRODUCT),
              QStringLiteral(PINIT_VERSION_STR),
              tr("Keep any window always on top — with a global hotkey."),
              QStringLiteral(QT_VERSION_STR),
              QStringLiteral(PINIT_COMPANY),
              QStringLiteral(PINIT_URL),
-             QStringLiteral(PINIT_COPYRIGHT)));
+             QStringLiteral(PINIT_COPYRIGHT),
+             tr("Check for a newer version")));
     box.exec();
 }
 
@@ -485,49 +592,87 @@ void MainWindow::buildTray()
 
     m_tray = new QSystemTrayIcon(appIcon(), this);
 
-    auto *menu = new QMenu(this);
-    QAction *showAct = menu->addAction(tr("Show PinIt"));
-    connect(showAct, &QAction::triggered, this, &MainWindow::showFromTray);
-    QAction *aboutAct = menu->addAction(tr("About PinIt"));
-    connect(aboutAct, &QAction::triggered, this, &MainWindow::showAbout);
-    menu->addSeparator();
-    QAction *quitAct = menu->addAction(tr("Quit"));
-    connect(quitAct, &QAction::triggered, qApp, &QApplication::quit);
+    // Filled each time it opens, so it always reflects the current pins.
+    m_trayMenu = new QMenu(this);
+    connect(m_trayMenu, &QMenu::aboutToShow, this, &MainWindow::fillTrayMenu);
+    fillTrayMenu();
 
-    m_tray->setContextMenu(menu);
+    m_tray->setContextMenu(m_trayMenu);
     m_tray->setToolTip(QStringLiteral("PinIt"));
     connect(m_tray, &QSystemTrayIcon::activated, this,
             [this](QSystemTrayIcon::ActivationReason reason) {
-                if (reason == QSystemTrayIcon::Trigger ||
-                    reason == QSystemTrayIcon::DoubleClick)
+                // Trigger only: a double-click also delivers a Trigger first,
+                // so reacting to both opened the window and hid it again.
+                if (reason == QSystemTrayIcon::Trigger)
                     toggleVisibility();
             });
     m_tray->show();
 }
 
-void MainWindow::applyAutostart(bool enabled)
+void MainWindow::fillTrayMenu()
 {
-    QSettings run(QStringLiteral(
-        "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"),
-        QSettings::NativeFormat);
-    if (enabled) {
-        const QString exe = QDir::toNativeSeparators(
-            QCoreApplication::applicationFilePath());
-        // --minimized: when launched at login, start silently in the tray
-        // instead of popping the window every boot.
-        run.setValue(QStringLiteral("PinIt"),
-                     QStringLiteral("\"%1\" --minimized").arg(exe));
-    } else {
-        run.remove(QStringLiteral("PinIt"));
+    m_trayMenu->clear();
+    const int pinned = m_manager->pinnedCount();
+
+    m_trayMenu->addAction(tr("Show PinIt"), this, &MainWindow::showFromTray);
+    m_trayMenu->addAction(tr("Pin a window…"), this, &MainWindow::addWindowDialog);
+    m_trayMenu->addSeparator();
+
+    // What is pinned right now, each one click away from being unpinned —
+    // so the tray alone is enough to see and manage pins.
+    const QVector<PinnedWindow> windows = m_manager->pinnedWindows();
+    for (const PinnedWindow &w : windows) {
+        const intptr_t hwnd = w.hwnd;
+        // Keep the menu narrow, and stop "&" in a title becoming a mnemonic.
+        QString title = m_trayMenu->fontMetrics().elidedText(displayTitle(w.title),
+                                                             Qt::ElideRight, 260);
+        title.replace(QLatin1Char('&'), QLatin1String("&&"));
+        m_trayMenu->addAction(tr("Unpin: %1").arg(title), this,
+                              [this, hwnd]() { m_manager->unpin(hwnd); });
     }
+    if (!windows.isEmpty()) {
+        m_trayMenu->addAction(tr("Unpin all"), this, &MainWindow::unpinAll);
+        m_trayMenu->addSeparator();
+    }
+
+    // PinIt never goes online by itself; this just opens the releases page
+    // in the browser.
+    m_trayMenu->addAction(tr("Check for updates…"), this, []() {
+        QDesktopServices::openUrl(QUrl(QStringLiteral(PINIT_URL "/releases/latest")));
+    });
+    m_trayMenu->addAction(tr("About PinIt"), this, &MainWindow::showAbout);
+    m_trayMenu->addSeparator();
+
+    // Quitting un-pins everything and forgets the pins; say so up front
+    // rather than surprising the user afterwards.
+    const QString quitText = pinned == 0 ? tr("Quit")
+                           : pinned == 1 ? tr("Quit and unpin 1 window")
+                                         : tr("Quit and unpin %1 windows").arg(pinned);
+    m_trayMenu->addAction(quitText, qApp, &QApplication::quit);
 }
 
 void MainWindow::toggleVisibility()
 {
-    if (isVisible() && !isMinimized())
+    // Hide only when the user is actually looking at the window. If it is open
+    // but buried under other windows, bring it forward instead.
+    //
+    // Clicking the tray icon moves focus to the taskbar just before this runs,
+    // so "was active a moment ago" has to count as active too.
+    constexpr qint64 kJustDeactivatedMs = 400;
+    const bool inFront = isActiveWindow()
+        || (m_sinceDeactivated.isValid() && m_sinceDeactivated.elapsed() < kJustDeactivatedMs);
+
+    if (isVisible() && !isMinimized() && inFront)
         hide();
     else
         showFromTray();
+}
+
+void MainWindow::changeEvent(QEvent *event)
+{
+    if (event->type() == QEvent::ActivationChange && !isActiveWindow())
+        m_sinceDeactivated.start();
+    QMainWindow::changeEvent(event);
 }
 
 void MainWindow::showFromTray()
@@ -539,7 +684,14 @@ void MainWindow::showFromTray()
 
 void MainWindow::notify(const QString &message)
 {
-    if (m_tray && m_tray->isVisible())
+    const bool hasTray = m_tray && m_tray->isVisible();
+    const bool userIsLooking = isVisible() && !isMinimized() && isActiveWindow();
+
+    // Without a tray there is nowhere else to say it, so the message would be
+    // lost; and when the window is in front, a system notification is overkill.
+    if (!hasTray || userIsLooking)
+        showStatus(message);
+    else
         m_tray->showMessage(QStringLiteral("PinIt"), message,
                             QSystemTrayIcon::Information, 2500);
 }

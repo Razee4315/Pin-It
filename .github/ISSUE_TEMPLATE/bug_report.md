@@ -17,7 +17,7 @@ What you expected to happen.
 
 **Environment**
 - Windows version: (e.g. Windows 11 23H2)
-- PinIt version: (tray → About PinIt)
+- PinIt version: (About, at the bottom of the PinIt window)
 
 **Logs**
 If possible, attach `%LOCALAPPDATA%\PinIt\pinit.log`.

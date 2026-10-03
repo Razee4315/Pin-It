@@ -38,11 +38,13 @@ Press `Win+Ctrl+T` and the focused window stays on top of everything else. Slide
 
 ## Features
 
-- **Global hotkey pinning** — `Win+Ctrl+T` pins/unpins the focused window. No clicking through menus.
+- **Global hotkey pinning** — `Win+Ctrl+T` pins/unpins the focused window, with a brief outline around it so you see it happen. No clicking through menus.
 - **Per-window transparency** — make any pinned window see-through with `Win+Ctrl+=` / `Win+Ctrl+-` or a slider. Great for reference docs, video calls, or notes over your work.
-- **Pins survive restarts** — PinIt remembers what you pinned (and its opacity) and re-pins it when you log back in.
+- **Pins survive restarts** — PinIt remembers what you pinned (and its opacity). After a restart it pins each window again as soon as that window is open.
 - **Windows 11 topmost re-enforcement** — Win11's compositor sometimes strips the always-on-top flag; PinIt re-applies it automatically.
-- **System tray app** — closes to the tray and stays out of your way. Optional start-with-Windows.
+- **Click-through** — let mouse clicks pass through a faded window to whatever is behind it.
+- **System tray app** — closes to the tray and stays out of your way; the tray menu lists your pinned windows. Optional start-with-Windows.
+- **Light and dark** — follows your Windows colour mode.
 - **Tiny and fast** — native C++/Qt talking directly to the Windows API. Minimal RAM, instant response.
 
 ## Keyboard Shortcuts
@@ -87,7 +89,7 @@ Yes — pin a window with PinIt, then press `Win+Ctrl+-` to fade it (down to 20%
 
 ### Do my pinned windows stay on top after I restart?
 
-Yes. PinIt saves your pins (per app, with their opacity) to `%LOCALAPPDATA%\PinIt` and re-pins matching windows on the next launch — something neither PowerToys nor DeskPins does.
+Yes. PinIt saves your pins (app, window title and opacity) to `%LOCALAPPDATA%\PinIt`. After a restart, each saved window is pinned again as soon as it is open with the same title — windows that aren't open yet are listed as "Waiting" in PinIt until they are. Quitting PinIt yourself (tray → Quit) unpins everything and clears the list. Neither PowerToys nor DeskPins remembers pins at all.
 
 ### Does it work with apps running as administrator?
 
@@ -101,7 +103,7 @@ Yes — PinIt is completely free and open source under the [Apache 2.0 license](
 
 ### Prerequisites
 
-- [Qt 6](https://www.qt.io/download-open-source) (Widgets) with a C++17 compiler (MinGW or MSVC)
+- [Qt 6.5 or newer](https://www.qt.io/download-open-source) (Widgets) with a C++17 compiler (MinGW or MSVC)
 - [CMake](https://cmake.org/) 3.21+
 
 ### Build
@@ -116,7 +118,7 @@ cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=<pat
 cmake --build build
 ```
 
-The executable is `build/PinIt.exe`. To run it standalone, bundle the Qt runtime with `windeployqt`. To produce the installer, run the [Inno Setup](https://jrsoftware.org/isinfo.php) script at `installer/PinIt.iss`.
+The executable is `build/PinIt.exe`. To run it standalone, bundle the Qt runtime with `windeployqt` (the exact flags are in `.github/workflows/build.yml`). To produce the installer, run the [Inno Setup](https://jrsoftware.org/isinfo.php) script at `installer/PinIt.iss`.
 
 > Every push is built automatically by GitHub Actions (`.github/workflows/build.yml`), which produces the installer and a portable ZIP. Pushing a `v*` tag publishes them to a GitHub Release.
 
