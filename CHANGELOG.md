@@ -8,72 +8,115 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [2.2.0]
 
-### Fixed
-- **Pins survive a Windows restart again.** 2.1.1 cleared the saved pins on
-  every exit, which also wiped them on shutdown/restart — disabling the
-  advertised "pins come back after a restart" feature. PinIt now keeps pins
-  when Windows is logging off/restarting and only forgets them on a deliberate
-  quit (and a shutdown that gets cancelled no longer confuses the two).
-- **Saved pins wait for their window.** After a restart PinIt usually starts
-  before the apps it had pinned. Instead of giving up — and then erasing those
-  pins — it now lists them as "Waiting" and pins each window as soon as it is
-  opened again. A waiting pin can be dropped from the list.
-- Restoring no longer pins "some window of the same app": a saved pin is only
-  applied to a window with the same app *and* title.
-- The pin hotkey no longer pins the desktop, the taskbar, Start or PinIt
-  itself, and the window picker no longer lists them (or hidden Store-app
-  windows).
-- A long window title no longer pushes the unpin button out of the list.
-- Unpinning no longer takes away an app's own always-on-top (e.g. Task
-  Manager's) or resets the transparency of apps that manage their own.
-- Double-clicking the tray icon no longer opens the window and hides it again;
-  clicking it while the window is buried brings the window forward.
-- The "Start PinIt with Windows" checkbox now reflects what Windows will
-  actually do (the Run registry entry), including when the installer set it.
-- Window titles in the list follow the window as it is retitled.
-- After a crash, re-pinning and then unpinning a window now fully restores it.
-- Closing the window when no system tray is available now quits PinIt instead
-  of leaving it running invisibly with no way to exit.
-- A corrupt `pinned.json` is backed up to `pinned.json.corrupt` instead of
-  being silently overwritten; a failed save is written to the log.
-- Window titles are no longer written to `pinit.log`.
+### Upgrade notes
+- Pins now survive a restart even when PinIt starts before your apps: saved
+  pins whose window isn't open yet show as **Waiting** and are pinned again as
+  soon as that window opens with the same title. (2.1.1 lost all pins on every
+  exit, including shutdown.)
+- Pin/unpin **notifications are off by default**; a brief outline around the
+  window confirms the action instead. Turn notifications back on with
+  "Show a notification when pinning".
+- Every global shortcut must now include **Win, Ctrl or Alt**. A shortcut saved
+  with only Shift is reported as unavailable — pick new keys in Edit shortcuts.
+- PinIt follows the Windows light/dark setting and uses Qt's Fusion style, so
+  check boxes and lists look slightly different.
+- `pinned.json` gains new keys (`show_notifications`, and per pin
+  `click_through`, `was_layered`, `was_topmost`, `was_click_through`). Older
+  files load unchanged; no migration step.
+- Building from source now needs **Qt 6.5 or newer**. Qt Network is no longer
+  used. No new environment variables.
 
-### Added
-- **On-screen feedback**: a brief outline around the window when it is pinned
-  or unpinned, and when the pointer rests on its row in the list.
-- **Click-through**: let mouse clicks pass through a pinned window (per
-  window, next to the opacity slider).
-- **Dark theme** that follows the Windows colour mode.
-- **Tray menu** lists the pinned windows (click to unpin), plus "Pin a
-  window…", "Unpin all" and "Check for updates…".
-- "Unpin all" and "About" in the window.
-- The window picker has a search box, window icons and proper empty states.
-- Shortcuts can use F1–F24, arrows, Space and punctuation keys; the editor has
-  "Restore Defaults" and only accepts a set Windows has actually registered,
-  saying which shortcut another app already owns.
-- A standing warning in the window and tray tooltip while a shortcut is
-  unavailable.
-- Setting: "Show a notification when pinning" (off by default — the outline
-  replaces the notification).
+### Features
+- On-screen outline around a window when it is pinned, unpinned, re-pinned
+  after a restart, or when the pointer rests on its row in the list
+  (F-02, M-01).
+- Saved pins wait for their window after a restart instead of being dropped
+  (F-12, M-02).
+- Click-through: let mouse clicks pass through a pinned window (M-08).
+- Dark theme that follows the Windows colour mode (M-10).
+- Tray menu lists the pinned windows (click to unpin), plus "Pin a window…",
+  "Unpin all" and "Check for updates…" (M-05, M-04, M-09).
+- "Unpin all" and "About" buttons in the window (M-04, F-36).
+- Window picker with search, window icons and empty states; it only lists real
+  application windows (F-22, F-21).
+- Shortcut editor: F1–F24, arrows, Space and punctuation keys; Restore
+  Defaults; only accepts a set that Windows actually registered and says which
+  shortcut another app owns (F-30, M-07, F-26).
+- Standing warning in the window and tray tooltip while a shortcut is
+  unavailable (F-03).
+- Optional pin notifications, off by default (M-06).
+- Window grows in height to show more pins (F-15).
 
-### Changed
-- Each pinned window is now a single compact row, kept in the order you pinned
-  them; the window is resizable in height and gives the extra room to the list.
-- Holding an opacity hotkey now keeps fading; pressing one on an unpinned
-  window says why nothing happened.
-- Global shortcuts must include Win, Ctrl or Alt (Shift alone would capture
-  ordinary typing).
-- Messages appear inside the window while you are looking at it, as a tray
-  notification otherwise.
-- The tray "Quit" item says how many windows it will unpin.
-- The pin confirmation sound is now a soft "tick" instead of the system beep.
-- Better contrast, visible keyboard focus, sensible tab order and screen-reader
-  names throughout.
-- A second launch now brings the running PinIt to the front.
-- Smaller download: Qt Network and unused Qt plugins are no longer bundled.
+### Fixes
+- Pins survive a Windows restart again, including when the other apps close
+  before PinIt; a cancelled shutdown no longer leaves PinIt thinking the
+  session is ending (F-09).
+- Restoring only re-pins a window whose app and title both match (F-13).
+- The pin hotkey no longer pins the desktop, taskbar, Start or PinIt itself
+  (F-01).
+- A long window title no longer pushes the unpin button out of the list
+  (F-14).
+- Unpinning keeps an app's own always-on-top (F-05); a window re-pinned after
+  a crash is fully restored on unpin (F-24).
+- Tray: double-click no longer opens and hides the window; a click brings a
+  buried window forward; Quit says how many windows it unpins (F-04, F-07,
+  F-32).
+- The list follows window title changes, keeps pin order, keeps the slider in
+  sync with the opacity hotkeys and updates rows in place (F-06, F-19, F-16,
+  F-20).
+- Opacity hotkeys repeat while held, and explain themselves on an unpinned
+  window (F-18, F-17).
+- Shortcuts must include Win, Ctrl or Alt; a hand-edited key the editor
+  doesn't know is kept, not replaced by "A" (F-25, F-30).
+- "Start PinIt with Windows" reflects the real Run registry entry and repairs
+  a moved portable copy (F-27).
+- The cheat-sheet and empty-state hint stay correct after rebinding (F-28,
+  F-29).
+- Messages appear inside the window when it is in front or when there is no
+  tray (F-10).
+- A second launch brings the running PinIt to the front (F-34).
 - The installer detects a running PinIt and always removes the autostart entry
-  on uninstall. Release assets come with `SHA256SUMS.txt`.
-- Building from source now needs Qt 6.5 or newer.
+  on uninstall (F-33).
+- A failed save is written to the log; a corrupt `pinned.json` is backed up
+  (F-41).
+- Website: content visible without JavaScript, SmartScreen guidance, video
+  controls and no autoplay under reduced motion, accurate restart wording and
+  fresh screenshots (F-38, F-39, F-40, F-43).
+- Tooltip reads "1 window pinned" (F-35).
+
+### Performance
+- Smaller download: Qt Network, Qt Svg and unused Qt plugins are no longer
+  bundled (about 4 MB less unpacked) (O-01, O-02).
+- Smaller executable icon resource (O-03); settings file read once instead of
+  before every save (O-05).
+- Pins are re-asserted the moment another window comes to the front (F-08).
+- Website: no Google Fonts request; README GIF and social image roughly halved
+  and a third smaller (O-08, O-06, O-07).
+
+### Accessibility
+- Text contrast at least 4.5:1 in both themes, visible keyboard focus, a
+  top-to-bottom tab order, and screen-reader names for every row control and
+  shortcut setting (F-23, F-31).
+- In-window messages and dialog errors are announced to screen readers (F-10,
+  F-31).
+
+### Security and privacy
+- Window titles are no longer written to `pinit.log` (F-37).
+- CI: read-only token by default, write access only in the tag-gated release
+  job, third-party actions pinned to commit SHAs; releases include
+  `SHA256SUMS.txt` and a stable-named `PinIt-setup-x64.exe` (F-42).
+
+### Cleanup
+- Dead code and unused includes/libraries removed; one window-handle type;
+  shared helpers for the data folder, shortcut chips and the unpin path; no
+  sentinel strings; colours only in the theme (C-01 – C-07, C-10 – C-17).
+- New unit tests for saved-pin matching, shell windows, shortcut keys,
+  autostart and `pinned.json` (19 tests, up from 7) (C-18).
+- Earlier, unreleased fixes from PRs #14–#16: compact one-line pinned rows, a
+  soft tick sound, debounced opacity saves, corrupt-file backup, quitting when
+  no tray is available, silent restore at startup.
+
+Full audit tracker: [AUDIT_PROGRESS.md](AUDIT_PROGRESS.md).
 
 ## [2.1.1]
 
