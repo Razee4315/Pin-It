@@ -104,9 +104,12 @@ jobs:
       - name: Write checksums
         shell: pwsh
         run: |
-          Get-ChildItem release -File | Where-Object { $_.Name -ne 'SHA256SUMS.txt' } | ForEach-Object {
+          $lines = Get-ChildItem release -File | Where-Object { $_.Name -ne 'SHA256SUMS.txt' } | ForEach-Object {
             "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower())  $($_.Name)"
-          } | Set-Content -Encoding ascii release\SHA256SUMS.txt
+          }
+          # LF line endings: with CRLF, `sha256sum -c` on Linux/macOS/Git Bash
+          # reads the carriage return as part of each file name and fails.
+          [IO.File]::WriteAllText("$PWD\release\SHA256SUMS.txt", (($lines -join "`n") + "`n"))
           Get-Content release\SHA256SUMS.txt
 
       - name: Upload build artifacts
