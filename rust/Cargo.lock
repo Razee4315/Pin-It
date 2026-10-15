@@ -3251,7 +3251,7 @@ checksum = "b330c9d1b92dfe68442ca20b009c717d5f0b1e3cf4965e62f704c3c6e95a1305"
 
 [[package]]
 name = "pinit"
-version = "3.0.0-alpha.1"
+version = "3.0.0"
 dependencies = [
  "embed-resource",
  "raw-window-handle",

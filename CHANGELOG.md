@@ -6,6 +6,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [3.0.0]
+
+PinIt is rewritten in Rust with a [Slint](https://slint.dev) interface. It no
+longer uses Qt; the C++ sources stay in the repository for reference.
+
+### Upgrade notes
+- Your pins and settings carry over: 3.0.0 reads and writes the same
+  `pinned.json` as 2.x.
+- PinIt is now one `PinIt.exe` (about 9.5 MB) instead of an exe plus 21 Qt
+  files (35.8 MB). It also uses less memory.
+- Building from source needs Rust, not Qt: see `rust/README.md`.
+
+### Changed
+- A smaller window (340×350). Settings, shortcuts and About open as panels
+  inside it instead of sitting on the main window.
+- The window picker shows each app's icon.
+- A shortcut another app already uses is marked in the shortcut editor
+  instead of with a warning on the main window.
+
 ## [2.2.0]
 
 ### Upgrade notes
@@ -164,6 +183,7 @@ Rust + Tauri implementation is archived on the `legacy-tauri` branch).
 - Version is single-sourced from CMake into the app, the installer, and the exe
   metadata.
 
+[3.0.0]: https://github.com/Razee4315/Pin-It/releases/tag/v3.0.0
 [2.2.0]: https://github.com/Razee4315/Pin-It/releases/tag/v2.2.0
 [2.1.1]: https://github.com/Razee4315/Pin-It/releases/tag/v2.1.1
 [2.1.0]: https://github.com/Razee4315/Pin-It/releases/tag/v2.1.0
