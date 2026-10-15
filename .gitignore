@@ -26,3 +26,6 @@ src-tauri/
 
 # Generated from *.in by CMake (single-sourced version)
 installer/version.iss
+
+# Rust port build output
+/rust/target/

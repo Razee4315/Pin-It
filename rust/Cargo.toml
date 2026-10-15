@@ -1,0 +1,56 @@
+[package]
+name = "pinit"
+version = "3.0.0-alpha.1"
+description = "Keep any window always on top on Windows"
+authors = ["Saqlain Abbas <saqlainrazee@gmail.com>"]
+license = "Apache-2.0"
+repository = "https://github.com/Razee4315/Pin-It"
+edition = "2024"
+rust-version = "1.88"
+
+[dependencies]
+# - No Slint tray icon: PinIt drives the tray itself (it needs balloon
+#   notifications and the Explorer-restart message).
+# - Software renderer only: for one small window it draws just as well, uses
+#   a fraction of the memory of OpenGL (no GPU driver loaded), and avoids a
+#   stale strip at the bottom of the window seen with the OpenGL renderer.
+slint = { version = "1.18", default-features = false, features = [
+    "std",
+    "backend-winit",
+    "renderer-software",
+    "accessibility",
+    "compat-1-2",
+    "raw-window-handle-06",
+] }
+raw-window-handle = "0.6"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[target.'cfg(windows)'.dependencies]
+# Pinned: windows 0.100 renames every feature and breaks the API.
+windows = { version = "=0.62.2", features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Dwm",
+    "Win32_Graphics_Gdi",
+    "Win32_Media_Audio",
+    "Win32_Security",
+    "Win32_System_LibraryLoader",
+    "Win32_UI_HiDpi",
+    "Win32_System_Registry",
+    "Win32_System_Threading",
+    "Win32_UI_Accessibility",
+    "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_UI_Shell",
+    "Win32_UI_WindowsAndMessaging",
+] }
+
+[build-dependencies]
+slint-build = "1.18"
+embed-resource = "3"
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

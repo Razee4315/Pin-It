@@ -1,0 +1,711 @@
+// The PinIt window: a compact list of pinned windows with opacity sliders,
+// plus four sheets (window picker, shortcut editor, settings, about).
+
+import { ScrollView, LineEdit, ComboBox, AboutSlint } from "std-widgets.slint";
+import { Theme, Icons } from "theme.slint";
+import {
+    Glyph, Button, ButtonKind, IconButton, CheckBox, Slider, KeyCombo, Card, SectionTitle, AppAvatar, Sheet
+} from "controls.slint";
+
+export { Theme }
+
+export struct PinRow {
+    title: string,
+    process: string,
+    opacity: int,
+    click-through: bool,
+    icon: image,
+    has-icon: bool,
+    initial: string,
+    tint: color,
+    waiting: bool,   // a saved pin whose window isn't open yet
+}
+
+export struct PickItem {
+    title: string,
+    process: string,
+    icon: image,
+    has-icon: bool,
+    initial: string,
+    tint: color,
+    pinned: bool,
+}
+
+export struct ShortcutEdit {
+    label: string,
+    win: bool,
+    ctrl: bool,
+    alt: bool,
+    shift: bool,
+    key-index: int,
+}
+
+component PinCard {
+    in property <PinRow> pin;
+    callback opacity-changed(int);
+    callback toggle-click-through();
+    callback unpin();
+    callback hovered(bool);
+
+    property <bool> hover: touch.has-hover;
+    changed hover => { root.hovered(hover); }
+
+    height: 44px;
+    // Fade in when the row first appears.
+    property <bool> shown: false;
+    init => { shown = true; }
+    opacity: shown ? 1 : 0;
+    animate opacity { duration: Theme.medium; easing: ease-out; }
+
+    touch := TouchArea { }
+
+    Card {
+        hover-lift: !pin.waiting;
+        hovered: hover;
+        background: pin.waiting ? Theme.window : (hover ? Theme.card-hover : Theme.card);
+        border-color: pin.waiting ? Theme.border : Theme.card-border;
+
+        HorizontalLayout {
+            padding-left: 8px;
+            padding-right: 5px;
+            spacing: 7px;
+
+            AppAvatar {
+                y: (parent.height - self.height) / 2;
+                icon: pin.icon;
+                has-icon: pin.has-icon;
+                initial: pin.initial;
+                tint: pin.tint;
+                opacity: pin.waiting ? 0.55 : 1;
+            }
+
+            VerticalLayout {
+                alignment: center;
+                horizontal-stretch: 1;
+                min-width: 50px;
+                Text {
+                    text: pin.title;
+                    overflow: elide;
+                    font-size: Theme.body;
+                    font-weight: 600;
+                    color: pin.waiting ? Theme.text-muted : Theme.text;
+                }
+                Text {
+                    text: pin.waiting ? "Waiting for " + pin.process : pin.process;
+                    overflow: elide;
+                    font-size: Theme.tiny;
+                    color: Theme.text-muted;
+                }
+            }
+
+            if !pin.waiting: Slider {
+                y: (parent.height - self.height) / 2;
+                width: 60px;
+                value: pin.opacity;
+                minimum: 20;
+                maximum: 100;
+                label: "Opacity of " + pin.title;
+                changed(v) => { root.opacity-changed(v); }
+            }
+            if !pin.waiting: Text {
+                text: pin.opacity + "%";
+                width: 27px;
+                vertical-alignment: center;
+                horizontal-alignment: right;
+                font-size: Theme.tiny;
+                color: Theme.text-muted;
+            }
+            if !pin.waiting: Rectangle {
+                y: (parent.height - self.height) / 2;
+                width: 24px;
+                height: 24px;
+                border-radius: 6px;
+                background: pin.click-through ? Theme.accent-soft : transparent;
+                IconButton {
+                    icon: Icons.pointer;
+                    tooltip: pin.click-through ? "Clicks pass through (on)" : "Clicks pass through (off)";
+                    accessible-role: checkbox;
+                    accessible-checkable: true;
+                    accessible-checked: pin.click-through;
+                    clicked => { root.toggle-click-through(); }
+                }
+            }
+            IconButton {
+                y: (parent.height - self.height) / 2;
+                icon: Icons.close;
+                kind: danger-ghost;
+                tooltip: pin.waiting ? "Forget " + pin.title : "Unpin " + pin.title;
+                clicked => { root.unpin(); }
+            }
+        }
+    }
+}
+
+component PickRow {
+    in property <PickItem> item;
+    callback picked();
+
+    height: 38px;
+    accessible-role: button;
+    accessible-label: (item.pinned ? "Unpin " : "Pin ") + item.title + ", " + item.process;
+    accessible-action-default => { root.picked(); }
+
+    Rectangle {
+        border-radius: 7px;
+        background: touch.has-hover ? Theme.raised : transparent;
+        animate background { duration: Theme.fast; }
+
+        HorizontalLayout {
+            padding-left: 6px;
+            padding-right: 6px;
+            spacing: 8px;
+            AppAvatar {
+                y: (parent.height - self.height) / 2;
+                width: 24px;
+                height: 24px;
+                icon: item.icon;
+                has-icon: item.has-icon;
+                initial: item.initial;
+                tint: item.tint;
+            }
+            VerticalLayout {
+                alignment: center;
+                horizontal-stretch: 1;
+                Text {
+                    text: item.title;
+                    overflow: elide;
+                    font-size: Theme.body;
+                    color: Theme.text;
+                }
+                Text {
+                    text: item.process;
+                    overflow: elide;
+                    font-size: Theme.tiny;
+                    color: Theme.text-muted;
+                }
+            }
+            if item.pinned: Rectangle {
+                y: (parent.height - self.height) / 2;
+                height: 18px;
+                width: badge.preferred-width;
+                border-radius: 5px;
+                background: Theme.accent-soft;
+                badge := HorizontalLayout {
+                    padding-left: 6px;
+                    padding-right: 6px;
+                    spacing: 3px;
+                    Glyph {
+                        y: (parent.height - self.height) / 2;
+                        icon: Icons.pin;
+                        size: 10px;
+                        color: Theme.accent-hover;
+                    }
+                    Text {
+                        text: "Pinned";
+                        vertical-alignment: center;
+                        font-size: Theme.tiny;
+                        font-weight: 600;
+                        color: Theme.accent-hover;
+                    }
+                }
+            }
+        }
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => { root.picked(); }
+    }
+}
+
+component ModifierChip {
+    in property <string> text;
+    in property <bool> on;
+    callback toggled();
+    width: 38px;
+    height: 24px;
+    accessible-role: checkbox;
+    accessible-label: text;
+    accessible-checkable: true;
+    accessible-checked: on;
+    accessible-action-default => { root.toggled(); }
+
+    Rectangle {
+        border-radius: 6px;
+        background: on ? Theme.accent-strong : touch.has-hover ? Theme.raised : Theme.card;
+        border-width: on ? 0px : 1px;
+        border-color: Theme.border;
+        animate background { duration: Theme.fast; }
+        Text {
+            text: root.text;
+            font-size: Theme.tiny;
+            font-weight: 600;
+            color: on ? Theme.on-accent : Theme.text-muted;
+        }
+    }
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => { root.toggled(); }
+    }
+}
+
+export component AppWindow inherits Window {
+    title: "PinIt";
+    icon: @image-url("../../resources/icon-128.png");
+    background: Theme.window;
+    default-font-family: Theme.font;
+    default-font-size: Theme.body;
+    preferred-width: 340px;
+    min-width: 340px;
+    max-width: 340px;
+    preferred-height: 350px;
+    min-height: 260px;
+
+    // State from Rust
+    in property <[PinRow]> pins;
+    in property <[string]> pin-keys;           // the pin shortcut, for the hint line
+    in property <string> hotkey-warning;
+    in-out property <bool> sound;
+    in-out property <bool> notifications;
+    in-out property <bool> autostart;
+    in property <string> version;
+    in property <bool> animations <=> Theme.animations;
+    out property <bool> dark: Theme.dark;
+    out property <color> window-color: Theme.window;
+    callback theme-changed();
+    changed dark => { root.theme-changed(); }
+
+    in property <[PickItem]> pick-items;
+    in-out property <string> pick-filter;
+    in-out property <bool> picker-open;
+
+    in property <[ShortcutEdit]> shortcut-edits;
+    in property <[string]> key-labels;
+    in-out property <string> shortcut-error;
+    in-out property <bool> shortcuts-open;
+
+    in-out property <bool> settings-open;
+    in-out property <bool> about-open;
+
+    // Toast
+    in-out property <string> toast-text;
+    in-out property <bool> toast-visible;
+
+    // Callbacks to Rust
+    callback open-picker();
+    callback pick(int);
+    callback filter-changed(string);
+    callback set-opacity(int, int);
+    callback toggle-click-through(int);
+    callback unpin(int);
+    callback row-hovered(int, bool);
+    callback unpin-all();
+    callback setting-changed(string, bool);
+    callback open-shortcuts();
+    callback shortcut-chip(int, string);
+    callback shortcut-key(int, int);
+    callback save-shortcuts();
+    callback restore-default-shortcuts();
+    callback open-url(string);
+
+    public function focus-search() {
+        search.focus();
+    }
+
+    VerticalLayout {
+        padding: 12px;
+        padding-top: 10px;
+        spacing: 8px;
+
+        // Header: logo, name, shortcuts, settings
+        HorizontalLayout {
+            spacing: 7px;
+            Image {
+                y: (parent.height - self.height) / 2;
+                source: @image-url("../../resources/icon-128.png");
+                width: 22px;
+                height: 22px;
+                image-rendering: smooth;
+            }
+            Text {
+                text: "PinIt";
+                vertical-alignment: center;
+                horizontal-stretch: 1;
+                font-family: Theme.display-font;
+                font-size: 15px;
+                font-weight: 700;
+                color: Theme.text;
+                accessible-role: text;
+            }
+            IconButton {
+                icon: Icons.keyboard;
+                tooltip: "Shortcuts";
+                clicked => { root.open-shortcuts(); }
+            }
+            IconButton {
+                icon: Icons.settings;
+                tooltip: "Settings";
+                clicked => { root.settings-open = true; }
+            }
+        }
+
+        Button {
+            kind: primary;
+            icon: Icons.plus;
+            text: "Pin a window…";
+            font-size: Theme.body;
+            height: 30px;
+            horizontal-stretch: 1;
+            clicked => { root.open-picker(); }
+        }
+
+        if hotkey-warning != "": Rectangle {
+            border-radius: 8px;
+            background: Theme.warning-bg;
+            border-width: 1px;
+            border-color: Theme.warning-border;
+            HorizontalLayout {
+                padding: 7px;
+                spacing: 6px;
+                Glyph {
+                    icon: Icons.warning;
+                    size: 13px;
+                    color: Theme.warning-text;
+                }
+                Text {
+                    text: hotkey-warning;
+                    wrap: word-wrap;
+                    horizontal-stretch: 1;
+                    font-size: Theme.tiny;
+                    color: Theme.warning-text;
+                    accessible-role: text;
+                }
+            }
+        }
+
+        // Pinned windows
+        HorizontalLayout {
+            height: 18px;
+            SectionTitle {
+                text: pins.length == 0 ? "PINNED" : "PINNED · " + pins.length;
+                vertical-alignment: center;
+                horizontal-stretch: 1;
+            }
+            if pins.length > 0: Button {
+                kind: ghost;
+                text: "Unpin all";
+                font-size: Theme.tiny;
+                height: 18px;
+                radius: 5px;
+                clicked => { root.unpin-all(); }
+            }
+        }
+
+        ScrollView {
+            vertical-stretch: 1;
+            min-height: 96px;
+
+            VerticalLayout {
+                spacing: 5px;
+                padding-bottom: 3px;
+                padding-left: 1px;
+                padding-right: 1px;
+                alignment: start;
+
+                if pins.length == 0: Rectangle {
+                    height: 92px;
+                    border-radius: 9px;
+                    border-width: 1px;
+                    border-color: Theme.border;
+                    VerticalLayout {
+                        alignment: center;
+                        spacing: 6px;
+                        HorizontalLayout {
+                            alignment: center;
+                            Rectangle {
+                                width: 30px;
+                                height: 30px;
+                                border-radius: 15px;
+                                background: Theme.accent-soft;
+                                Glyph {
+                                    icon: Icons.pin;
+                                    size: 15px;
+                                    color: Theme.accent-hover;
+                                }
+                            }
+                        }
+                        Text {
+                            text: "Nothing pinned yet";
+                            horizontal-alignment: center;
+                            font-size: Theme.body;
+                            font-weight: 600;
+                            color: Theme.text;
+                        }
+                    }
+                }
+
+                for p[i] in pins: PinCard {
+                    pin: p;
+                    opacity-changed(v) => { root.set-opacity(i, v); }
+                    toggle-click-through => { root.toggle-click-through(i); }
+                    unpin => { root.unpin(i); }
+                    hovered(h) => { root.row-hovered(i, h); }
+                }
+            }
+        }
+
+        // How to pin without opening PinIt
+        HorizontalLayout {
+            alignment: center;
+            spacing: 5px;
+            Text {
+                text: "Pin the window you're in:";
+                vertical-alignment: center;
+                font-size: Theme.tiny;
+                color: Theme.text-muted;
+            }
+            KeyCombo { keys: pin-keys; }
+        }
+    }
+
+    // Toast
+    toast := Rectangle {
+        property <bool> show: root.toast-visible && root.toast-text != "";
+        x: (parent.width - self.width) / 2;
+        y: show ? parent.height - self.height - 40px : parent.height - self.height - 28px;
+        opacity: show ? 1 : 0;
+        visible: self.opacity > 0.01;
+        animate y, opacity { duration: Theme.medium; easing: ease-out; }
+        width: min(parent.width - 32px, toast-label.preferred-width + 22px);
+        height: toast-label.preferred-height + 12px;
+        border-radius: 8px;
+        background: Theme.toast-bg;
+        drop-shadow-blur: 12px;
+        drop-shadow-offset-y: 3px;
+        drop-shadow-color: #00000040;
+        toast-label := Text {
+            width: parent.width - 22px;
+            text: root.toast-text;
+            wrap: word-wrap;
+            horizontal-alignment: center;
+            font-size: Theme.small;
+            font-weight: 500;
+            color: Theme.toast-text;
+            accessible-role: text;
+        }
+        Timer {
+            interval: 3200ms;
+            running: toast.show;
+            triggered => { root.toast-visible = false; }
+        }
+    }
+
+    // Window picker
+    Sheet {
+        open: root.picker-open;
+        title: "Pin a window";
+        sheet-height: 420px;
+        close => { root.picker-open = false; }
+
+        search := LineEdit {
+            placeholder-text: "Search windows";
+            font-size: Theme.body;
+            text <=> root.pick-filter;
+            edited(t) => { root.filter-changed(t); }
+            accepted => {
+                if (root.pick-items.length > 0) {
+                    root.pick(0);
+                }
+            }
+        }
+
+        if pick-items.length == 0: VerticalLayout {
+            alignment: center;
+            vertical-stretch: 1;
+            Text {
+                text: root.pick-filter == "" ? "No windows to pin. Open an app and try again." : "No window matches “" + root.pick-filter + "”.";
+                horizontal-alignment: center;
+                wrap: word-wrap;
+                font-size: Theme.small;
+                color: Theme.text-muted;
+            }
+        }
+
+        if pick-items.length > 0: ScrollView {
+            vertical-stretch: 1;
+            VerticalLayout {
+                alignment: start;
+                for item[i] in pick-items: PickRow {
+                    item: item;
+                    picked => { root.pick(i); }
+                }
+            }
+        }
+    }
+
+    // Shortcut editor
+    Sheet {
+        open: root.shortcuts-open;
+        title: "Shortcuts";
+        sheet-height: 420px;
+        close => { root.shortcuts-open = false; }
+
+        editor-scroll := ScrollView {
+            vertical-stretch: 1;
+            VerticalLayout {
+                // Fit the sheet's width; only scroll vertically.
+                width: editor-scroll.visible-width - 10px;
+                spacing: 9px;
+                alignment: start;
+                Text {
+                    text: "Each needs Win, Ctrl or Alt.";
+                    font-size: Theme.tiny;
+                    color: Theme.text-muted;
+                }
+                for edit[i] in shortcut-edits: VerticalLayout {
+                    spacing: 4px;
+                    Text {
+                        text: edit.label;
+                        font-size: Theme.small;
+                        font-weight: 600;
+                        color: Theme.text;
+                    }
+                    HorizontalLayout {
+                        spacing: 4px;
+                        ModifierChip { y: (parent.height - self.height) / 2; text: "Win"; on: edit.win; toggled => { root.shortcut-chip(i, "win"); } }
+                        ModifierChip { y: (parent.height - self.height) / 2; text: "Ctrl"; on: edit.ctrl; toggled => { root.shortcut-chip(i, "ctrl"); } }
+                        ModifierChip { y: (parent.height - self.height) / 2; text: "Alt"; on: edit.alt; toggled => { root.shortcut-chip(i, "alt"); } }
+                        ModifierChip { y: (parent.height - self.height) / 2; text: "Shift"; on: edit.shift; toggled => { root.shortcut-chip(i, "shift"); } }
+                        ComboBox {
+                            horizontal-stretch: 1;
+                            min-width: 70px;
+                            model: root.key-labels;
+                            current-index: edit.key-index;
+                            selected => { root.shortcut-key(i, self.current-index); }
+                        }
+                    }
+                }
+            }
+        }
+
+        if shortcut-error != "": Text {
+            text: shortcut-error;
+            wrap: word-wrap;
+            font-size: Theme.small;
+            color: Theme.danger;
+            accessible-role: text;
+        }
+
+        HorizontalLayout {
+            spacing: 6px;
+            Button {
+                kind: ghost;
+                text: "Defaults";
+                clicked => { root.restore-default-shortcuts(); }
+            }
+            Rectangle { horizontal-stretch: 1; }
+            Button {
+                text: "Cancel";
+                clicked => { root.shortcuts-open = false; }
+            }
+            Button {
+                kind: primary;
+                text: "Save";
+                clicked => { root.save-shortcuts(); }
+            }
+        }
+    }
+
+    // Settings
+    Sheet {
+        open: root.settings-open;
+        title: "Settings";
+        sheet-height: 196px;
+        close => { root.settings-open = false; }
+
+        VerticalLayout {
+            spacing: 0px;
+            CheckBox {
+                text: "Play a sound when pinning";
+                checked <=> root.sound;
+                toggled(on) => { root.setting-changed("sound", on); }
+            }
+            CheckBox {
+                text: "Show a notification when pinning";
+                checked <=> root.notifications;
+                toggled(on) => { root.setting-changed("notifications", on); }
+            }
+            CheckBox {
+                text: "Start PinIt with Windows";
+                checked <=> root.autostart;
+                toggled(on) => { root.setting-changed("autostart", on); }
+            }
+        }
+        Rectangle { vertical-stretch: 1; }
+        HorizontalLayout {
+            Rectangle { horizontal-stretch: 1; }
+            Button {
+                kind: ghost;
+                icon: Icons.info;
+                text: "About PinIt";
+                clicked => {
+                    root.settings-open = false;
+                    root.about-open = true;
+                }
+            }
+        }
+    }
+
+    // About
+    Sheet {
+        open: root.about-open;
+        title: "About";
+        sheet-height: 300px;
+        close => { root.about-open = false; }
+
+        HorizontalLayout {
+            spacing: 10px;
+            Image {
+                source: @image-url("../../resources/icon-128.png");
+                width: 36px;
+                height: 36px;
+            }
+            VerticalLayout {
+                alignment: center;
+                Text {
+                    text: "PinIt " + root.version;
+                    font-family: Theme.display-font;
+                    font-size: 13px;
+                    font-weight: 650;
+                    color: Theme.text;
+                }
+                Text {
+                    text: "by Saqlain Abbas · Apache-2.0";
+                    font-size: Theme.tiny;
+                    color: Theme.text-muted;
+                }
+            }
+        }
+        HorizontalLayout {
+            spacing: 6px;
+            alignment: start;
+            Button {
+                text: "Website";
+                clicked => { root.open-url("https://razee4315.github.io/Pin-It/"); }
+            }
+            Button {
+                text: "Source code";
+                clicked => { root.open-url("https://github.com/Razee4315/Pin-It"); }
+            }
+        }
+        Rectangle { vertical-stretch: 1; }
+        // Slint's royalty-free licence asks for this credit in the About box.
+        HorizontalLayout {
+            alignment: center;
+            AboutSlint {
+                width: 150px;
+                height: 72px;
+            }
+        }
+    }
+}
