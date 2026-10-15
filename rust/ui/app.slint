@@ -38,6 +38,7 @@ export struct ShortcutEdit {
     alt: bool,
     shift: bool,
     key-index: int,
+    unavailable: bool,   // Windows refused it: another app owns these keys
 }
 
 component PinCard {
@@ -264,7 +265,6 @@ export component AppWindow inherits Window {
     // State from Rust
     in property <[PinRow]> pins;
     in property <[string]> pin-keys;           // the pin shortcut, for the hint line
-    in property <string> hotkey-warning;
     in-out property <bool> sound;
     in-out property <bool> notifications;
     in-out property <bool> autostart;
@@ -338,11 +338,17 @@ export component AppWindow inherits Window {
                 accessible-role: text;
             }
             IconButton {
+                width: 28px;
+                height: 28px;
+                icon-size: 17px;
                 icon: Icons.keyboard;
                 tooltip: "Shortcuts";
                 clicked => { root.open-shortcuts(); }
             }
             IconButton {
+                width: 28px;
+                height: 28px;
+                icon-size: 16px;
                 icon: Icons.settings;
                 tooltip: "Settings";
                 clicked => { root.settings-open = true; }
@@ -357,30 +363,6 @@ export component AppWindow inherits Window {
             height: 30px;
             horizontal-stretch: 1;
             clicked => { root.open-picker(); }
-        }
-
-        if hotkey-warning != "": Rectangle {
-            border-radius: 8px;
-            background: Theme.warning-bg;
-            border-width: 1px;
-            border-color: Theme.warning-border;
-            HorizontalLayout {
-                padding: 7px;
-                spacing: 6px;
-                Glyph {
-                    icon: Icons.warning;
-                    size: 13px;
-                    color: Theme.warning-text;
-                }
-                Text {
-                    text: hotkey-warning;
-                    wrap: word-wrap;
-                    horizontal-stretch: 1;
-                    font-size: Theme.tiny;
-                    color: Theme.warning-text;
-                    accessible-role: text;
-                }
-            }
         }
 
         // Pinned windows
@@ -564,11 +546,21 @@ export component AppWindow inherits Window {
                 }
                 for edit[i] in shortcut-edits: VerticalLayout {
                     spacing: 4px;
-                    Text {
-                        text: edit.label;
-                        font-size: Theme.small;
-                        font-weight: 600;
-                        color: Theme.text;
+                    HorizontalLayout {
+                        spacing: 6px;
+                        Text {
+                            text: edit.label;
+                            font-size: Theme.small;
+                            font-weight: 600;
+                            color: Theme.text;
+                        }
+                        if edit.unavailable: Text {
+                            text: "· in use by another app";
+                            vertical-alignment: center;
+                            horizontal-stretch: 1;
+                            font-size: Theme.tiny;
+                            color: Theme.danger;
+                        }
                     }
                     HorizontalLayout {
                         spacing: 4px;
@@ -660,7 +652,7 @@ export component AppWindow inherits Window {
     Sheet {
         open: root.about-open;
         title: "About";
-        sheet-height: 300px;
+        sheet-height: 236px;
         close => { root.about-open = false; }
 
         HorizontalLayout {
@@ -698,13 +690,12 @@ export component AppWindow inherits Window {
                 clicked => { root.open-url("https://github.com/Razee4315/Pin-It"); }
             }
         }
-        Rectangle { vertical-stretch: 1; }
         // Slint's royalty-free licence asks for this credit in the About box.
         HorizontalLayout {
             alignment: center;
             AboutSlint {
-                width: 150px;
-                height: 72px;
+                width: 130px;
+                height: 64px;
             }
         }
     }

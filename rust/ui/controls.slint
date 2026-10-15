@@ -29,6 +29,7 @@ export component Button {
     in property <length> radius: 7px;
     in property <length> font-size: Theme.small;
     in property <string> tooltip;
+    in property <length> icon-size: text == "" ? 14px : 13px;
     callback clicked;
 
     out property <bool> has-hover: touch.has-hover;
@@ -65,7 +66,7 @@ export component Button {
             if icon != "": Glyph {
                 y: (parent.height - self.height) / 2;
                 icon: root.icon;
-                size: text == "" ? 14px : 13px;
+                size: root.icon-size;
                 color: !enabled ? Theme.text-subtle
                     : kind == ButtonKind.primary ? Theme.on-accent
                     : kind == ButtonKind.danger-ghost && (touch.has-hover || focus.has-focus) ? Theme.danger
@@ -95,12 +96,6 @@ export component Button {
         border-color: Theme.focus;
     }
 
-    touch := TouchArea {
-        enabled: root.enabled;
-        mouse-cursor: pointer;
-        clicked => { root.clicked(); }
-    }
-
     focus := FocusScope {
         enabled: root.enabled;
         property <bool> focus-visible: true;
@@ -111,6 +106,12 @@ export component Button {
             }
             reject
         }
+    }
+
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: pointer;
+        clicked => { root.clicked(); }
     }
 }
 
@@ -182,11 +183,6 @@ export component CheckBox {
         }
     }
 
-    touch := TouchArea {
-        mouse-cursor: pointer;
-        clicked => { root.toggle(); }
-    }
-
     focus := FocusScope {
         key-pressed(event) => {
             if (event.text == " ") {
@@ -195,6 +191,11 @@ export component CheckBox {
             }
             reject
         }
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => { root.toggle(); }
     }
 }
 
@@ -278,6 +279,28 @@ export component Slider {
         }
     }
 
+    focus := FocusScope {
+        key-pressed(event) => {
+            if (event.text == Key.RightArrow || event.text == Key.UpArrow) {
+                root.request(value + step);
+                return accept;
+            }
+            if (event.text == Key.LeftArrow || event.text == Key.DownArrow) {
+                root.request(value - step);
+                return accept;
+            }
+            if (event.text == Key.Home) {
+                root.request(minimum);
+                return accept;
+            }
+            if (event.text == Key.End) {
+                root.request(maximum);
+                return accept;
+            }
+            reject
+        }
+    }
+
     touch := TouchArea {
         mouse-cursor: pointer;
         function apply(px: length) {
@@ -301,28 +324,6 @@ export component Slider {
                 root.request(value - step);
             }
             accept
-        }
-    }
-
-    focus := FocusScope {
-        key-pressed(event) => {
-            if (event.text == Key.RightArrow || event.text == Key.UpArrow) {
-                root.request(value + step);
-                return accept;
-            }
-            if (event.text == Key.LeftArrow || event.text == Key.DownArrow) {
-                root.request(value - step);
-                return accept;
-            }
-            if (event.text == Key.Home) {
-                root.request(minimum);
-                return accept;
-            }
-            if (event.text == Key.End) {
-                root.request(maximum);
-                return accept;
-            }
-            reject
         }
     }
 }

@@ -417,7 +417,7 @@ fn tray_menu(app: &Shared, x: i32, y: i32) {
 fn apply_shortcuts(s: &store::Shortcuts) -> Vec<String> {
     let mut failed = Vec::new();
     for (id, keys, name) in [
-        (HOTKEY_PIN, &s.toggle_pin, "Pin / unpin"),
+        (HOTKEY_PIN, &s.toggle_pin, "Pin / unpin window"),
         (HOTKEY_OPACITY_UP, &s.opacity_up, "Increase opacity"),
         (HOTKEY_OPACITY_DOWN, &s.opacity_down, "Decrease opacity"),
         (HOTKEY_WINDOW, &s.toggle_window, "Show / hide PinIt"),
@@ -656,29 +656,15 @@ impl App {
         }
     }
 
-    /// Hotkey warning, live count, tray tooltip.
+    /// The tray tooltip. (A shortcut Windows refused is only pointed out in
+    /// the shortcut editor, next to that shortcut.)
     fn refresh_status(&self) {
-        let warning = if self.hotkey_problems.is_empty() {
-            String::new()
-        } else {
-            format!(
-                "Shortcut unavailable: {}. Another app is using the keys. Pick different ones in Shortcuts.",
-                self.hotkey_problems.join(", ")
-            )
-        };
-        let n = self.pins.pinned().len();
-        let mut tip = match n {
+        let tip = match self.pins.pinned().len() {
             0 => "PinIt".to_string(),
             1 => "PinIt: 1 window pinned".to_string(),
             n => format!("PinIt: {n} windows pinned"),
         };
-        if !self.hotkey_problems.is_empty() {
-            tip.push_str(" (a shortcut is unavailable)");
-        }
         host::set_tray_tip(&tip);
-        if let Some(ui) = self.ui() {
-            ui.set_hotkey_warning(warning.into());
-        }
     }
 
     /// The pin shortcut, shown under the list.
@@ -751,6 +737,7 @@ impl App {
             let p = shortcuts::split(keys);
             ShortcutEdit {
                 label: label.into(),
+                unavailable: self.hotkey_problems.iter().any(|n| n == label),
                 win: p.win,
                 ctrl: p.ctrl,
                 alt: p.alt,
@@ -807,10 +794,21 @@ impl App {
         candidate.opacity_down = strings[2].clone();
         candidate.toggle_window = strings[3].clone();
 
+        let old = self.state.settings.shortcuts.clone();
+        let unchanged = |name: &str| match name {
+            "Pin / unpin window" => candidate.toggle_pin == old.toggle_pin,
+            "Increase opacity" => candidate.opacity_up == old.opacity_up,
+            "Decrease opacity" => candidate.opacity_down == old.opacity_down,
+            _ => candidate.toggle_window == old.toggle_window,
+        };
         let failed = apply_shortcuts(&candidate);
-        if !failed.is_empty() {
+        // A shortcut that was already unavailable and wasn't touched doesn't
+        // block saving the others.
+        let newly_failed: Vec<String> =
+            failed.iter().filter(|n| !(unchanged(n) && self.hotkey_problems.contains(n))).cloned().collect();
+        if !newly_failed.is_empty() {
+            let failed = newly_failed;
             // Put the working set back and say which one Windows refused.
-            let old = self.state.settings.shortcuts.clone();
             self.hotkey_problems = apply_shortcuts(&old);
             ui.set_shortcut_error(
                 format!("Another app already uses the keys for: {}. Pick different ones.", failed.join(", ")).into(),
@@ -818,7 +816,7 @@ impl App {
             return;
         }
         self.state.settings.shortcuts = candidate;
-        self.hotkey_problems.clear();
+        self.hotkey_problems = failed;
         self.save_now();
         self.refresh_shortcut_views();
         self.refresh_status();
