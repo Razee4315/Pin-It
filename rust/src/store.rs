@@ -149,10 +149,18 @@ fn file() -> PathBuf {
 }
 
 pub fn load() -> State {
-    std::fs::read(file())
-        .ok()
-        .and_then(|bytes| serde_json::from_slice(&bytes).ok())
-        .unwrap_or_default()
+    let path = file();
+    let Ok(bytes) = std::fs::read(&path) else { return State::default() };
+    match serde_json::from_slice(&bytes) {
+        Ok(state) => state,
+        Err(e) => {
+            // Keep the broken file for a look later: the next save would
+            // otherwise overwrite whatever could still be recovered from it.
+            crate::logfile::warning!("pinned.json is corrupt ({e}); backing it up to pinned.json.corrupt");
+            let _ = std::fs::rename(&path, data_dir().join("pinned.json.corrupt"));
+            State::default()
+        }
+    }
 }
 
 /// Write via a temporary file and rename, so a crash or power cut mid-write
@@ -162,8 +170,8 @@ pub fn save(state: &State) {
     let _ = std::fs::create_dir_all(&dir);
     let Ok(json) = serde_json::to_vec_pretty(state) else { return };
     let tmp = dir.join("pinned.json.tmp");
-    if std::fs::write(&tmp, json).is_ok() {
-        let _ = std::fs::rename(&tmp, file());
+    if let Err(e) = std::fs::write(&tmp, json).and_then(|()| std::fs::rename(&tmp, file())) {
+        crate::logfile::warning!("Could not save {}: {e}", file().display());
     }
 }
 

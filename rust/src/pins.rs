@@ -95,8 +95,10 @@ impl Pins {
         // UIPI silently ignores SetWindowPos on elevated windows; checking that
         // the style took is how we notice.
         if !win::apply_topmost(hwnd) || !win::is_topmost(hwnd) {
+            crate::logfile::warning!("Pin failed for {process} (likely elevated/UIPI)");
             return Err(PinError::Blocked(process));
         }
+        crate::logfile::info!("Pinned a window of {process}");
         let was_click_through = win::is_click_through(hwnd);
         self.pending.retain(|p| !p.matches(&process, &title));
         self.pinned.push(Pinned {

@@ -9,6 +9,7 @@
 mod autostart;
 mod flash;
 mod host;
+mod logfile;
 mod pins;
 mod shortcuts;
 mod store;
@@ -75,7 +76,10 @@ struct App {
 type Shared = Rc<RefCell<App>>;
 
 fn main() {
+    logfile::init();
+    logfile::info!("PinIt {} starting", env!("CARGO_PKG_VERSION"));
     if host::hand_off_to_running_instance() {
+        logfile::info!("Another instance is running; asked it to show");
         return;
     }
     let start_hidden = std::env::args().any(|a| a == "--minimized");
@@ -123,6 +127,9 @@ fn main() {
 
     let shortcuts = app.borrow().state.settings.shortcuts.clone();
     let failed = apply_shortcuts(&shortcuts);
+    if !failed.is_empty() {
+        logfile::warning!("Hotkeys unavailable: {}", failed.join(", "));
+    }
     app.borrow_mut().hotkey_problems = failed;
 
     // Pins from last time: open windows are re-pinned now, the rest wait.
@@ -339,6 +346,7 @@ fn on_host_event(app: &Shared, event: host::Event) {
         SessionEndCancelled => app.borrow_mut().pins.set_session_ending(false),
         SessionEnded => {
             let mut a = app.borrow_mut();
+            logfile::info!("Session ending: restored {} window(s), keeping pins for next login", a.pins.pinned().len());
             a.pins.release_all();
             a.save_now();
             host::remove_tray();
@@ -388,6 +396,7 @@ fn tray_menu(app: &Shared, x: i32, y: i32) {
         }
         MENU_UNPIN_ALL => a.unpin_all(),
         MENU_QUIT => {
+            logfile::info!("Restored and cleared {} pinned window(s) on manual quit", a.pins.pinned().len());
             a.pins.release_all();
             a.save_now();
             host::remove_tray();

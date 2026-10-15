@@ -23,6 +23,11 @@ cargo build --release  # single PinIt exe in target/release
 cargo test
 ```
 
+The version lives only in `Cargo.toml`: `build.rs` writes it into the exe's
+file properties and `installer/PinIt.iss` reads it from there. CI
+(`.github/workflows/build.yml`) runs the tests and builds the installer and
+the portable ZIP from `target/release/pinit.exe`.
+
 To run next to an installed PinIt without touching it, set `PINIT_DEV=1`.
 The build then uses `%LOCALAPPDATA%\PinIt-dev`, its own single-instance lock,
 and its own Run-key value. The default shortcuts will be reported as
@@ -44,10 +49,9 @@ unavailable while the installed copy holds them; pick spare ones in
 | `src/store.rs` | `pinned.json` |
 | `src/shortcuts.rs` | Shortcut strings such as `super+ctrl+KeyT` |
 | `src/autostart.rs` | The HKCU Run key |
+| `src/logfile.rs` | `pinit.log`: process names only, never window titles |
 
 ## Not done yet
 
-- Log file (`pinit.log`)
-- Installer and CI (the Inno Setup script still packages the Qt build)
 - Mica backdrop on Windows 11
 - The maximize button: the window has a fixed width, but Windows still shows it
