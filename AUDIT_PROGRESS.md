@@ -19,7 +19,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | F-08 | 1 | P3 | 2 s polling only | verified | Harness: topmost stripped right after a timer tick was restored within 0.6 s of another window coming to the front |
 | F-09 | 1 | P3 | Session-ending flag sticks after cancelled shutdown | verified | Harness: session-end detection now uses PinIt's own hidden top-level window (works with no Qt window, as at login); cancelled shutdown clears the flag; simulated shutdown with apps closing first keeps every pin and its opacity |
 | F-10 | 1 | P3 | Messages vanish without a tray | verified | Harness: notify() with the window focused shows the in-window message; list geometry unchanged (screenshot checked) |
-| F-11 | 2 | P0 | Restart fix is unreleased | blocked | Prepared: version 2.2.0, changelog, README and site metadata; the P1 restore/list fixes it depended on are in. Publishing means pushing a v2.2.0 tag, which creates a public release — needs your go-ahead after you merge |
+| F-11 | 2 | P0 | Restart fix is unreleased | verified | Released: v2.2.0 tagged on merge commit d1219ad, published by CI; released portable build runs and reports 2.2.0; assets match SHA256SUMS |
 | F-12 | 2 | P1 | Restore is one-shot and erases unmatched pins | verified | Harness: 4 saved pins, 1 open at start → 1 pinned at saved opacity, 3 waiting rows; file keeps all 4 after an unrelated pin; awaited window pinned and outlined within 0.8 s of opening; late-titled window pinned once the title matches; another window of the same app ignored; forget/quit/session-end all checked |
 | F-13 | 2 | P1 | Restore fallback pins the wrong window | verified |  |
 | F-14 | 2 | P1 | Pinned row clips its unpin button | verified |  |
@@ -41,7 +41,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | F-30 | 3 | P3 | Unsupported keys shown as "A" | verified | Unit tests (named/function keys, every offered key round-trips, unknown key preserved) + harness: F13–F17 register and display; NumpadAdd is shown as written, reported unavailable, not rewritten |
 | F-31 | 3 | P3 | Shortcuts dialog accessibility | verified | Harness: all 16 checkboxes and 4 key lists carry '<action>: <part>' accessible names; errors are an inline label with an accessibility alert, no message boxes |
 | F-32 | 3 | P3 | Quit forgets pins with no hint | verified | Harness: tray Quit reads 'Quit' / 'Quit and unpin 1 window' / 'Quit and unpin 2 windows' |
-| F-33 | 3 | P3 | Uninstaller leaves Run key; no AppMutex | blocked | Implemented (AppMutex + unconditional uninsdeletevalue; app holds the mutex — harness-checked). Inno Setup is not installed here, so the script could not be compiled or an uninstall run; CI compiles it on push. Needs one manual install/uninstall |
+| F-33 | 3 | P3 | Uninstaller leaves Run key; no AppMutex | blocked | Script compiles in CI (v2.2.0 installer built). Still needs one manual run: install, enable autostart in the app, uninstall, confirm no Run entry is left |
 | F-34 | 3 | P3 | Second launch only flashes the taskbar | verified | Harness: after a second launch the PinIt window was the foreground window (AllowSetForegroundWindow from the second process) |
 | F-35 | 3 | P3 | "window(s)" tooltip | verified | Harness: tooltip reads 'no windows pinned' / '1 window pinned' / '2 windows pinned' |
 | F-36 | 3 | P3 | About only in tray; CONTRIBUTING wrong | verified | Harness: About button in the window footer opens the About box; CONTRIBUTING and the bug template now point at it |
@@ -50,7 +50,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | F-39 | 4 | P2 | Site does not mention SmartScreen | verified | Browser: SmartScreen note renders under the hero CTA and in the download band; portable link returns 302 to the asset (direct installer link deferred, see report) |
 | F-40 | 4 | P3 | Autoplay video without controls | verified | Browser: video has controls and no autoplay attribute; script starts it only when reduced motion is not requested |
 | F-41 | 4 | P3 | Failed save is ignored | verified | Harness: with pinned.json made unwritable, the log gets 'Could not save …pinned.json: <reason>'; corrupt-file backup still works |
-| F-42 | 4 | P3 | CI permissions / pinning / checksums | blocked | Implemented: read-only token by default, write only in a tag-gated release job; actions pinned to commit SHAs; SHA256SUMS.txt and a stable-named installer published. YAML parses, but the workflow can only be proven by a CI run, which needs the branch pushed. clang-format check deliberately not added (see report) |
+| F-42 | 4 | P3 | CI permissions / pinning / checksums | verified | PR #17, main and the v2.2.0 tag runs all passed with the new workflow; release job published installer, ZIP, PinIt-setup-x64.exe and SHA256SUMS.txt. Follow-up: checksum file is now written with LF endings (PR #18) |
 | F-43 | 4 | P3 | Docs drift (size, version, restore promise) | verified | Read back: llms.txt size and restart wording, site 'It remembers' copy and README FAQ now describe the waiting-pin behaviour; softwareVersion is bumped with F-11 |
 
 ## Missing must-haves
@@ -67,7 +67,7 @@ and the affected flow has been exercised (the "How verified" column says how).
 | M-08 | Click-through for pinned windows | verified | Harness: toggle sets WS_EX_TRANSPARENT and WindowFromPoint no longer hits the window; off/unpin restore a normal clickable unlayered window; saved; undone correctly after a simulated crash |
 | M-09 | "Check for updates" link | verified | Harness: tray has 'Check for updates…'; About box links to /releases/latest. Opening the browser itself was not triggered |
 | M-10 | Dark theme | verified | Harness: every screen rendered in both variants and reviewed (main, picker, shortcuts, About, tray menu); rendered contrast >= 4.5 for all text pairs in both; a colour-scheme change at run time re-themes without restart. Real Windows setting toggle not exercised |
-| M-11 | winget / Scoop package | blocked | winget and Scoop manifests need the download URL and SHA-256 of the released 2.2.0 installer, which does not exist until the tag is pushed (F-11); winget also means a pull request to microsoft/winget-pkgs from your account |
+| M-11 | winget / Scoop package | blocked | v2.2.0 now exists, so the Scoop manifest and winget files can be written; submitting to winget still needs a pull request from your GitHub account |
 
 ## Cleanup
 
