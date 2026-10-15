@@ -1,0 +1,69 @@
+// PinIt's look: a warm "paper" palette in a light and a dark variant that
+// follows the Windows colour mode. Every colour the UI uses is defined here
+// once, by role. Text/background pairs keep at least 4.5:1 contrast.
+
+import { Palette } from "std-widgets.slint";
+
+export global Theme {
+    out property <bool> dark: Palette.color-scheme == ColorScheme.dark;
+
+    // Surfaces
+    out property <color> window: dark ? #1c1a17 : #f7f5f0;
+    out property <color> card: dark ? #272420 : #ffffff;
+    out property <color> card-hover: dark ? #2e2a26 : #fffdf9;
+    out property <color> card-border: dark ? #ffffff14 : #00000012;
+    out property <color> border: dark ? #ffffff26 : #0000001f;
+    out property <color> raised: dark ? #34302b : #f0ece4;      // key chips, hover fills
+    out property <color> scrim: dark ? #000000a0 : #2a26226b;
+
+    // Text
+    out property <color> text: dark ? #f3efe8 : #26221e;
+    out property <color> text-muted: dark ? #bdb5a9 : #6a645c;
+    out property <color> text-subtle: dark ? #a59d91 : #7a736a;
+
+    // Accent: warm copper
+    out property <color> accent: dark ? #d4a26c : #b07c4a;         // slider fill, non-text
+    out property <color> accent-strong: dark ? #dcac76 : #93633a;  // primary button
+    out property <color> accent-hover: dark ? #e8bd8c : #82552f;
+    out property <color> accent-soft: dark ? #d4a26c29 : #b07c4a1f;
+    out property <color> on-accent: dark ? #1c1a17 : #ffffff;
+    out property <color> track: dark ? #47413a : #e7e2d9;
+    out property <color> focus: dark ? #f3efe8 : #26221e;
+
+    // States
+    out property <color> danger: dark ? #f0a58c : #a8432b;
+    out property <color> danger-soft: dark ? #f0a58c24 : #a8432b17;
+    out property <color> warning-bg: dark ? #4a3a17 : #fbefd5;
+    out property <color> warning-border: dark ? #7a6124 : #e2c27d;
+    out property <color> warning-text: dark ? #f5deb0 : #5c4307;
+    out property <color> toast-bg: dark ? #f3efe8 : #26221e;
+    out property <color> toast-text: dark ? #1c1a17 : #f7f5f0;
+    out property <color> shadow: dark ? #00000066 : #3a2a1a1c;
+
+    // Type
+    out property <string> font: "Segoe UI Variable Text";
+    out property <string> display-font: "Segoe UI Variable Display";
+    out property <length> body: 12px;
+    out property <length> small: 11px;
+    out property <length> tiny: 10px;
+
+    // Motion (zero when the user turned Windows animations off)
+    in property <bool> animations: true;
+    out property <duration> fast: animations ? 120ms : 0ms;
+    out property <duration> medium: animations ? 220ms : 0ms;
+}
+
+// Glyphs, drawn as 24x24 stroked paths.
+export global Icons {
+    out property <string> plus: "M12 5v14M5 12h14";
+    out property <string> close: "M6.5 6.5l11 11M17.5 6.5l-11 11";
+    out property <string> search: "M10.5 4a6.5 6.5 0 1 0 0 13a6.5 6.5 0 1 0 0-13zM15.5 15.5L20 20";
+    out property <string> keyboard: "M4.5 6.5h15a1.5 1.5 0 0 1 1.5 1.5v8a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 16V8a1.5 1.5 0 0 1 1.5-1.5zM7 10.5h.5M11.75 10.5h.5M16.5 10.5h.5M8.5 14h7";
+    out property <string> pointer: "M6 4l12 7.2-5.6 1.4L9.6 18z";
+    out property <string> pin: "M9 3.5h6M10 3.5v5.5l-3.5 4h11L14 9V3.5M12 13v7.5";
+    out property <string> check: "M5 12.5l4.5 4.5L19 7.5";
+    out property <string> info: "M12 3.5a8.5 8.5 0 1 0 0 17a8.5 8.5 0 1 0 0-17zM12 11v5M12 8h.01";
+    out property <string> warning: "M12 4l9 15.5H3zM12 10v4.5M12 17h.01";
+    out property <string> settings: "M4 7.5h9M17 7.5h3M4 16.5h3M11 16.5h9M15 5v5M9 14v5";
+    out property <string> clock: "M12 3.5a8.5 8.5 0 1 0 0 17a8.5 8.5 0 1 0 0-17zM12 7.5V12l3 2";
+}
