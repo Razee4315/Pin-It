@@ -66,11 +66,11 @@ RestartApplications=no
 AppMutex=PinIt_SingleInstance_v2
 
 [Languages]
-Name: "english"; MessagesFile: "compiler:Default.isl"
+Name: "chinesesimplified"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
-Name: "startupicon"; Description: "Start {#MyAppName} automatically when Windows starts"; GroupDescription: "Startup:"; Flags: unchecked
+Name: "startupicon"; Description: "开机时自动启动 {#MyAppName}"; GroupDescription: "启动选项："; Flags: unchecked
 
 [InstallDelete]
 ; Up to 2.2.0 PinIt was a Qt app shipped with its runtime next to the exe.

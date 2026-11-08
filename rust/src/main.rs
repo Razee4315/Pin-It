@@ -154,7 +154,7 @@ fn main() {
             if !a.state.settings.has_seen_tray_notice {
                 a.state.settings.has_seen_tray_notice = true;
                 a.save_now();
-                host::notify("PinIt is still running", "Your pins stay active. Find PinIt in the tray to open it again.");
+                host::notify("PinIt 仍在运行", "已置顶的窗口仍然有效。点击系统托盘中的 PinIt 图标可重新打开。");
             }
             CloseRequestResponse::HideWindow
         });
@@ -205,7 +205,7 @@ fn connect_ui(ui: &AppWindow, app: &Shared) {
                 Ok(()) => {
                     app.update_rows_in_place();
                     app.save_soon();
-                    app.toast(if on { "Clicks reach this window again." } else { "Clicks now pass through this window." });
+                    app.toast(if on { "鼠标点击将作用于此窗口。" } else { "鼠标点击将穿透此窗口。" });
                 }
                 Err(e) => app.toast(&e.message()),
             }
@@ -249,7 +249,7 @@ fn connect_ui(ui: &AppWindow, app: &Shared) {
             "notifications" => app.state.settings.show_notifications = on,
             "autostart" => {
                 if !autostart::set_enabled(on) {
-                    app.toast("Couldn't change the startup setting.");
+                    app.toast("无法更改开机启动设置。");
                 }
                 if let Some(ui) = app.ui.upgrade() {
                     ui.set_autostart(autostart::is_enabled());
@@ -359,7 +359,7 @@ fn tray_menu(app: &Shared, x: i32, y: i32) {
     let (items, pinned): (Vec<host::MenuItem>, Vec<Hwnd>) = {
         let a = app.borrow();
         let mut items = vec![
-            host::MenuItem::Command { id: MENU_SHOW, text: "Show PinIt".into(), checked: false, enabled: true },
+            host::MenuItem::Command { id: MENU_SHOW, text: "打开 PinIt".into(), checked: false, enabled: true },
             host::MenuItem::Separator,
         ];
         let pinned: Vec<Hwnd> = a.pins.pinned().iter().map(|p| p.hwnd).collect();
@@ -373,15 +373,15 @@ fn tray_menu(app: &Shared, x: i32, y: i32) {
         if !pinned.is_empty() {
             items.push(host::MenuItem::Separator);
         }
-        items.push(host::MenuItem::Command { id: MENU_PICK, text: "Pin a window…".into(), checked: false, enabled: true });
+        items.push(host::MenuItem::Command { id: MENU_PICK, text: "选择窗口并置顶…".into(), checked: false, enabled: true });
         items.push(host::MenuItem::Command {
             id: MENU_UNPIN_ALL,
-            text: "Unpin all".into(),
+            text: "全部取消置顶".into(),
             checked: false,
             enabled: a.pins.is_active(),
         });
         items.push(host::MenuItem::Separator);
-        items.push(host::MenuItem::Command { id: MENU_QUIT, text: "Quit PinIt".into(), checked: false, enabled: true });
+        items.push(host::MenuItem::Command { id: MENU_QUIT, text: "退出 PinIt".into(), checked: false, enabled: true });
         (items, pinned)
     };
     let (x, y) = if x == 0 && y == 0 { host::cursor_pos() } else { (x, y) };
@@ -417,10 +417,10 @@ fn tray_menu(app: &Shared, x: i32, y: i32) {
 fn apply_shortcuts(s: &store::Shortcuts) -> Vec<String> {
     let mut failed = Vec::new();
     for (id, keys, name) in [
-        (HOTKEY_PIN, &s.toggle_pin, "Pin / unpin window"),
-        (HOTKEY_OPACITY_UP, &s.opacity_up, "Increase opacity"),
-        (HOTKEY_OPACITY_DOWN, &s.opacity_down, "Decrease opacity"),
-        (HOTKEY_WINDOW, &s.toggle_window, "Show / hide PinIt"),
+        (HOTKEY_PIN, &s.toggle_pin, "置顶/取消置顶窗口"),
+        (HOTKEY_OPACITY_UP, &s.opacity_up, "提高不透明度"),
+        (HOTKEY_OPACITY_DOWN, &s.opacity_down, "降低不透明度"),
+        (HOTKEY_WINDOW, &s.toggle_window, "显示/隐藏 PinIt"),
     ] {
         let ok = match shortcuts::parse(keys) {
             Some((mods, vk)) if shortcuts::has_safe_modifier(mods) => host::register_hotkey(id, mods, vk),
@@ -517,7 +517,7 @@ impl App {
                 if pinned && self.state.settings.enable_sound {
                     win::play_pin_sound();
                 }
-                let verb = if pinned { "Pinned" } else { "Unpinned" };
+                let verb = if pinned { "已置顶" } else { "已取消置顶" };
                 let text = if title.is_empty() { verb.to_string() } else { format!("{verb}: {title}") };
                 if from_hotkey {
                     if self.state.settings.show_notifications {
@@ -539,9 +539,9 @@ impl App {
         self.save_now();
         self.pins_changed();
         self.toast(&match n {
-            0 => "Nothing to unpin.".to_string(),
-            1 => "Unpinned 1 window.".to_string(),
-            n => format!("Unpinned {n} windows."),
+            0 => "没有窗口需要取消置顶。".to_string(),
+            1 => "已取消 1 个窗口的置顶。".to_string(),
+            n => format!("已取消 {n} 个窗口的置顶。"),
         });
     }
 
@@ -661,8 +661,8 @@ impl App {
     fn refresh_status(&self) {
         let tip = match self.pins.pinned().len() {
             0 => "PinIt".to_string(),
-            1 => "PinIt: 1 window pinned".to_string(),
-            n => format!("PinIt: {n} windows pinned"),
+            1 => "PinIt：已置顶 1 个窗口".to_string(),
+            n => format!("PinIt：已置顶 {n} 个窗口"),
         };
         host::set_tray_tip(&tip);
     }
@@ -746,10 +746,10 @@ impl App {
             }
         };
         self.edit_model.set_vec(vec![
-            edit("Pin / unpin window", &s.toggle_pin),
-            edit("Increase opacity", &s.opacity_up),
-            edit("Decrease opacity", &s.opacity_down),
-            edit("Show / hide PinIt", &s.toggle_window),
+            edit("置顶/取消置顶窗口", &s.toggle_pin),
+            edit("提高不透明度", &s.opacity_up),
+            edit("降低不透明度", &s.opacity_down),
+            edit("显示/隐藏 PinIt", &s.toggle_window),
         ]);
         if let Some(ui) = self.ui() {
             ui.set_shortcut_error("".into());
@@ -773,18 +773,18 @@ impl App {
                 })
             })
             .collect();
-        let names = ["Pin / unpin window", "Increase opacity", "Decrease opacity", "Show / hide PinIt"];
+        let names = ["置顶/取消置顶窗口", "提高不透明度", "降低不透明度", "显示/隐藏 PinIt"];
         for (s, name) in strings.iter().zip(names) {
             match shortcuts::parse(s) {
                 Some((mods, _)) if shortcuts::has_safe_modifier(mods) => {}
                 _ => {
-                    ui.set_shortcut_error(format!("“{name}” needs Win, Ctrl or Alt.").into());
+            ui.set_shortcut_error(format!("“{name}”必须包含 Win、Ctrl 或 Alt。 ").into());
                     return;
                 }
             }
         }
         if strings.iter().enumerate().any(|(i, s)| strings[..i].contains(s)) {
-            ui.set_shortcut_error("Two actions can't share the same keys.".into());
+            ui.set_shortcut_error("两个操作不能使用相同的快捷键。".into());
             return;
         }
 
@@ -796,9 +796,9 @@ impl App {
 
         let old = self.state.settings.shortcuts.clone();
         let unchanged = |name: &str| match name {
-            "Pin / unpin window" => candidate.toggle_pin == old.toggle_pin,
-            "Increase opacity" => candidate.opacity_up == old.opacity_up,
-            "Decrease opacity" => candidate.opacity_down == old.opacity_down,
+            "置顶/取消置顶窗口" => candidate.toggle_pin == old.toggle_pin,
+            "提高不透明度" => candidate.opacity_up == old.opacity_up,
+            "降低不透明度" => candidate.opacity_down == old.opacity_down,
             _ => candidate.toggle_window == old.toggle_window,
         };
         let failed = apply_shortcuts(&candidate);
@@ -811,7 +811,7 @@ impl App {
             // Put the working set back and say which one Windows refused.
             self.hotkey_problems = apply_shortcuts(&old);
             ui.set_shortcut_error(
-                format!("Another app already uses the keys for: {}. Pick different ones.", failed.join(", ")).into(),
+                format!("以下快捷键已被其他程序占用：{}。请选择其他按键。", failed.join(", ")).into(),
             );
             return;
         }
@@ -821,6 +821,6 @@ impl App {
         self.refresh_shortcut_views();
         self.refresh_status();
         ui.set_shortcuts_open(false);
-        self.toast("Shortcuts saved.");
+        self.toast("快捷键已保存。");
     }
 }

@@ -32,14 +32,14 @@ pub enum PinError {
 impl PinError {
     pub fn message(&self) -> String {
         match self {
-            PinError::NoWindow => "No window to pin. Click a window first.".into(),
-            PinError::Gone => "That window no longer exists.".into(),
-            PinError::NotPinnable => "That window can't be pinned.".into(),
+            PinError::NoWindow => "没有可置顶的窗口，请先点击一个窗口。".into(),
+            PinError::Gone => "该窗口已不存在。".into(),
+            PinError::NotPinnable => "无法置顶该窗口。".into(),
             PinError::Blocked(app) => {
-                let app = if app.is_empty() { "this window" } else { app };
-                format!("Can't pin {app}. It may be running as administrator.")
+                let app = if app.is_empty() { "此窗口" } else { app };
+                format!("无法置顶 {app}。它可能正以管理员身份运行。")
             }
-            PinError::NotPinned => "Pin this window first to change its opacity.".into(),
+            PinError::NotPinned => "请先置顶此窗口，再调整透明度。".into(),
         }
     }
 }
