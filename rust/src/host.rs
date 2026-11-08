@@ -155,7 +155,7 @@ pub fn create(handler: impl Fn(Event) + 'static) -> Hwnd {
         let hwnd = CreateWindowExW(
             WS_EX_TOOLWINDOW,
             &class,
-            w!("PinIt"),
+            w!("PinIt - 窗口置顶"),
             WS_OVERLAPPED,
             0,
             0,

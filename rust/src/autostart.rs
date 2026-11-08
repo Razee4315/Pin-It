@@ -1,4 +1,4 @@
-//! autostart — "Start PinIt with Windows", kept where Windows itself reads
+//! autostart — "PinIt 随 Windows 启动", kept where Windows itself reads
 //! it: the per-user Run key. The registry is the single source of truth (the
 //! installer can switch autostart on too, so a flag in pinned.json would
 //! drift out of step).

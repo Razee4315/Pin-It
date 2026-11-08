@@ -92,7 +92,7 @@ component PinCard {
                     color: pin.waiting ? Theme.text-muted : Theme.text;
                 }
                 Text {
-                    text: pin.waiting ? "Waiting for " + pin.process : pin.process;
+                    text: pin.waiting ? "等待窗口：" + pin.process : pin.process;
                     overflow: elide;
                     font-size: Theme.tiny;
                     color: Theme.text-muted;
@@ -105,7 +105,7 @@ component PinCard {
                 value: pin.opacity;
                 minimum: 20;
                 maximum: 100;
-                label: "Opacity of " + pin.title;
+                label: "窗口透明度：" + pin.title;
                 changed(v) => { root.opacity-changed(v); }
             }
             if !pin.waiting: Text {
@@ -124,7 +124,7 @@ component PinCard {
                 background: pin.click-through ? Theme.accent-soft : transparent;
                 IconButton {
                     icon: Icons.pointer;
-                    tooltip: pin.click-through ? "Clicks pass through (on)" : "Clicks pass through (off)";
+                    tooltip: pin.click-through ? "已开启鼠标穿透" : "已关闭鼠标穿透";
                     accessible-role: checkbox;
                     accessible-checkable: true;
                     accessible-checked: pin.click-through;
@@ -135,7 +135,7 @@ component PinCard {
                 y: (parent.height - self.height) / 2;
                 icon: Icons.close;
                 kind: danger-ghost;
-                tooltip: pin.waiting ? "Forget " + pin.title : "Unpin " + pin.title;
+                tooltip: pin.waiting ? "移除等待：" + pin.title : "取消置顶：" + pin.title;
                 clicked => { root.unpin(); }
             }
         }
@@ -148,7 +148,7 @@ component PickRow {
 
     height: 38px;
     accessible-role: button;
-    accessible-label: (item.pinned ? "Unpin " : "Pin ") + item.title + ", " + item.process;
+    accessible-label: (item.pinned ? "取消置顶 " : "设为置顶 ") + item.title + ", " + item.process;
     accessible-action-default => { root.picked(); }
 
     Rectangle {
@@ -202,7 +202,7 @@ component PickRow {
                         color: Theme.accent-hover;
                     }
                     Text {
-                        text: "Pinned";
+                        text: "已置顶";
                         vertical-alignment: center;
                         font-size: Theme.tiny;
                         font-weight: 600;
@@ -251,7 +251,7 @@ component ModifierChip {
 }
 
 export component AppWindow inherits Window {
-    title: "PinIt";
+    title: "PinIt - 窗口置顶";
     icon: @image-url("../../resources/icon-128.png");
     background: Theme.window;
     default-font-family: Theme.font;
@@ -342,7 +342,7 @@ export component AppWindow inherits Window {
                 height: 28px;
                 icon-size: 17px;
                 icon: Icons.keyboard;
-                tooltip: "Shortcuts";
+                tooltip: "快捷键";
                 clicked => { root.open-shortcuts(); }
             }
             IconButton {
@@ -350,7 +350,7 @@ export component AppWindow inherits Window {
                 height: 28px;
                 icon-size: 16px;
                 icon: Icons.settings;
-                tooltip: "Settings";
+                tooltip: "设置";
                 clicked => { root.settings-open = true; }
             }
         }
@@ -358,7 +358,7 @@ export component AppWindow inherits Window {
         Button {
             kind: primary;
             icon: Icons.plus;
-            text: "Pin a window…";
+            text: "选择窗口并置顶…";
             font-size: Theme.body;
             height: 30px;
             horizontal-stretch: 1;
@@ -369,13 +369,13 @@ export component AppWindow inherits Window {
         HorizontalLayout {
             height: 18px;
             SectionTitle {
-                text: pins.length == 0 ? "PINNED" : "PINNED · " + pins.length;
+                text: pins.length == 0 ? "已置顶窗口" : "已置顶窗口 · " + pins.length;
                 vertical-alignment: center;
                 horizontal-stretch: 1;
             }
             if pins.length > 0: Button {
                 kind: ghost;
-                text: "Unpin all";
+                text: "全部取消置顶";
                 font-size: Theme.tiny;
                 height: 18px;
                 radius: 5px;
@@ -417,7 +417,7 @@ export component AppWindow inherits Window {
                             }
                         }
                         Text {
-                            text: "Nothing pinned yet";
+                            text: "还没有置顶窗口";
                             horizontal-alignment: center;
                             font-size: Theme.body;
                             font-weight: 600;
@@ -441,7 +441,7 @@ export component AppWindow inherits Window {
             alignment: center;
             spacing: 5px;
             Text {
-                text: "Pin the window you're in:";
+                text: "置顶当前窗口：";
                 vertical-alignment: center;
                 font-size: Theme.tiny;
                 color: Theme.text-muted;
@@ -485,12 +485,12 @@ export component AppWindow inherits Window {
     // Window picker
     Sheet {
         open: root.picker-open;
-        title: "Pin a window";
+        title: "选择要置顶的窗口";
         sheet-height: 420px;
         close => { root.picker-open = false; }
 
         search := LineEdit {
-            placeholder-text: "Search windows";
+            placeholder-text: "搜索窗口";
             font-size: Theme.body;
             text <=> root.pick-filter;
             edited(t) => { root.filter-changed(t); }
@@ -505,7 +505,7 @@ export component AppWindow inherits Window {
             alignment: center;
             vertical-stretch: 1;
             Text {
-                text: root.pick-filter == "" ? "No windows to pin. Open an app and try again." : "No window matches “" + root.pick-filter + "”.";
+                text: root.pick-filter == "" ? "没有可置顶的窗口，请先打开一个程序。" : "没有找到匹配“" + root.pick-filter + "”的窗口。";
                 horizontal-alignment: center;
                 wrap: word-wrap;
                 font-size: Theme.small;
@@ -528,7 +528,7 @@ export component AppWindow inherits Window {
     // Shortcut editor
     Sheet {
         open: root.shortcuts-open;
-        title: "Shortcuts";
+        title: "快捷键设置";
         sheet-height: 420px;
         close => { root.shortcuts-open = false; }
 
@@ -540,7 +540,7 @@ export component AppWindow inherits Window {
                 spacing: 9px;
                 alignment: start;
                 Text {
-                    text: "Each needs Win, Ctrl or Alt.";
+                    text: "每个快捷键都必须包含 Win、Ctrl 或 Alt。";
                     font-size: Theme.tiny;
                     color: Theme.text-muted;
                 }
@@ -555,7 +555,7 @@ export component AppWindow inherits Window {
                             color: Theme.text;
                         }
                         if edit.unavailable: Text {
-                            text: "· in use by another app";
+                            text: "· 已被其他程序占用";
                             vertical-alignment: center;
                             horizontal-stretch: 1;
                             font-size: Theme.tiny;
@@ -592,17 +592,17 @@ export component AppWindow inherits Window {
             spacing: 6px;
             Button {
                 kind: ghost;
-                text: "Defaults";
+                text: "恢复默认";
                 clicked => { root.restore-default-shortcuts(); }
             }
             Rectangle { horizontal-stretch: 1; }
             Button {
-                text: "Cancel";
+                text: "取消";
                 clicked => { root.shortcuts-open = false; }
             }
             Button {
                 kind: primary;
-                text: "Save";
+                text: "保存";
                 clicked => { root.save-shortcuts(); }
             }
         }
@@ -611,24 +611,24 @@ export component AppWindow inherits Window {
     // Settings
     Sheet {
         open: root.settings-open;
-        title: "Settings";
+        title: "设置";
         sheet-height: 196px;
         close => { root.settings-open = false; }
 
         VerticalLayout {
             spacing: 0px;
             CheckBox {
-                text: "Play a sound when pinning";
+                text: "置顶时播放提示音";
                 checked <=> root.sound;
                 toggled(on) => { root.setting-changed("sound", on); }
             }
             CheckBox {
-                text: "Show a notification when pinning";
+                text: "置顶时显示通知";
                 checked <=> root.notifications;
                 toggled(on) => { root.setting-changed("notifications", on); }
             }
             CheckBox {
-                text: "Start PinIt with Windows";
+                text: "开机时启动 PinIt";
                 checked <=> root.autostart;
                 toggled(on) => { root.setting-changed("autostart", on); }
             }
@@ -639,7 +639,7 @@ export component AppWindow inherits Window {
             Button {
                 kind: ghost;
                 icon: Icons.info;
-                text: "About PinIt";
+                text: "关于 PinIt";
                 clicked => {
                     root.settings-open = false;
                     root.about-open = true;
@@ -651,7 +651,7 @@ export component AppWindow inherits Window {
     // About
     Sheet {
         open: root.about-open;
-        title: "About";
+        title: "关于";
         sheet-height: 236px;
         close => { root.about-open = false; }
 
@@ -672,7 +672,7 @@ export component AppWindow inherits Window {
                     color: Theme.text;
                 }
                 Text {
-                    text: "by Saqlain Abbas · Apache-2.0";
+                text: "作者：Saqlain Abbas · Apache-2.0";
                     font-size: Theme.tiny;
                     color: Theme.text-muted;
                 }
@@ -682,11 +682,11 @@ export component AppWindow inherits Window {
             spacing: 6px;
             alignment: start;
             Button {
-                text: "Website";
+                text: "官方网站";
                 clicked => { root.open-url("https://razee4315.github.io/Pin-It/"); }
             }
             Button {
-                text: "Source code";
+                text: "源代码";
                 clicked => { root.open-url("https://github.com/Razee4315/Pin-It"); }
             }
         }
